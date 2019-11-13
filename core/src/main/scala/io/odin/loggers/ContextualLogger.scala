@@ -9,23 +9,26 @@ import io.odin.{Logger, LoggerMessage}
 /**
   * Logger that extracts context from environment of `F[_]` with the help of [[WithContext]] type class
   */
-class ContextualLogger[F[_]: Clock](inner: Logger[F])(implicit F: Monad[F], withContext: WithContext[F])
+case class ContextualLogger[F[_]: Clock: Monad](inner: Logger[F])(implicit withContext: WithContext[F])
     extends DefaultLogger[F] {
   def log(msg: LoggerMessage): F[Unit] =
-    for {
-      ctx <- withContext.context
-      _ <- inner.log(msg.copy(context = msg.context ++ ctx))
-    } yield {
-      ()
+    withContext.context.flatMap { ctx =>
+      inner.log(msg.copy(context = msg.context ++ ctx))
     }
 }
 
-/**
-  * Extract log context from environment in `F[_]` scope
-  */
-trait HasContext[F[_], Env] {
+object ContextualLogger extends ContextualLoggerBuilder
 
-  def getContext(env: Env): F[Map[String, String]]
+trait ContextualLoggerBuilder {
+  def withContextualLogger[F[_]: Clock: Monad: WithContext]: Logger[F] => Logger[F] = ContextualLogger.apply
+}
+
+/**
+  * Extract log context from environment
+  */
+trait HasContext[Env] {
+
+  def getContext(env: Env): Map[String, String]
 
 }
 
@@ -46,7 +49,7 @@ object WithContext {
     */
   implicit def fromHasContext[F[_], Env](
       implicit A: ApplicativeAsk[F, Env],
-      hasContext: HasContext[F, Env],
+      hasContext: HasContext[Env],
       F: Monad[F]
   ): WithContext[F] = new WithContext[F] {
     def context: F[Map[String, String]] = A.ask.map(hasContext.getContext)

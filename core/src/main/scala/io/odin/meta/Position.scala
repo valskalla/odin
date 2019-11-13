@@ -5,9 +5,24 @@ package io.odin.meta
   */
 case class Position(
     fileName: String,
-    className: String,
-    methodName: Option[String],
-    packageName: Option[String],
-    line: Option[Int],
-    column: Option[Int]
+    enclosureName: String,
+    packageName: String,
+    line: Int
 )
+
+object Position {
+
+  implicit def derivePosition(
+      implicit fileName: sourcecode.File,
+      enclosureName: sourcecode.FullName,
+      packageName: sourcecode.Pkg,
+      line: sourcecode.Line
+  ): Position =
+    Position(
+      fileName = fileName.value,
+      enclosureName = enclosureName.value,
+      packageName = packageName.value,
+      line = line.value
+    )
+
+}

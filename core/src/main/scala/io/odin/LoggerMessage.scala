@@ -4,8 +4,8 @@ import io.odin.meta.Position
 
 /**
   * Final log message that contains all the possible information to render
- *
- * @param level log level of the message
+  *
+  * @param level log level of the message
   * @param message string message
   * @param context some MDC
   * @param exception exception if exists

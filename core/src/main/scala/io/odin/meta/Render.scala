@@ -11,18 +11,22 @@ trait Render[M] {
 
 }
 
-object Render {
+object Render extends LowPriorityRender {
 
   /**
     * Construct [[Render]] using default `.toString` method
     */
   def fromToString[M]: Render[M] = (m: M) => m.toString
 
+  implicit val renderString: Render[String] = (m: String) => m
+
+}
+
+trait LowPriorityRender {
+
   /**
     * Automatically derive [[Render]] instance given `cats.Show`
     */
   implicit def fromShow[M](implicit S: Show[M]): Render[M] = (m: M) => S.show(m)
-
-  implicit val renderString: Render[String] = (m: String) => m
 
 }

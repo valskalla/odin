@@ -1,7 +1,7 @@
 package io.odin
 
 import cats.syntax.all._
-import cats.{Applicative, Monoid, MonoidK, ~>}
+import cats.{~>, Applicative, Monoid, MonoidK}
 import io.odin.meta.{Position, Render}
 
 trait Logger[F[_]] {
@@ -149,7 +149,7 @@ trait Noop {
 }
 
 trait LoggerInstances {
-  def monoid[F[_]: Applicative]: Monoid[Logger[F]] = new MonoidLogger[F]
+  implicit def monoidLogger[F[_]: Applicative]: Monoid[Logger[F]] = new MonoidLogger[F]
 }
 
 private[odin] class NoopLogger[F[_]](implicit F: Applicative[F]) extends Logger[F] {
