@@ -38,4 +38,5 @@ lazy val `odin-core` = (project in file("core"))
 
 lazy val odin = (project in file("."))
   .settings(sharedSettings)
-  .dependsOn(`odin-core`)
+  .dependsOn(`odin-core` % "compile->compile;test->test")
+  .aggregate(`odin-core`)
