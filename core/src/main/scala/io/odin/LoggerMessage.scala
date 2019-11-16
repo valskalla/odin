@@ -10,7 +10,7 @@ import io.odin.meta.Position
   * @param context some MDC
   * @param exception exception if exists
   * @param position origin of log
-  * @param thread current thread
+  * @param threadName current thread name
   * @param timestamp Epoch time in milliseconds at the moment of log
   */
 case class LoggerMessage(
@@ -19,6 +19,6 @@ case class LoggerMessage(
     context: Map[String, String],
     exception: Option[Throwable],
     position: Position,
-    thread: Thread,
+    threadName: String,
     timestamp: Long
 )

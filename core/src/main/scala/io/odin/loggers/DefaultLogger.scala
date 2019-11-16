@@ -27,7 +27,7 @@ abstract class DefaultLogger[F[_]](implicit clock: Clock[F], F: Monad[F]) extend
           context = ctx,
           exception = t,
           position = position,
-          thread = Thread.currentThread(),
+          threadName = Thread.currentThread().getName,
           timestamp = timestamp
         )
       )

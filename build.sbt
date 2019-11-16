@@ -4,9 +4,10 @@ lazy val versions = new {
   val catsMtl = "0.7.0"
   val sourcecode = "0.1.7"
   val monix = "3.1.0"
+  val scalaCheck = "1.14.2"
 }
 
-lazy val scalaTest = Seq("org.scalatest" %% "scalatest" % versions.scalaTest % Test)
+lazy val scalaTest = "org.scalatest" %% "scalatest" % versions.scalaTest % Test
 
 lazy val cats = List(
   "org.typelevel" %% "cats-core",
@@ -19,11 +20,13 @@ lazy val sourcecode = "com.lihaoyi" %% "sourcecode" % versions.sourcecode
 
 lazy val monixCatnap = "io.monix" %% "monix-catnap" % versions.monix
 
+lazy val scalaCheck = "org.scalacheck" %% "scalacheck" % versions.scalaCheck % Test
+
 lazy val sharedSettings = Seq(
   scalaVersion := "2.13.1",
   version := "0.1.0-SNAPSHOT",
   organization := "com.github.scala-odin",
-  libraryDependencies ++= scalaTest,
+  libraryDependencies ++= scalaCheck :: scalaTest :: Nil,
   addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3")
 )
 
