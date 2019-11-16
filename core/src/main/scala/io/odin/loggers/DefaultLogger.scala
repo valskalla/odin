@@ -41,13 +41,10 @@ abstract class DefaultLogger[F[_]](implicit clock: Clock[F], F: Monad[F]) extend
   def trace[M](msg: => M, t: Throwable)(implicit render: Render[M], position: Position): F[Unit] =
     log(Level.Trace, msg, t = Some(t))
 
-  def trace[M](ctx: Map[String, String])(msg: => M)(implicit render: Render[M], position: Position): F[Unit] =
+  def trace[M](msg: => M, ctx: Map[String, String])(implicit render: Render[M], position: Position): F[Unit] =
     log(Level.Trace, msg, ctx)
 
-  def trace[M](
-      ctx: Map[String, String],
-      t: Throwable
-  )(msg: => M)(implicit render: Render[M], position: Position): F[Unit] =
+  def trace[M](msg: => M, ctx: Map[String, String], t: Throwable)(implicit render: Render[M], position: Position): F[Unit] =
     log(Level.Trace, msg, ctx, Some(t))
 
   def debug[M](msg: => M)(implicit render: Render[M], position: Position): F[Unit] =
@@ -56,13 +53,10 @@ abstract class DefaultLogger[F[_]](implicit clock: Clock[F], F: Monad[F]) extend
   def debug[M](msg: => M, t: Throwable)(implicit render: Render[M], position: Position): F[Unit] =
     log(Level.Debug, msg, t = Some(t))
 
-  def debug[M](ctx: Map[String, String])(msg: => M)(implicit render: Render[M], position: Position): F[Unit] =
+  def debug[M](msg: => M, ctx: Map[String, String])(implicit render: Render[M], position: Position): F[Unit] =
     log(Level.Debug, msg, ctx)
 
-  def debug[M](
-      ctx: Map[String, String],
-      t: Throwable
-  )(msg: => M)(implicit render: Render[M], position: Position): F[Unit] =
+  def debug[M](msg: => M, ctx: Map[String, String], t: Throwable)(implicit render: Render[M], position: Position): F[Unit] =
     log(Level.Debug, msg, ctx, Some(t))
 
   def info[M](msg: => M)(implicit render: Render[M], position: Position): F[Unit] =
@@ -71,13 +65,10 @@ abstract class DefaultLogger[F[_]](implicit clock: Clock[F], F: Monad[F]) extend
   def info[M](msg: => M, t: Throwable)(implicit render: Render[M], position: Position): F[Unit] =
     log(Level.Info, msg, t = Some(t))
 
-  def info[M](ctx: Map[String, String])(msg: => M)(implicit render: Render[M], position: Position): F[Unit] =
+  def info[M](msg: => M, ctx: Map[String, String])(implicit render: Render[M], position: Position): F[Unit] =
     log(Level.Info, msg, ctx)
 
-  def info[M](
-      ctx: Map[String, String],
-      t: Throwable
-  )(msg: => M)(implicit render: Render[M], position: Position): F[Unit] =
+  def info[M](msg: => M, ctx: Map[String, String], t: Throwable)(implicit render: Render[M], position: Position): F[Unit] =
     log(Level.Info, msg, ctx, Some(t))
 
   def warn[M](msg: => M)(implicit render: Render[M], position: Position): F[Unit] =
@@ -86,13 +77,10 @@ abstract class DefaultLogger[F[_]](implicit clock: Clock[F], F: Monad[F]) extend
   def warn[M](msg: => M, t: Throwable)(implicit render: Render[M], position: Position): F[Unit] =
     log(Level.Warn, msg, t = Some(t))
 
-  def warn[M](ctx: Map[String, String])(msg: => M)(implicit render: Render[M], position: Position): F[Unit] =
+  def warn[M](msg: => M, ctx: Map[String, String])(implicit render: Render[M], position: Position): F[Unit] =
     log(Level.Warn, msg, ctx)
 
-  def warn[M](
-      ctx: Map[String, String],
-      t: Throwable
-  )(msg: => M)(implicit render: Render[M], position: Position): F[Unit] =
+  def warn[M](msg: => M, ctx: Map[String, String], t: Throwable)(implicit render: Render[M], position: Position): F[Unit] =
     log(Level.Warn, msg, ctx, Some(t))
 
   def error[M](msg: => M)(implicit render: Render[M], position: Position): F[Unit] =
@@ -101,12 +89,9 @@ abstract class DefaultLogger[F[_]](implicit clock: Clock[F], F: Monad[F]) extend
   def error[M](msg: => M, t: Throwable)(implicit render: Render[M], position: Position): F[Unit] =
     log(Level.Error, msg, t = Some(t))
 
-  def error[M](ctx: Map[String, String])(msg: => M)(implicit render: Render[M], position: Position): F[Unit] =
+  def error[M](msg: => M, ctx: Map[String, String])(implicit render: Render[M], position: Position): F[Unit] =
     log(Level.Error, msg, ctx)
 
-  def error[M](
-      ctx: Map[String, String],
-      t: Throwable
-  )(msg: => M)(implicit render: Render[M], position: Position): F[Unit] =
+  def error[M](msg: => M, ctx: Map[String, String], t: Throwable)(implicit render: Render[M], position: Position): F[Unit] =
     log(Level.Error, msg, ctx, t = Some(t))
 }

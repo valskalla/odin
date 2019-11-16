@@ -1,7 +1,7 @@
 package io.odin
 
 import cats.syntax.all._
-import cats.{~>, Applicative, Monoid, MonoidK}
+import cats.{~>, Applicative, Monoid}
 import io.odin.meta.{Position, Render}
 
 trait Logger[F[_]] {
@@ -12,56 +12,56 @@ trait Logger[F[_]] {
 
   def trace[M](msg: => M, t: Throwable)(implicit render: Render[M], position: Position): F[Unit]
 
-  def trace[M](ctx: Map[String, String])(msg: => M)(implicit render: Render[M], position: Position): F[Unit]
+  def trace[M](msg: => M, ctx: Map[String, String])(implicit render: Render[M], position: Position): F[Unit]
 
-  def trace[M](
-      ctx: Map[String, String],
-      t: Throwable
-  )(msg: => M)(implicit render: Render[M], position: Position): F[Unit]
+  def trace[M](msg: => M, ctx: Map[String, String], t: Throwable)(
+      implicit render: Render[M],
+      position: Position
+  ): F[Unit]
 
   def debug[M](msg: => M)(implicit render: Render[M], position: Position): F[Unit]
 
   def debug[M](msg: => M, t: Throwable)(implicit render: Render[M], position: Position): F[Unit]
 
-  def debug[M](ctx: Map[String, String])(msg: => M)(implicit render: Render[M], position: Position): F[Unit]
+  def debug[M](msg: => M, ctx: Map[String, String])(implicit render: Render[M], position: Position): F[Unit]
 
-  def debug[M](
-      ctx: Map[String, String],
-      t: Throwable
-  )(msg: => M)(implicit render: Render[M], position: Position): F[Unit]
+  def debug[M](msg: => M, ctx: Map[String, String], t: Throwable)(
+      implicit render: Render[M],
+      position: Position
+  ): F[Unit]
 
   def info[M](msg: => M)(implicit render: Render[M], position: Position): F[Unit]
 
   def info[M](msg: => M, t: Throwable)(implicit render: Render[M], position: Position): F[Unit]
 
-  def info[M](ctx: Map[String, String])(msg: => M)(implicit render: Render[M], position: Position): F[Unit]
+  def info[M](msg: => M, ctx: Map[String, String])(implicit render: Render[M], position: Position): F[Unit]
 
-  def info[M](
-      ctx: Map[String, String],
-      t: Throwable
-  )(msg: => M)(implicit render: Render[M], position: Position): F[Unit]
+  def info[M](msg: => M, ctx: Map[String, String], t: Throwable)(
+      implicit render: Render[M],
+      position: Position
+  ): F[Unit]
 
   def warn[M](msg: => M)(implicit render: Render[M], position: Position): F[Unit]
 
   def warn[M](msg: => M, t: Throwable)(implicit render: Render[M], position: Position): F[Unit]
 
-  def warn[M](ctx: Map[String, String])(msg: => M)(implicit render: Render[M], position: Position): F[Unit]
+  def warn[M](msg: => M, ctx: Map[String, String])(implicit render: Render[M], position: Position): F[Unit]
 
-  def warn[M](
-      ctx: Map[String, String],
-      t: Throwable
-  )(msg: => M)(implicit render: Render[M], position: Position): F[Unit]
+  def warn[M](msg: => M, ctx: Map[String, String], t: Throwable)(
+      implicit render: Render[M],
+      position: Position
+  ): F[Unit]
 
   def error[M](msg: => M)(implicit render: Render[M], position: Position): F[Unit]
 
   def error[M](msg: => M, t: Throwable)(implicit render: Render[M], position: Position): F[Unit]
 
-  def error[M](ctx: Map[String, String])(msg: => M)(implicit render: Render[M], position: Position): F[Unit]
+  def error[M](msg: => M, ctx: Map[String, String])(implicit render: Render[M], position: Position): F[Unit]
 
-  def error[M](
-      ctx: Map[String, String],
-      t: Throwable
-  )(msg: => M)(implicit render: Render[M], position: Position): F[Unit]
+  def error[M](msg: => M, ctx: Map[String, String], t: Throwable)(
+      implicit render: Render[M],
+      position: Position
+  ): F[Unit]
 
 }
 
@@ -76,13 +76,14 @@ object Logger extends Noop with LoggerInstances {
       def trace[M](msg: => M, t: Throwable)(implicit render: Render[M], position: Position): G[Unit] =
         f(logger.trace(msg, t))
 
-      def trace[M](ctx: Map[String, String])(msg: => M)(implicit render: Render[M], position: Position): G[Unit] =
-        f(logger.trace(ctx)(msg))
+      def trace[M](msg: => M, ctx: Map[String, String])(implicit render: Render[M], position: Position): G[Unit] =
+        f(logger.trace(msg, ctx))
 
-      def trace[M](ctx: Map[String, String], t: Throwable)(
-          msg: => M
-      )(implicit render: Render[M], position: Position): G[Unit] =
-        f(logger.trace(ctx, t)(msg))
+      def trace[M](msg: => M, ctx: Map[String, String], t: Throwable)(
+          implicit render: Render[M],
+          position: Position
+      ): G[Unit] =
+        f(logger.trace(msg, ctx, t))
 
       def debug[M](msg: => M)(implicit render: Render[M], position: Position): G[Unit] =
         f(logger.debug(msg))
@@ -90,13 +91,14 @@ object Logger extends Noop with LoggerInstances {
       def debug[M](msg: => M, t: Throwable)(implicit render: Render[M], position: Position): G[Unit] =
         f(logger.debug(msg, t))
 
-      def debug[M](ctx: Map[String, String])(msg: => M)(implicit render: Render[M], position: Position): G[Unit] =
-        f(logger.debug(ctx)(msg))
+      def debug[M](msg: => M, ctx: Map[String, String])(implicit render: Render[M], position: Position): G[Unit] =
+        f(logger.debug(msg, ctx))
 
-      def debug[M](ctx: Map[String, String], t: Throwable)(
-          msg: => M
-      )(implicit render: Render[M], position: Position): G[Unit] =
-        f(logger.debug(ctx, t)(msg))
+      def debug[M](msg: => M, ctx: Map[String, String], t: Throwable)(
+          implicit render: Render[M],
+          position: Position
+      ): G[Unit] =
+        f(logger.debug(msg, ctx, t))
 
       def info[M](msg: => M)(implicit render: Render[M], position: Position): G[Unit] =
         f(logger.info(msg))
@@ -104,13 +106,14 @@ object Logger extends Noop with LoggerInstances {
       def info[M](msg: => M, t: Throwable)(implicit render: Render[M], position: Position): G[Unit] =
         f(logger.info(msg, t))
 
-      def info[M](ctx: Map[String, String])(msg: => M)(implicit render: Render[M], position: Position): G[Unit] =
-        f(logger.info(ctx)(msg))
+      def info[M](msg: => M, ctx: Map[String, String])(implicit render: Render[M], position: Position): G[Unit] =
+        f(logger.info(msg, ctx))
 
-      def info[M](ctx: Map[String, String], t: Throwable)(
-          msg: => M
-      )(implicit render: Render[M], position: Position): G[Unit] =
-        f(logger.info(ctx, t)(msg))
+      def info[M](msg: => M, ctx: Map[String, String], t: Throwable)(
+          implicit render: Render[M],
+          position: Position
+      ): G[Unit] =
+        f(logger.info(msg, ctx, t))
 
       def warn[M](msg: => M)(implicit render: Render[M], position: Position): G[Unit] =
         f(logger.warn(msg))
@@ -118,13 +121,14 @@ object Logger extends Noop with LoggerInstances {
       def warn[M](msg: => M, t: Throwable)(implicit render: Render[M], position: Position): G[Unit] =
         f(logger.warn(msg, t))
 
-      def warn[M](ctx: Map[String, String])(msg: => M)(implicit render: Render[M], position: Position): G[Unit] =
-        f(logger.warn(ctx)(msg))
+      def warn[M](msg: => M, ctx: Map[String, String])(implicit render: Render[M], position: Position): G[Unit] =
+        f(logger.warn(msg, ctx))
 
-      def warn[M](ctx: Map[String, String], t: Throwable)(
-          msg: => M
-      )(implicit render: Render[M], position: Position): G[Unit] =
-        f(logger.warn(ctx, t)(msg))
+      def warn[M](msg: => M, ctx: Map[String, String], t: Throwable)(
+          implicit render: Render[M],
+          position: Position
+      ): G[Unit] =
+        f(logger.warn(msg, ctx, t))
 
       def error[M](msg: => M)(implicit render: Render[M], position: Position): G[Unit] =
         f(logger.error(msg))
@@ -132,13 +136,14 @@ object Logger extends Noop with LoggerInstances {
       def error[M](msg: => M, t: Throwable)(implicit render: Render[M], position: Position): G[Unit] =
         f(logger.error(msg, t))
 
-      def error[M](ctx: Map[String, String])(msg: => M)(implicit render: Render[M], position: Position): G[Unit] =
-        f(logger.error(ctx)(msg))
+      def error[M](msg: => M, ctx: Map[String, String])(implicit render: Render[M], position: Position): G[Unit] =
+        f(logger.error(msg, ctx))
 
-      def error[M](ctx: Map[String, String], t: Throwable)(
-          msg: => M
-      )(implicit render: Render[M], position: Position): G[Unit] =
-        f(logger.error(ctx, t)(msg))
+      def error[M](msg: => M, ctx: Map[String, String], t: Throwable)(
+          implicit render: Render[M],
+          position: Position
+      ): G[Unit] =
+        f(logger.error(msg, ctx, t))
     }
   }
 
@@ -159,55 +164,56 @@ private[odin] class NoopLogger[F[_]](implicit F: Applicative[F]) extends Logger[
 
   def trace[M](msg: => M, t: Throwable)(implicit render: Render[M], position: Position): F[Unit] = F.unit
 
-  def trace[M](ctx: Map[String, String])(msg: => M)(implicit render: Render[M], position: Position): F[Unit] = F.unit
+  def trace[M](msg: => M, ctx: Map[String, String])(implicit render: Render[M], position: Position): F[Unit] = F.unit
 
-  def trace[M](ctx: Map[String, String], t: Throwable)(
-      msg: => M
-  )(implicit render: Render[M], position: Position): F[Unit] = F.unit
+  def trace[M](msg: => M, ctx: Map[String, String], t: Throwable)(
+      implicit render: Render[M],
+      position: Position
+  ): F[Unit] = F.unit
 
   def debug[M](msg: => M)(implicit render: Render[M], position: Position): F[Unit] = F.unit
 
   def debug[M](msg: => M, t: Throwable)(implicit render: Render[M], position: Position): F[Unit] = F.unit
 
-  def debug[M](ctx: Map[String, String])(msg: => M)(implicit render: Render[M], position: Position): F[Unit] = F.unit
+  def debug[M](msg: => M, ctx: Map[String, String])(implicit render: Render[M], position: Position): F[Unit] = F.unit
 
-  def debug[M](
-      ctx: Map[String, String],
-      t: Throwable
-  )(msg: => M)(implicit render: Render[M], position: Position): F[Unit] = F.unit
+  def debug[M](msg: => M, ctx: Map[String, String], t: Throwable)(
+      implicit render: Render[M],
+      position: Position
+  ): F[Unit] = F.unit
 
   def info[M](msg: => M)(implicit render: Render[M], position: Position): F[Unit] = F.unit
 
   def info[M](msg: => M, t: Throwable)(implicit render: Render[M], position: Position): F[Unit] = F.unit
 
-  def info[M](ctx: Map[String, String])(msg: => M)(implicit render: Render[M], position: Position): F[Unit] = F.unit
+  def info[M](msg: => M, ctx: Map[String, String])(implicit render: Render[M], position: Position): F[Unit] = F.unit
 
-  def info[M](
-      ctx: Map[String, String],
-      t: Throwable
-  )(msg: => M)(implicit render: Render[M], position: Position): F[Unit] = F.unit
+  def info[M](msg: => M, ctx: Map[String, String], t: Throwable)(
+      implicit render: Render[M],
+      position: Position
+  ): F[Unit] = F.unit
 
   def warn[M](msg: => M)(implicit render: Render[M], position: Position): F[Unit] = F.unit
 
   def warn[M](msg: => M, t: Throwable)(implicit render: Render[M], position: Position): F[Unit] = F.unit
 
-  def warn[M](ctx: Map[String, String])(msg: => M)(implicit render: Render[M], position: Position): F[Unit] = F.unit
+  def warn[M](msg: => M, ctx: Map[String, String])(implicit render: Render[M], position: Position): F[Unit] = F.unit
 
-  def warn[M](
-      ctx: Map[String, String],
-      t: Throwable
-  )(msg: => M)(implicit render: Render[M], position: Position): F[Unit] = F.unit
+  def warn[M](msg: => M, ctx: Map[String, String], t: Throwable)(
+      implicit render: Render[M],
+      position: Position
+  ): F[Unit] = F.unit
 
   def error[M](msg: => M)(implicit render: Render[M], position: Position): F[Unit] = F.unit
 
   def error[M](msg: => M, t: Throwable)(implicit render: Render[M], position: Position): F[Unit] = F.unit
 
-  def error[M](ctx: Map[String, String])(msg: => M)(implicit render: Render[M], position: Position): F[Unit] = F.unit
+  def error[M](msg: => M, ctx: Map[String, String])(implicit render: Render[M], position: Position): F[Unit] = F.unit
 
-  def error[M](
-      ctx: Map[String, String],
-      t: Throwable
-  )(msg: => M)(implicit render: Render[M], position: Position): F[Unit] = F.unit
+  def error[M](msg: => M, ctx: Map[String, String], t: Throwable)(
+      implicit render: Render[M],
+      position: Position
+  ): F[Unit] = F.unit
 }
 
 private[odin] class MonoidLogger[F[_]: Applicative] extends Monoid[Logger[F]] {
@@ -223,14 +229,14 @@ private[odin] class MonoidLogger[F[_]: Applicative] extends Monoid[Logger[F]] {
     def trace[M](msg: => M, t: Throwable)(implicit render: Render[M], position: Position): F[Unit] =
       x.trace(msg, t) *> y.trace(msg, t)
 
-    def trace[M](ctx: Map[String, String])(msg: => M)(implicit render: Render[M], position: Position): F[Unit] =
-      x.trace(ctx)(msg) *> y.trace(ctx)(msg)
+    def trace[M](msg: => M, ctx: Map[String, String])(implicit render: Render[M], position: Position): F[Unit] =
+      x.trace(msg, ctx) *> y.trace(msg, ctx)
 
-    def trace[M](
-        ctx: Map[String, String],
-        t: Throwable
-    )(msg: => M)(implicit render: Render[M], position: Position): F[Unit] =
-      x.trace(ctx, t)(msg) *> y.trace(ctx, t)(msg)
+    def trace[M](msg: => M, ctx: Map[String, String], t: Throwable)(
+        implicit render: Render[M],
+        position: Position
+    ): F[Unit] =
+      x.trace(msg, ctx, t) *> y.trace(msg, ctx, t)
 
     def debug[M](msg: => M)(implicit render: Render[M], position: Position): F[Unit] =
       x.debug(msg) *> y.debug(msg)
@@ -238,14 +244,14 @@ private[odin] class MonoidLogger[F[_]: Applicative] extends Monoid[Logger[F]] {
     def debug[M](msg: => M, t: Throwable)(implicit render: Render[M], position: Position): F[Unit] =
       x.debug(msg, t) *> y.debug(msg, t)
 
-    def debug[M](ctx: Map[String, String])(msg: => M)(implicit render: Render[M], position: Position): F[Unit] =
-      x.debug(ctx)(msg) *> y.debug(ctx)(msg)
+    def debug[M](msg: => M, ctx: Map[String, String])(implicit render: Render[M], position: Position): F[Unit] =
+      x.debug(msg, ctx) *> y.debug(msg, ctx)
 
-    def debug[M](
-        ctx: Map[String, String],
-        t: Throwable
-    )(msg: => M)(implicit render: Render[M], position: Position): F[Unit] =
-      x.debug(ctx, t)(msg) *> y.debug(ctx, t)(msg)
+    def debug[M](msg: => M, ctx: Map[String, String], t: Throwable)(
+        implicit render: Render[M],
+        position: Position
+    ): F[Unit] =
+      x.debug(msg, ctx, t) *> y.debug(msg, ctx, t)
 
     def info[M](msg: => M)(implicit render: Render[M], position: Position): F[Unit] =
       x.info(msg) *> y.info(msg)
@@ -253,14 +259,14 @@ private[odin] class MonoidLogger[F[_]: Applicative] extends Monoid[Logger[F]] {
     def info[M](msg: => M, t: Throwable)(implicit render: Render[M], position: Position): F[Unit] =
       x.info(msg, t) *> y.info(msg, t)
 
-    def info[M](ctx: Map[String, String])(msg: => M)(implicit render: Render[M], position: Position): F[Unit] =
-      x.info(ctx)(msg) *> y.info(ctx)(msg)
+    def info[M](msg: => M, ctx: Map[String, String])(implicit render: Render[M], position: Position): F[Unit] =
+      x.info(msg, ctx) *> y.info(msg, ctx)
 
-    def info[M](
-        ctx: Map[String, String],
-        t: Throwable
-    )(msg: => M)(implicit render: Render[M], position: Position): F[Unit] =
-      x.info(ctx, t)(msg) *> y.info(ctx, t)(msg)
+    def info[M](msg: => M, ctx: Map[String, String], t: Throwable)(
+        implicit render: Render[M],
+        position: Position
+    ): F[Unit] =
+      x.info(msg, ctx, t) *> y.info(msg, ctx, t)
 
     def warn[M](msg: => M)(implicit render: Render[M], position: Position): F[Unit] =
       x.warn(msg) *> y.warn(msg)
@@ -268,14 +274,14 @@ private[odin] class MonoidLogger[F[_]: Applicative] extends Monoid[Logger[F]] {
     def warn[M](msg: => M, t: Throwable)(implicit render: Render[M], position: Position): F[Unit] =
       x.warn(msg, t) *> y.warn(msg, t)
 
-    def warn[M](ctx: Map[String, String])(msg: => M)(implicit render: Render[M], position: Position): F[Unit] =
-      x.warn(ctx)(msg) *> y.warn(ctx)(msg)
+    def warn[M](msg: => M, ctx: Map[String, String])(implicit render: Render[M], position: Position): F[Unit] =
+      x.warn(msg, ctx) *> y.warn(msg, ctx)
 
-    def warn[M](
-        ctx: Map[String, String],
-        t: Throwable
-    )(msg: => M)(implicit render: Render[M], position: Position): F[Unit] =
-      x.warn(ctx, t)(msg) *> y.warn(ctx, t)(msg)
+    def warn[M](msg: => M, ctx: Map[String, String], t: Throwable)(
+        implicit render: Render[M],
+        position: Position
+    ): F[Unit] =
+      x.warn(msg, ctx, t) *> y.warn(msg, ctx, t)
 
     def error[M](msg: => M)(implicit render: Render[M], position: Position): F[Unit] =
       x.error(msg) *> y.error(msg)
@@ -283,13 +289,13 @@ private[odin] class MonoidLogger[F[_]: Applicative] extends Monoid[Logger[F]] {
     def error[M](msg: => M, t: Throwable)(implicit render: Render[M], position: Position): F[Unit] =
       x.error(msg, t) *> y.error(msg, t)
 
-    def error[M](ctx: Map[String, String])(msg: => M)(implicit render: Render[M], position: Position): F[Unit] =
-      x.error(ctx)(msg) *> y.error(ctx)(msg)
+    def error[M](msg: => M, ctx: Map[String, String])(implicit render: Render[M], position: Position): F[Unit] =
+      x.error(msg, ctx) *> y.error(msg, ctx)
 
-    def error[M](
-        ctx: Map[String, String],
-        t: Throwable
-    )(msg: => M)(implicit render: Render[M], position: Position): F[Unit] =
-      x.error(ctx, t)(msg) *> y.error(ctx, t)(msg)
+    def error[M](msg: => M, ctx: Map[String, String], t: Throwable)(
+        implicit render: Render[M],
+        position: Position
+    ): F[Unit] =
+      x.error(msg, ctx, t) *> y.error(msg, ctx, t)
   }
 }
