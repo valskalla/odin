@@ -20,7 +20,7 @@ class FileLogWriter[F[_]](writer: BufferedWriter)(implicit F: Sync[F]) extends L
     F.guarantee {
       F.delay {
         writer.write(formatter.format(msg))
-        writer.write("\n")
+        writer.write(System.lineSeparator())
       }
     }(flush)
   }

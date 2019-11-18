@@ -14,7 +14,7 @@ class StdLogWriterSpec extends OdinSpec {
       val ps = new PrintStream(baos)
       StdLogWriter.mk[IO](ps).write(loggerMessage, Formatter.simple).unsafeRunSync()
       val str = new String(baos.toByteArray)
-      str shouldBe Formatter.simple.format(loggerMessage) + "\n"
+      str shouldBe Formatter.simple.format(loggerMessage) + lineSeparator
       ps.close()
     }
   }

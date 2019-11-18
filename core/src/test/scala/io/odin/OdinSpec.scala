@@ -7,6 +7,8 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 trait OdinSpec extends FlatSpec with Matchers with ScalaCheckDrivenPropertyChecks {
 
+  val lineSeparator = System.lineSeparator()
+
   val nonEmptyStringGen: Gen[String] = Gen.nonEmptyListOf(Gen.alphaNumChar).map(_.mkString)
 
   val levelGen: Gen[Level] = Gen.oneOf(Level.Trace, Level.Debug, Level.Info, Level.Warn, Level.Error)

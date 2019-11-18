@@ -4,10 +4,10 @@ import java.nio.file.{Files, Paths}
 import java.util.UUID
 
 import cats.effect.IO
+import cats.instances.list._
+import cats.syntax.all._
 import io.odin.formatter.Formatter
 import io.odin.{LoggerMessage, OdinSpec}
-import cats.syntax.all._
-import cats.instances.list._
 import org.scalatest.BeforeAndAfter
 
 class FileLogWriterSpec extends OdinSpec with BeforeAndAfter {
@@ -20,7 +20,7 @@ class FileLogWriterSpec extends OdinSpec with BeforeAndAfter {
       loggerMessage.traverse(writer.write(_, Formatter.simple)).unsafeRunSync()
       new String(Files.readAllBytes(Paths.get(fileName))) shouldBe loggerMessage
         .map(Formatter.simple.format)
-        .mkString("\n") + (if (loggerMessage.isEmpty) "" else "\n")
+        .mkString(lineSeparator) + (if (loggerMessage.isEmpty) "" else lineSeparator)
     }
   }
 
