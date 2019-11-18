@@ -9,9 +9,11 @@ on:
       - master
 
 jobs:
-  build:
+  test:
 
-    runs-on: ubuntu-latest
+    stratery:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
 
     steps:
     - uses: actions/checkout@v1
