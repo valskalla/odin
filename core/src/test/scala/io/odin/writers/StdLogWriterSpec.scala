@@ -12,9 +12,9 @@ class StdLogWriterSpec extends OdinSpec {
     forAll { loggerMessage: LoggerMessage =>
       val baos = new ByteArrayOutputStream()
       val ps = new PrintStream(baos)
-      StdLogWriter.mk[IO](ps).write(loggerMessage, Formatter.simple).unsafeRunSync()
+      StdLogWriter.mk[IO](ps).write(loggerMessage, Formatter.default).unsafeRunSync()
       val str = new String(baos.toByteArray)
-      str shouldBe Formatter.simple.format(loggerMessage) + lineSeparator
+      str shouldBe Formatter.default.format(loggerMessage) + lineSeparator
       ps.close()
     }
   }
