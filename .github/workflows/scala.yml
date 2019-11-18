@@ -27,4 +27,4 @@ jobs:
         java-version: ${{ matrix.java }}
     - name: Run tests
       shell: bash
-      run: sbt test
+      run: JAVA_TOOL_OPTIONS=-Dfile.encoding=UTF8 sbt test

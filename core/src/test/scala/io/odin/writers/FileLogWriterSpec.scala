@@ -12,8 +12,6 @@ import org.scalatest.BeforeAndAfter
 
 class FileLogWriterSpec extends OdinSpec with BeforeAndAfter {
 
-  System.setProperty("file.encoding", "UTF-8")
-
   private val fileName = UUID.randomUUID().toString
 
   it should "write formatted messages into file" in {
