@@ -1,5 +1,6 @@
 package io.odin
 
+import io.odin.formatter.Formatter
 import io.odin.meta.Position
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.{FlatSpec, Matchers}
@@ -52,5 +53,8 @@ trait OdinSpec extends FlatSpec with Matchers with Checkers with ScalaCheckDrive
     )
   }
   implicit val loggerMessageArbitrary: Arbitrary[LoggerMessage] = Arbitrary(loggerMessageGen)
+
+  val formatterGen: Gen[Formatter] = Gen.const(Formatter.simple)
+  implicit val formatterArbitrary: Arbitrary[Formatter] = Arbitrary(formatterGen)
 
 }
