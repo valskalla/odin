@@ -3,11 +3,19 @@ package io.odin
 import io.odin.meta.Position
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.{FlatSpec, Matchers}
-import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
+import org.scalatestplus.scalacheck.{Checkers, ScalaCheckDrivenPropertyChecks}
+import org.typelevel.discipline.Laws
 
-trait OdinSpec extends FlatSpec with Matchers with ScalaCheckDrivenPropertyChecks {
+trait OdinSpec extends FlatSpec with Matchers with Checkers with ScalaCheckDrivenPropertyChecks with EqInstances {
 
-  val lineSeparator = System.lineSeparator()
+  def checkAll(name: String, ruleSet: Laws#RuleSet): Unit = {
+    for ((id, prop) <- ruleSet.all.properties)
+      it should (name + "." + id) in {
+        check(prop)
+      }
+  }
+
+  val lineSeparator: String = System.lineSeparator()
 
   val nonEmptyStringGen: Gen[String] = Gen.nonEmptyListOf(Gen.alphaNumChar).map(_.mkString)
 

@@ -10,9 +10,10 @@ lazy val versions = new {
 lazy val scalaTest = "org.scalatest" %% "scalatest" % versions.scalaTest % Test
 
 lazy val cats = List(
-  "org.typelevel" %% "cats-core",
-  "org.typelevel" %% "cats-effect"
-).map(_ % versions.cats)
+  (version: String) => "org.typelevel" %% "cats-core" % version,
+  (version: String) => "org.typelevel" %% "cats-laws" % version % Test,
+  (version: String) => "org.typelevel" %% "cats-effect" % version
+).map(_.apply(versions.cats))
 
 lazy val catsMtl = "org.typelevel" %% "cats-mtl-core" % versions.catsMtl
 
