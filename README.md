@@ -5,4 +5,6 @@
 </p>
 
 ----
+![Build Status](https://github.com/valskalla/odin/workflows/Scala%20CI/badge.svg) ![Codecov](https://img.shields.io/codecov/c/github/valskalla/odin)
+
 WIP
