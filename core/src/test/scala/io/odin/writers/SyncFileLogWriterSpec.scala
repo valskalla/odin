@@ -10,13 +10,13 @@ import io.odin.formatter.Formatter
 import io.odin.{LoggerMessage, OdinSpec}
 import org.scalatest.BeforeAndAfter
 
-class FileLogWriterSpec extends OdinSpec with BeforeAndAfter {
+class SyncFileLogWriterSpec extends OdinSpec with BeforeAndAfter {
 
   private val fileName = UUID.randomUUID().toString
 
   it should "write formatted messages into file" in {
     forAll { loggerMessage: List[LoggerMessage] =>
-      val writer = FileLogWriter[IO](fileName)
+      val writer = SyncFileLogWriter[IO](fileName)
       loggerMessage.traverse(writer.write(_, Formatter.simple)).unsafeRunSync()
       new String(Files.readAllBytes(Paths.get(fileName))) shouldBe loggerMessage
         .map(Formatter.simple.format)

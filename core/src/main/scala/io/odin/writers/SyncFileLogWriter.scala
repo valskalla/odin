@@ -7,7 +7,12 @@ import cats.effect.Sync
 import io.odin.LoggerMessage
 import io.odin.formatter.Formatter
 
-class FileLogWriter[F[_]](writer: BufferedWriter)(implicit F: Sync[F]) extends LogWriter[F] {
+/**
+  * Sync file logger that always flushes to the file after log is written.
+  *
+  * Performance-wise, it's better to use [[AsyncFileLogWriter]] version that buffers the events before flushing to disk
+  */
+class SyncFileLogWriter[F[_]](writer: BufferedWriter)(implicit F: Sync[F]) extends LogWriter[F] {
 
   Runtime.getRuntime.addShutdownHook {
     new Thread {
@@ -19,8 +24,7 @@ class FileLogWriter[F[_]](writer: BufferedWriter)(implicit F: Sync[F]) extends L
   def write(msg: LoggerMessage, formatter: Formatter): F[Unit] = {
     F.guarantee {
       F.delay {
-        writer.write(formatter.format(msg))
-        writer.write(System.lineSeparator())
+        writer.write(formatter.format(msg) + System.lineSeparator())
       }
     }(flush)
   }
@@ -28,9 +32,9 @@ class FileLogWriter[F[_]](writer: BufferedWriter)(implicit F: Sync[F]) extends L
   def flush: F[Unit] = F.handleErrorWith(F.delay(writer.flush()))(_ => F.unit)
 }
 
-object FileLogWriter {
+object SyncFileLogWriter {
 
   def apply[F[_]: Sync](fileName: String): LogWriter[F] =
-    new FileLogWriter[F](Files.newBufferedWriter(Paths.get(fileName)))
+    new SyncFileLogWriter[F](Files.newBufferedWriter(Paths.get(fileName)))
 
 }
