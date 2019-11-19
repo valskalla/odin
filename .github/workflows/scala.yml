@@ -27,4 +27,13 @@ jobs:
         java-version: ${{ matrix.java }}
     - name: Run tests
       shell: bash
-      run: JAVA_TOOL_OPTIONS=-Dfile.encoding=UTF8 sbt test
+      run: |
+        JAVA_TOOL_OPTIONS=-Dfile.encoding=UTF8 sbt coverage test
+        sbt coverageReport coverageAggregate
+    - uses: codecov/codecov-action@v1
+      if: matrix.os != 'windows-latest' #doesn't work properly on Windows
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        file: ./target/scala-2.13/scoverage-report/scoverage.xml
+        flags: unittests
+        yml: ./.codecov.yml
