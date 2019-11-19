@@ -2,6 +2,8 @@ package io.odin
 
 import cats.Eq
 import cats.effect.IO
+import io.odin.formatter.Formatter
+import io.odin.writers.LogWriter
 import org.scalacheck.Arbitrary
 
 import scala.annotation.tailrec
@@ -54,11 +56,27 @@ trait EqInstances {
     val LoggerMessage(lvl1, msg1, context1, exception1, position1, threadName1, timestamp1) = lm1
     val LoggerMessage(lvl2, msg2, context2, exception2, position2, threadName2, timestamp2) = lm2
     lvl1 == lvl2 &&
-      msg1() == msg2() &&
-      context1 == context2 &&
-      exception1 == exception2 &&
-      position1 == position2 &&
-      threadName1 == threadName2 &&
-      timestamp1 == timestamp2
+    msg1() == msg2() &&
+    context1 == context2 &&
+    exception1 == exception2 &&
+    position1 == position2 &&
+    threadName1 == threadName2 &&
+    timestamp1 == timestamp2
   }
+
+  implicit def logWriterEq[F[_]](
+      implicit arbMsg: Arbitrary[LoggerMessage],
+      arbFormatter: Arbitrary[Formatter],
+      eqF: Eq[F[Unit]]
+  ): Eq[LogWriter[F]] = Eq.instance { (writer1, writer2) =>
+    val msg = retrySample[LoggerMessage]
+    val fmt = retrySample[Formatter]
+    eqF.eqv(writer1.write(msg, fmt), writer2.write(msg, fmt))
+  }
+
+  implicit def formatterEq(implicit arbLoggerMsg: Arbitrary[LoggerMessage]): Eq[Formatter] =
+    Eq.instance { (fmt1, fmt2) =>
+      val msg = retrySample[LoggerMessage]
+      fmt1.format(msg) == fmt2.format(msg)
+    }
 }
