@@ -79,7 +79,8 @@ object AsyncFileLogWriter {
       fileName: String,
       timeWindow: FiniteDuration = 1.second
   )(implicit F: ConcurrentEffect[F]): LogWriter[F] = {
-    val writer = new AsyncFileLogWriter[F](Files.newBufferedWriter(Paths.get(fileName), StandardOpenOption.APPEND), timeWindow)
+    val writer =
+      new AsyncFileLogWriter[F](Files.newBufferedWriter(Paths.get(fileName), StandardOpenOption.APPEND), timeWindow)
     F.toIO(writer.runFlush.map(_ => writer)).unsafeRunAsyncAndForget()
     writer
   }
