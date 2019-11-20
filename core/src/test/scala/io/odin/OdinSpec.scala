@@ -36,7 +36,7 @@ trait OdinSpec extends FlatSpec with Matchers with Checkers with ScalaCheckDrive
   val loggerMessageGen: Gen[LoggerMessage] = for {
     level <- levelGen
     msg <- Gen.alphaNumStr
-    context <- Arbitrary.arbitrary[Map[String, String]]
+    context <- Gen.listOfN(20, Gen.alphaNumStr.flatMap(key => Gen.alphaNumStr.map(key -> _)))
     exception <- Gen.option(Arbitrary.arbitrary[Throwable])
     position <- positionGen
     threadName <- nonEmptyStringGen
@@ -45,7 +45,7 @@ trait OdinSpec extends FlatSpec with Matchers with Checkers with ScalaCheckDrive
     LoggerMessage(
       level = level,
       message = () => msg,
-      context = context,
+      context = context.toMap,
       exception = exception,
       position = position,
       threadName = threadName,
