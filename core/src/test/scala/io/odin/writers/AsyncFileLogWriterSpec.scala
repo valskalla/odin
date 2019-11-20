@@ -13,15 +13,14 @@ import scala.concurrent.duration._
 
 class AsyncFileLogWriterSpec extends OdinSpec {
 
+  private val ec = scala.concurrent.ExecutionContext.global
+  implicit private val timer: Timer[IO] = IO.timer(ec)
+  implicit private val cs: ContextShift[IO] = IO.contextShift(ec)
   private val fileResource = Resource.make[IO, Path] {
     IO.delay(Files.createFile(Paths.get(UUID.randomUUID().toString)))
   } { file =>
     IO.delay(Files.delete(file))
   }
-
-  private val ec = scala.concurrent.ExecutionContext.global
-  implicit val timer: Timer[IO] = IO.timer(ec)
-  implicit val cs: ContextShift[IO] = IO.contextShift(ec)
 
   it should "write formatted messages into file" in {
     forAll { loggerMessage: List[LoggerMessage] =>

@@ -10,8 +10,6 @@ import io.odin.formatter.Formatter
 import io.odin.{LoggerMessage, OdinSpec}
 import org.scalatest.BeforeAndAfter
 
-import scala.collection.mutable
-
 class SyncFileLogWriterSpec extends OdinSpec with BeforeAndAfter {
 
   private val fileResource = Resource.make[IO, Path] {
