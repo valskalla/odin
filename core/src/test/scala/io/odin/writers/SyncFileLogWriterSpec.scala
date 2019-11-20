@@ -13,7 +13,7 @@ import org.scalatest.BeforeAndAfter
 class SyncFileLogWriterSpec extends OdinSpec with BeforeAndAfter {
 
   private val fileResource = Resource.make[IO, Path] {
-    IO.delay(Files.createFile(Paths.get(UUID.randomUUID().toString)))
+    IO.delay(Files.createTempFile(UUID.randomUUID().toString, ""))
   } { file =>
     IO.delay(Files.delete(file))
   }

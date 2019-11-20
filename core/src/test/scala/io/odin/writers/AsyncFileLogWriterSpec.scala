@@ -17,7 +17,7 @@ class AsyncFileLogWriterSpec extends OdinSpec {
   implicit private val timer: Timer[IO] = IO.timer(ec)
   implicit private val cs: ContextShift[IO] = IO.contextShift(ec)
   private val fileResource = Resource.make[IO, Path] {
-    IO.delay(Files.createFile(Paths.get(UUID.randomUUID().toString)))
+    IO.delay(Files.createTempFile(UUID.randomUUID().toString, ""))
   } { file =>
     IO.delay(Files.delete(file))
   }
