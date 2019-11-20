@@ -8,18 +8,19 @@ import cats.instances.list._
 import cats.syntax.all._
 import io.odin.formatter.Formatter
 import io.odin.{LoggerMessage, OdinSpec}
+import monix.eval.Task
+import monix.execution.schedulers.TestScheduler
 
 import scala.concurrent.duration._
 
 class AsyncFileLogWriterSpec extends OdinSpec {
 
-  private val ec = scala.concurrent.ExecutionContext.global
-  implicit private val timer: Timer[IO] = IO.timer(ec)
-  implicit private val cs: ContextShift[IO] = IO.contextShift(ec)
-  private val fileResource = Resource.make[IO, Path] {
-    IO.delay(Files.createTempFile(UUID.randomUUID().toString, ""))
+  implicit private val scheduler: TestScheduler = TestScheduler()
+
+  private val fileResource = Resource.make[Task, Path] {
+    Task.delay(Files.createTempFile(UUID.randomUUID().toString, ""))
   } { file =>
-    IO.delay(Files.delete(file))
+    Task.delay(Files.delete(file))
   }
 
   it should "write formatted messages into file" in {
@@ -30,9 +31,9 @@ class AsyncFileLogWriterSpec extends OdinSpec {
           Resource
             .liftF {
               for {
-                writer <- AsyncFileLogWriter[IO](fileName, 5.millis)
+                writer <- AsyncFileLogWriter[Task](fileName, 5.millis)
                 _ <- loggerMessage.traverse(writer.write(_, Formatter.simple))
-                _ <- timer.sleep(10.millis)
+                _ = scheduler.tick(50.millis)
               } yield {
                 new String(Files.readAllBytes(Paths.get(fileName))) shouldBe loggerMessage
                   .map(Formatter.simple.format)
@@ -40,8 +41,8 @@ class AsyncFileLogWriterSpec extends OdinSpec {
               }
             }
         }
-        .use(IO(_))
-        .unsafeRunSync()
+        .use(Task(_))
+        .runSyncUnsafe()
     }
   }
 
@@ -50,19 +51,19 @@ class AsyncFileLogWriterSpec extends OdinSpec {
       fileResource
         .flatMap { path =>
           val fileName = path.toString
-          val writer = new AsyncFileLogWriter[IO](Files.newBufferedWriter(Paths.get(fileName)), 5.millis)
+          val writer = new AsyncFileLogWriter[Task](Files.newBufferedWriter(Paths.get(fileName)), 5.millis)
           Resource
             .liftF {
               for {
                 _ <- writer.write(loggerMessage, Formatter.simple)
-                _ <- timer.sleep(10.millis)
+                _ = scheduler.tick(10.millis)
               } yield {
                 new String(Files.readAllBytes(Paths.get(fileName))) shouldBe empty
               }
             }
         }
-        .use(IO(_))
-        .unsafeRunSync()
+        .use(Task(_))
+        .runSyncUnsafe()
     }
   }
 

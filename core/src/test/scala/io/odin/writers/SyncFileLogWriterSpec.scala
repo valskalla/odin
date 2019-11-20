@@ -8,14 +8,18 @@ import cats.instances.list._
 import cats.syntax.all._
 import io.odin.formatter.Formatter
 import io.odin.{LoggerMessage, OdinSpec}
+import monix.eval.Task
+import monix.execution.schedulers.TestScheduler
 import org.scalatest.BeforeAndAfter
 
 class SyncFileLogWriterSpec extends OdinSpec with BeforeAndAfter {
 
-  private val fileResource = Resource.make[IO, Path] {
-    IO.delay(Files.createTempFile(UUID.randomUUID().toString, ""))
+  implicit private val scheduler: TestScheduler = TestScheduler()
+
+  private val fileResource = Resource.make[Task, Path] {
+    Task.delay(Files.createTempFile(UUID.randomUUID().toString, ""))
   } { file =>
-    IO.delay(Files.delete(file))
+    Task.delay(Files.delete(file))
   }
 
   it should "write formatted messages into file" in {
@@ -23,7 +27,7 @@ class SyncFileLogWriterSpec extends OdinSpec with BeforeAndAfter {
       fileResource
         .flatMap { path =>
           val fileName = path.toString
-          val writer = SyncFileLogWriter[IO](fileName)
+          val writer = SyncFileLogWriter[Task](fileName)
           Resource
             .liftF(loggerMessage.traverse(writer.write(_, Formatter.simple)))
             .map { _ =>
@@ -32,8 +36,8 @@ class SyncFileLogWriterSpec extends OdinSpec with BeforeAndAfter {
                 .mkString(lineSeparator) + (if (loggerMessage.isEmpty) "" else lineSeparator)
             }
         }
-        .use(IO(_))
-        .unsafeRunSync()
+        .use(Task(_))
+        .runSyncUnsafe()
     }
   }
 }

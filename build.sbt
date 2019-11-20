@@ -23,6 +23,8 @@ lazy val monixCatnap = "io.monix" %% "monix-catnap" % versions.monix
 
 lazy val scalaCheck = "org.scalacheck" %% "scalacheck" % versions.scalaCheck % Test
 
+lazy val monix = "io.monix" %% "monix" % versions.monix % Test
+
 lazy val sharedSettings = Seq(
   scalaVersion := "2.13.1",
   version := "0.1.0-SNAPSHOT",
@@ -34,7 +36,7 @@ lazy val sharedSettings = Seq(
 lazy val `odin-core` = (project in file("core"))
   .settings(sharedSettings)
   .settings(
-    libraryDependencies ++= catsMtl :: sourcecode :: monixCatnap :: cats
+    libraryDependencies ++= monix :: catsMtl :: sourcecode :: monixCatnap :: cats
   )
 
 lazy val odin = (project in file("."))
