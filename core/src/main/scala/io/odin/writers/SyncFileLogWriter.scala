@@ -1,7 +1,7 @@
 package io.odin.writers
 
 import java.io.BufferedWriter
-import java.nio.file.{Files, Paths}
+import java.nio.file.{Files, Paths, StandardOpenOption}
 
 import cats.effect.Sync
 import io.odin.LoggerMessage
@@ -35,6 +35,6 @@ class SyncFileLogWriter[F[_]](writer: BufferedWriter)(implicit F: Sync[F]) exten
 object SyncFileLogWriter {
 
   def apply[F[_]: Sync](fileName: String): LogWriter[F] =
-    new SyncFileLogWriter[F](Files.newBufferedWriter(Paths.get(fileName)))
+    new SyncFileLogWriter[F](Files.newBufferedWriter(Paths.get(fileName), StandardOpenOption.APPEND))
 
 }

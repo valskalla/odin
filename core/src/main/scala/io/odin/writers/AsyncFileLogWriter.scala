@@ -3,7 +3,7 @@ package io.odin.writers
 import java.io.BufferedWriter
 
 import scala.concurrent.duration._
-import java.nio.file.{Files, Paths}
+import java.nio.file.{Files, Paths, StandardOpenOption}
 
 import cats.effect.{Concurrent, ConcurrentEffect, ContextShift, Fiber, Timer}
 import cats.syntax.all._
@@ -79,7 +79,7 @@ object AsyncFileLogWriter {
       fileName: String,
       timeWindow: FiniteDuration = 1.second
   )(implicit F: ConcurrentEffect[F]): LogWriter[F] = {
-    val writer = new AsyncFileLogWriter[F](Files.newBufferedWriter(Paths.get(fileName)), timeWindow)
+    val writer = new AsyncFileLogWriter[F](Files.newBufferedWriter(Paths.get(fileName), StandardOpenOption.APPEND), timeWindow)
     F.toIO(writer.runFlush.map(_ => writer)).unsafeRunAsyncAndForget()
     writer
   }
