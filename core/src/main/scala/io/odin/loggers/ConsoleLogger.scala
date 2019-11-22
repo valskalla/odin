@@ -1,7 +1,7 @@
 package io.odin.loggers
 
 import cats.Monad
-import cats.effect.{Clock, Sync}
+import cats.effect.{Clock, ContextShift, Sync}
 import cats.kernel.Comparison
 import cats.syntax.all._
 import io.odin.{Level, Logger, LoggerMessage}
@@ -22,7 +22,7 @@ object ConsoleLogger extends ConsoleLoggerBuilder
 
 trait ConsoleLoggerBuilder {
 
-  def consoleLogger[F[_]: Sync: Clock](formatter: Formatter): Logger[F] =
-    ConsoleLogger(formatter, StdOutLogWriter[F], StdErrLogWriter[F])
+  def consoleLogger[F[_]: Sync: Clock: ContextShift](formatter: Formatter): Logger[F] =
+    ConsoleLogger(formatter, StdOutLogWriter[F](), StdErrLogWriter[F]())
 
 }
