@@ -1,10 +1,7 @@
 package io.odin.writers
 
 import java.io.BufferedWriter
-
-import scala.concurrent.duration._
-import java.nio.file.{Files, Paths, StandardOpenOption}
-import java.util.concurrent.Executors
+import java.nio.file.{Files, Paths}
 
 import cats.effect.{Concurrent, ConcurrentEffect, ContextShift, Fiber, Timer}
 import cats.syntax.all._
@@ -12,7 +9,7 @@ import io.odin.LoggerMessage
 import io.odin.formatter.Formatter
 
 import scala.concurrent.ExecutionContext
-import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration.{FiniteDuration, _}
 
 /**
   * Async file logger that flushes the buffer after each `timeWindow`
@@ -90,7 +87,7 @@ object AsyncFileLogWriter {
       timeWindow: FiniteDuration = 1.second,
       ec: ExecutionContext = unboundedExecutionContext
   )(implicit F: ConcurrentEffect[F]): LogWriter[F] = {
-    F.toIO(apply[F](fileName, timeWindow)).unsafeRunSync()
+    F.toIO(apply[F](fileName, timeWindow, ec)).unsafeRunSync()
   }
 
 }
