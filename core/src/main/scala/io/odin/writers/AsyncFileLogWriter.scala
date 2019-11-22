@@ -4,12 +4,14 @@ import java.io.BufferedWriter
 
 import scala.concurrent.duration._
 import java.nio.file.{Files, Paths, StandardOpenOption}
+import java.util.concurrent.Executors
 
 import cats.effect.{Concurrent, ConcurrentEffect, ContextShift, Fiber, Timer}
 import cats.syntax.all._
 import io.odin.LoggerMessage
 import io.odin.formatter.Formatter
 
+import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.FiniteDuration
 
 /**
@@ -17,7 +19,11 @@ import scala.concurrent.duration.FiniteDuration
   *
   * Consider to use `AsyncFileLogWriter.apply` to start flushing loop properly
   */
-class AsyncFileLogWriter[F[_]](writer: BufferedWriter, timeWindow: FiniteDuration)(
+class AsyncFileLogWriter[F[_]](
+    writer: BufferedWriter,
+    timeWindow: FiniteDuration,
+    ec: ExecutionContext = unboundedExecutionContext
+)(
     implicit F: Concurrent[F],
     timer: Timer[F],
     contextShift: ContextShift[F]
@@ -31,8 +37,10 @@ class AsyncFileLogWriter[F[_]](writer: BufferedWriter, timeWindow: FiniteDuratio
   }
 
   def write(msg: LoggerMessage, formatter: Formatter): F[Unit] = {
-    F.delay {
-      writer.write(formatter.format(msg) + System.lineSeparator())
+    contextShift.evalOn(ec) {
+      F.delay {
+        writer.write(formatter.format(msg) + System.lineSeparator())
+      }
     }
   }
 
@@ -46,7 +54,7 @@ class AsyncFileLogWriter[F[_]](writer: BufferedWriter, timeWindow: FiniteDuratio
 
     def close: F[Unit] = F.delay(writer.close())
 
-    F.onCancel(F.start(recFlush).map { fiber =>
+    F.onCancel(F.start(contextShift.evalOn(ec)(recFlush)).map { fiber =>
       Fiber(fiber.join, close >> fiber.cancel)
     }) {
       close
@@ -62,11 +70,13 @@ object AsyncFileLogWriter {
     * BEWARE that cancellation invalidates the `BufferedWriter` as well, no `write` could be performed after that.
     * @param fileName name of log file to append to
     * @param timeWindow pause between flushing log events into file
+    * @param ec Execution Context that will be used to allocate threads during write/flush
     * @return [[LogWriter]] in the context of `F[_]` that will run internal async flush loop once it's started.
     */
   def apply[F[_]: ContextShift: Timer](
       fileName: String,
-      timeWindow: FiniteDuration = 1.second
+      timeWindow: FiniteDuration = 1.second,
+      ec: ExecutionContext = unboundedExecutionContext
   )(implicit F: Concurrent[F]): F[LogWriter[F]] =
     F.delay(new AsyncFileLogWriter[F](Files.newBufferedWriter(Paths.get(fileName)), timeWindow)).flatMap { writer =>
       writer.runFlush.map(_ => writer)
@@ -77,7 +87,8 @@ object AsyncFileLogWriter {
     */
   def unsafe[F[_]: ContextShift: Timer](
       fileName: String,
-      timeWindow: FiniteDuration = 1.second
+      timeWindow: FiniteDuration = 1.second,
+      ec: ExecutionContext = unboundedExecutionContext
   )(implicit F: ConcurrentEffect[F]): LogWriter[F] = {
     F.toIO(apply[F](fileName, timeWindow)).unsafeRunSync()
   }
