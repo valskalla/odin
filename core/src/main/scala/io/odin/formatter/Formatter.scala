@@ -21,7 +21,8 @@ object Formatter {
         val sw = new StringWriter()
         val pw = new PrintWriter(sw)
         t.printStackTrace(pw)
-        p"${msg.timestamp.t.F} [${msg.threadName}] ${msg.level.show} ${msg.position.enclosureName}:${msg.position.line} - ${msg.message()}${System.lineSeparator()}${sw.toString}"
+        p"${msg.timestamp.t.F} [${msg.threadName}] ${msg.level.show} ${msg.position.enclosureName}:${msg.position.line} - ${msg
+          .message()}${System.lineSeparator()}${sw.toString}"
       case None =>
         p"${msg.timestamp.t.F} [${msg.threadName}] ${msg.level.show} ${msg.position.enclosureName}:${msg.position.line} - ${msg.message()}"
     }
