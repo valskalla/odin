@@ -1,8 +1,8 @@
 package io.odin.loggers
 
+import cats.Id
 import cats.data.Writer
 import cats.effect.Clock
-import cats.instances.list._
 import io.odin.{Level, Logger, LoggerMessage, OdinSpec}
 
 import scala.concurrent.duration.TimeUnit
@@ -13,7 +13,7 @@ class DefaultLoggerSpec extends OdinSpec {
 
   it should "correctly construct LoggerMessage" in {
     forAll { (msg: String, ctx: Map[String, String], throwable: Throwable, timestamp: Long) =>
-      implicit val clk: Clock[F] = clock(timestamp)
+      implicit val clk: Clock[Id] = clock(timestamp)
       val log = logger
       check(log.trace(msg))(Level.Trace, msg, timestamp)
       check(log.trace(msg, throwable))(Level.Trace, msg, timestamp, throwable = Some(throwable))
@@ -42,14 +42,12 @@ class DefaultLoggerSpec extends OdinSpec {
     }
   }
 
-  private def clock(timestamp: Long): Clock[F] = new Clock[F] {
-    def realTime(unit: TimeUnit): F[Long] = Writer.value(timestamp)
-    def monotonic(unit: TimeUnit): F[Long] = Writer.value(timestamp)
+  private def clock(timestamp: Long): Clock[Id] = new Clock[Id] {
+    def realTime(unit: TimeUnit): Id[Long] = timestamp
+    def monotonic(unit: TimeUnit): Id[Long] = timestamp
   }
 
-  private def logger(implicit clock: Clock[F]): Logger[F] = new DefaultLogger[F] {
-    def log(msg: LoggerMessage): F[Unit] = Writer.tell(List(msg))
-  }
+  private def logger(implicit clock: Clock[Id]): Logger[F] = new WriterTLogger[Id]
 
   private def check(
       fn: => F[Unit]
