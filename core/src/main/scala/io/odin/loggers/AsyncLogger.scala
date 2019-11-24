@@ -14,7 +14,7 @@ import scala.concurrent.duration._
   *
   * Use `AsyncLogger.withAsync` to instantiate it safely
   */
-case class AsyncLogger[F[_]](queue: ConcurrentQueue[F, LoggerMessage])(inner: Logger[F])(
+case class AsyncLogger[F[_]](queue: ConcurrentQueue[F, LoggerMessage])(val inner: Logger[F])(
     implicit F: Concurrent[F],
     timer: Timer[F],
     contextShift: ContextShift[F]

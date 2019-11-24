@@ -3,6 +3,7 @@ package io.odin.loggers
 import cats.data.WriterT
 import cats.effect.{IO, Timer}
 import cats.instances.list._
+import cats.syntax.all._
 import io.odin.formatter.Formatter
 import io.odin.writers.LogWriter
 import io.odin.{Level, LoggerMessage, OdinSpec}
@@ -27,7 +28,7 @@ class ConsoleLoggerSpec extends OdinSpec {
 
   it should "route all messages with level <= INFO to stdout" in {
     forAll { loggerMessage: LoggerMessage =>
-      whenever(loggerMessage.level.value <= Level.Info.value) {
+      whenever(loggerMessage.level <= Level.Info) {
         val List((o, log)) = consoleLogger.log(loggerMessage).written.unsafeRunSync()
         o shouldBe out
         log shouldBe loggerMessage
@@ -37,7 +38,7 @@ class ConsoleLoggerSpec extends OdinSpec {
 
   it should "route all messages with level >= WARN to stderr" in {
     forAll { loggerMessage: LoggerMessage =>
-      whenever(loggerMessage.level.value >= Level.Warn.value) {
+      whenever(loggerMessage.level >= Level.Warn) {
         val List((o, log)) = consoleLogger.log(loggerMessage).written.unsafeRunSync()
         o shouldBe err
         log shouldBe loggerMessage
