@@ -29,23 +29,17 @@ class AsyncFileLogWriterSpec extends OdinSpec {
   it should "write formatted messages into file" in {
     forAll { loggerMessage: List[LoggerMessage] =>
       retryingOnAllErrors[Assertion](policy = retryPolicy, onError = (_: Throwable, _) => IO.unit) {
-        fileResource
-          .flatMap { path =>
-            val fileName = path.toString
-            Resource
-              .liftF {
-                for {
-                  writer <- AsyncFileLogWriter[IO](fileName, 5.millis)
-                  _ <- loggerMessage.traverse(writer.write(_, Formatter.default))
-                  _ <- timer.sleep(100.millis)
-                } yield {
-                  new String(Files.readAllBytes(Paths.get(fileName))) shouldBe loggerMessage
-                    .map(Formatter.default.format)
-                    .mkString(lineSeparator) + (if (loggerMessage.isEmpty) "" else lineSeparator)
-                }
-              }
-          }
-          .use(IO(_))
+        (for {
+          path <- fileResource
+          fileName = path.toString
+          writer <- AsyncFileLogWriter[IO](fileName, 5.millis)
+          _ <- Resource.liftF(loggerMessage.traverse(writer.write(_, Formatter.default)))
+          _ <- Resource.liftF(timer.sleep(100.millis))
+        } yield {
+          new String(Files.readAllBytes(Paths.get(fileName))) shouldBe loggerMessage
+            .map(Formatter.default.format)
+            .mkString(lineSeparator) + (if (loggerMessage.isEmpty) "" else lineSeparator)
+        }).use(IO(_))
       }.unsafeRunSync()
     }
   }

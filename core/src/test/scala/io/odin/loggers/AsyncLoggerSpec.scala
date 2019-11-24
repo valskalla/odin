@@ -1,5 +1,6 @@
 package io.odin.loggers
 
+import cats.effect.Resource
 import cats.effect.concurrent.Ref
 import cats.instances.list._
 import cats.syntax.all._
@@ -25,14 +26,14 @@ class AsyncLoggerSpec extends OdinSpec {
   it should "push logs down the chain" in {
     forAll { msgs: List[LoggerMessage] =>
       (for {
-        ref <- Ref.of[Task, List[LoggerMessage]](List.empty)
+        ref <- Resource.liftF(Ref.of[Task, List[LoggerMessage]](List.empty))
         logger <- RefLogger(ref).withAsync()
-        _ <- msgs.traverse(logger.log)
+        _ <- Resource.liftF(msgs.traverse(logger.log))
         _ = scheduler.tick(10.millis)
-        reported <- ref.get
+        reported <- Resource.liftF(ref.get)
       } yield {
         reported shouldBe msgs
-      }).runSyncUnsafe()
+      }).use(Task(_)).runSyncUnsafe()
     }
   }
 

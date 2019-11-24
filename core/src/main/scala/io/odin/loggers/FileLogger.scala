@@ -15,4 +15,3 @@ import scala.concurrent.duration._
 case class FileLogger[F[_]: Clock: Monad](logWriter: LogWriter[F], formatter: Formatter) extends DefaultLogger[F] {
   def log(msg: LoggerMessage): F[Unit] = logWriter.write(msg, formatter)
 }
-
