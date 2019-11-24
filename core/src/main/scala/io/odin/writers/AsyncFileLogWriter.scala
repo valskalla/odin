@@ -3,7 +3,7 @@ package io.odin.writers
 import java.io.BufferedWriter
 import java.nio.file.{Files, Paths}
 
-import cats.effect.{Concurrent, ConcurrentEffect, ContextShift, Fiber, Timer}
+import cats.effect.{Concurrent, ConcurrentEffect, ContextShift, Fiber, Resource, Timer}
 import cats.syntax.all._
 import io.odin.LoggerMessage
 import io.odin.formatter.Formatter
@@ -66,18 +66,24 @@ object AsyncFileLogWriter {
     * BEWARE that cancellation invalidates the `BufferedWriter` as well, no `write` could be performed after that.
     * @param fileName name of log file to append to
     * @param timeWindow pause between flushing log events into file
-    * @return [[LogWriter]] in the context of `F[_]` that will run internal async flush loop once it's started.
+    * @return `Resource` of [[LogWriter]] that will run internal async flush loop once it's in use.
     */
   def apply[F[_]: ContextShift: Timer](
       fileName: String,
       timeWindow: FiniteDuration = 1.second
-  )(implicit F: Concurrent[F]): F[LogWriter[F]] =
-    for {
-      writer <- F.delay(Files.newBufferedWriter(Paths.get(fileName)))
-      lw = new AsyncFileLogWriter[F](writer, timeWindow)
-      _ <- lw.runFlush
-    } yield {
-      lw
+  )(implicit F: Concurrent[F]): Resource[F, LogWriter[F]] =
+    Resource.make {
+      for {
+        writer <- F.delay(Files.newBufferedWriter(Paths.get(fileName)))
+        lw = new AsyncFileLogWriter[F](writer, timeWindow)
+        fiber <- lw.runFlush
+      } yield {
+        (fiber, lw)
+      }
+    } {
+      case (fiber, _) => fiber.cancel
+    } map {
+      case (_, writer) => writer
     }
 
   /**
@@ -87,7 +93,7 @@ object AsyncFileLogWriter {
       fileName: String,
       timeWindow: FiniteDuration = 1.second
   )(implicit F: ConcurrentEffect[F]): LogWriter[F] = {
-    F.toIO(apply[F](fileName, timeWindow)).unsafeRunSync()
+    F.toIO(apply[F](fileName, timeWindow).allocated).unsafeRunSync()._1
   }
 
 }

@@ -1,9 +1,10 @@
 package io
 
-import cats.effect.{Clock, Concurrent, ConcurrentEffect, ContextShift, Sync, Timer}
+import cats.effect.{Clock, Concurrent, ConcurrentEffect, ContextShift, Resource, Sync, Timer}
 import io.odin.formatter.Formatter
 import io.odin.loggers.{ConsoleLogger, FileLogger}
 import io.odin.writers.{AsyncFileLogWriter, StdErrLogWriter, StdOutLogWriter}
+
 import scala.concurrent.duration._
 import cats.syntax.all._
 
@@ -31,9 +32,9 @@ package object odin {
       fileName: String,
       formatter: Formatter = Formatter.default,
       timeWindow: FiniteDuration = 1.second
-  ): F[Logger[F]] = {
+  ): Resource[F, Logger[F]] = {
     AsyncFileLogWriter[F](fileName, timeWindow).map { writer =>
-      new FileLogger(writer, formatter)
+      FileLogger(writer, formatter)
     }
   }
 

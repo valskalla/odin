@@ -17,4 +17,3 @@ case class ConsoleLogger[F[_]: Clock: Monad](formatter: Formatter, out: LogWrite
       err.write(msg, formatter)
     }
 }
-

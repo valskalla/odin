@@ -1,7 +1,7 @@
 package io.odin
 
 import cats.Monad
-import cats.effect.{Clock, Concurrent, ConcurrentEffect, ContextShift, Timer}
+import cats.effect.{Clock, Concurrent, ConcurrentEffect, ContextShift, Resource, Timer}
 import io.odin.loggers.{AsyncLogger, ConstContextLogger, ContextualLogger, RouterLogger, WithContext}
 
 package object syntax {
@@ -19,7 +19,7 @@ package object syntax {
 
     def withAsync(
         maxBufferSize: Option[Int] = None
-    )(implicit timer: Timer[F], F: Concurrent[F], contextShift: ContextShift[F]): F[Logger[F]] =
+    )(implicit timer: Timer[F], F: Concurrent[F], contextShift: ContextShift[F]): Resource[F, Logger[F]] =
       AsyncLogger.withAsync(maxBufferSize, logger)
 
     def withAsyncUnsafe(

@@ -3,12 +3,10 @@ package io.odin
 import java.nio.file.{Files, Paths}
 import java.util.UUID
 import java.util.concurrent.TimeUnit
-import io.odin._
-import io.odin.syntax._
 
 import cats.effect.{ContextShift, IO, Timer}
-import io.odin.formatter.Formatter
-import io.odin.loggers.{AsyncLogger, DefaultLogger, FileLogger, RouterLogger}
+import io.odin.loggers.DefaultLogger
+import io.odin.syntax._
 import org.openjdk.jmh.annotations._
 
 // $COVERAGE-OFF$
@@ -49,25 +47,27 @@ class DefaultLoggerBenchmarks extends OdinBenchmarks {
 class FileLoggerBenchmarks extends OdinBenchmarks {
 
   val fileName: String = Files.createTempFile(UUID.randomUUID().toString, "").toAbsolutePath.toString
-  val fileLogger: Logger[IO] = fileLoggerUnsafe[IO](fileName, Formatter.default)
+  val (logger: Logger[IO], cancelToken: IO[Unit]) =
+    fileLogger[IO](fileName).allocated.unsafeRunSync()
 
   @Benchmark
   @OperationsPerInvocation(1000)
   def msg: Unit =
-    for (_ <- 1 to 1000) fileLogger.info(message).unsafeRunSync()
+    for (_ <- 1 to 1000) logger.info(message).unsafeRunSync()
 
   @Benchmark
   @OperationsPerInvocation(1000)
   def msgAndCtx: Unit =
-    for (_ <- 1 to 1000) fileLogger.info(message, context).unsafeRunSync()
+    for (_ <- 1 to 1000) logger.info(message, context).unsafeRunSync()
 
   @Benchmark
   @OperationsPerInvocation(1000)
   def msgCtxThrowable: Unit =
-    for (_ <- 1 to 1000) fileLogger.info(message, context, throwable).unsafeRunSync()
+    for (_ <- 1 to 1000) logger.info(message, context, throwable).unsafeRunSync()
 
   @TearDown
   def tearDown(): Unit = {
+    cancelToken.unsafeRunSync()
     Files.delete(Paths.get(fileName))
   }
 
@@ -77,7 +77,12 @@ class FileLoggerBenchmarks extends OdinBenchmarks {
 class AsyncLoggerBenchmark extends OdinBenchmarks {
 
   val fileName: String = Files.createTempFile(UUID.randomUUID().toString, "").toAbsolutePath.toString
-  val asyncLogger: Logger[IO] = fileLoggerUnsafe[IO](fileName, Formatter.default).withAsyncUnsafe()
+  val (asyncLogger: Logger[IO], cancelToken: IO[Unit]) = (for {
+    fl <- fileLogger[IO](fileName)
+    async <- fl.withAsync()
+  } yield {
+    async
+  }).allocated.unsafeRunSync()
 
   @Benchmark
   @OperationsPerInvocation(1000)
@@ -95,6 +100,7 @@ class AsyncLoggerBenchmark extends OdinBenchmarks {
 
   @TearDown
   def tearDown(): Unit = {
+    cancelToken.unsafeRunSync()
     Files.delete(Paths.get(fileName))
   }
 
@@ -105,8 +111,8 @@ class RouterLoggerBenchmarks extends OdinBenchmarks {
 
   val fileName: String = Files.createTempFile(UUID.randomUUID().toString, "").toAbsolutePath.toString
 
-  val routerLogger: Logger[IO] =
-    fileLoggerUnsafe[IO](fileName, Formatter.default).withMinimalLevel(io.odin.Level.Info)
+  val (routerLogger: Logger[IO], cancelToken: IO[Unit]) =
+    fileLogger[IO](fileName).map(_.withMinimalLevel(io.odin.Level.Info)).allocated.unsafeRunSync()
 
   @Benchmark
   @OperationsPerInvocation(1000)
@@ -119,6 +125,7 @@ class RouterLoggerBenchmarks extends OdinBenchmarks {
 
   @TearDown
   def tearDown(): Unit = {
+    cancelToken.unsafeRunSync()
     Files.delete(Paths.get(fileName))
   }
 }
