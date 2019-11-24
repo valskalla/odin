@@ -18,7 +18,7 @@ class StdErrOutWriterSpec extends OdinSpec {
       val baos = new ByteArrayOutputStream()
       Console.withOut(new PrintStream(baos)) {
 
-        val writer = StdOutLogWriter[IO]()
+        val writer = StdOutLogWriter[IO]
         msgs.traverse(writer.write(_, fmt)).unsafeRunSync()
         baos.toString shouldBe msgs
           .map(fmt.format)
@@ -34,13 +34,13 @@ class StdErrOutWriterSpec extends OdinSpec {
       val baos = new ByteArrayOutputStream()
       Console.withErr(new PrintStream(baos)) {
 
-        val writer = StdErrLogWriter[IO]()
+        val writer = StdErrLogWriter[IO]
         msgs.traverse(writer.write(_, fmt)).unsafeRunSync()
         baos.toString shouldBe msgs
           .map(fmt.format)
           .mkString(System.lineSeparator()) + (if (msgs.nonEmpty)
-          System.lineSeparator()
-        else "")
+                                                 System.lineSeparator()
+                                               else "")
       }
     }
   }

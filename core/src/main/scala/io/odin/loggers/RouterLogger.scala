@@ -2,6 +2,7 @@ package io.odin.loggers
 
 import cats.Monad
 import cats.effect.Clock
+import cats.syntax.all._
 import io.odin.{Level, Logger, LoggerMessage}
 
 case class RouterLogger[F[_]: Clock: Monad](router: PartialFunction[LoggerMessage, Logger[F]])
@@ -69,7 +70,7 @@ trait RouterLoggerBuilder {
     */
   def withMinimalLevel[F[_]: Clock: Monad](level: Level)(inner: Logger[F]): Logger[F] =
     RouterLogger {
-      case msg if msg.level.value >= level.value => inner
+      case msg if msg.level >= level => inner
     }
 
 }

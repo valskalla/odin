@@ -47,7 +47,12 @@ lazy val `odin-core` = (project in file("core"))
     libraryDependencies ++= monix :: catsMtl :: sourcecode :: monixCatnap :: perfolation :: catsRetry ::: cats
   )
 
+lazy val benchmarks = (project in file("benchmarks"))
+  .settings(sharedSettings)
+  .enablePlugins(JmhPlugin)
+  .dependsOn(`odin-core`)
+
 lazy val odin = (project in file("."))
   .settings(sharedSettings)
   .dependsOn(`odin-core` % "compile->compile;test->test")
-  .aggregate(`odin-core`)
+  .aggregate(`odin-core`, benchmarks)
