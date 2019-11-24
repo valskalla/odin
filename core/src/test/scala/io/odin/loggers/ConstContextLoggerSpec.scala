@@ -4,6 +4,7 @@ import cats.data.WriterT
 import cats.effect.{Clock, IO, Timer}
 import cats.instances.list._
 import io.odin.{LoggerMessage, OdinSpec}
+import io.odin.syntax._
 
 class ConstContextLoggerSpec extends OdinSpec {
 
@@ -12,14 +13,10 @@ class ConstContextLoggerSpec extends OdinSpec {
   implicit val timer: Timer[IO] = IO.timer(scala.concurrent.ExecutionContext.global)
   implicit val clock: Clock[IO] = timer.clock
 
-  def logger: DefaultLogger[F] = new DefaultLogger[F] {
-    def log(msg: LoggerMessage): F[Unit] = WriterT.tell(List(msg))
-  }
-
   it should "add constant context to the record" in {
     forAll { (loggerMessage: LoggerMessage, ctx: Map[String, String]) =>
-      val log = ConstContextLogger.withConstContext[F](ctx)(logger)
-      val List(written) = log.log(loggerMessage).written.unsafeRunSync()
+      val logger = new WriterTLogger[IO].withConstContext(ctx)
+      val List(written) = logger.log(loggerMessage).written.unsafeRunSync()
       written.context shouldBe loggerMessage.context ++ ctx
     }
   }

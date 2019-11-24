@@ -24,7 +24,7 @@ class ConsoleLoggerSpec extends OdinSpec {
     def write(msg: LoggerMessage, formatter: Formatter): F[Unit] = WriterT.tell(List((err, msg)))
   }
 
-  private val consoleLogger = ConsoleLogger[F](Formatter.simple, stdOutWriter, stdErrWriter)
+  private val consoleLogger = ConsoleLogger[F](Formatter.default, stdOutWriter, stdErrWriter)
 
   it should "route all messages with level <= INFO to stdout" in {
     forAll { loggerMessage: LoggerMessage =>

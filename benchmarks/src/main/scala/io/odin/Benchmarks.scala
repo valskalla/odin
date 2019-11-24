@@ -3,6 +3,8 @@ package io.odin
 import java.nio.file.{Files, Paths}
 import java.util.UUID
 import java.util.concurrent.TimeUnit
+import io.odin._
+import io.odin.syntax._
 
 import cats.effect.{ContextShift, IO, Timer}
 import io.odin.formatter.Formatter
@@ -47,7 +49,7 @@ class DefaultLoggerBenchmarks extends OdinBenchmarks {
 class FileLoggerBenchmarks extends OdinBenchmarks {
 
   val fileName: String = Files.createTempFile(UUID.randomUUID().toString, "").toAbsolutePath.toString
-  val fileLogger: Logger[IO] = FileLogger.unsafe[IO](fileName, Formatter.default)
+  val fileLogger: Logger[IO] = fileLoggerUnsafe[IO](fileName, Formatter.default)
 
   @Benchmark
   @OperationsPerInvocation(1000)
@@ -75,9 +77,7 @@ class FileLoggerBenchmarks extends OdinBenchmarks {
 class AsyncLoggerBenchmark extends OdinBenchmarks {
 
   val fileName: String = Files.createTempFile(UUID.randomUUID().toString, "").toAbsolutePath.toString
-  val asyncLogger: Logger[IO] = AsyncLogger.withAsyncUnsafe[IO](None).apply {
-    FileLogger.unsafe[IO](fileName, Formatter.default)
-  }
+  val asyncLogger: Logger[IO] = fileLoggerUnsafe[IO](fileName, Formatter.default).withAsyncUnsafe()
 
   @Benchmark
   @OperationsPerInvocation(1000)
@@ -105,11 +105,8 @@ class RouterLoggerBenchmarks extends OdinBenchmarks {
 
   val fileName: String = Files.createTempFile(UUID.randomUUID().toString, "").toAbsolutePath.toString
 
-  val routerLogger: Logger[IO] = {
-    RouterLogger.withMinimalLevel[IO](io.odin.Level.Info) {
-      FileLogger.unsafe[IO](fileName, Formatter.default)
-    }
-  }
+  val routerLogger: Logger[IO] =
+    fileLoggerUnsafe[IO](fileName, Formatter.default).withMinimalLevel(io.odin.Level.Info)
 
   @Benchmark
   @OperationsPerInvocation(1000)

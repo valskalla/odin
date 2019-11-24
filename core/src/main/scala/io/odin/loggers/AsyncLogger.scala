@@ -35,9 +35,7 @@ case class AsyncLogger[F[_]](queue: ConcurrentQueue[F, LoggerMessage])(val inner
   }
 }
 
-object AsyncLogger extends AsyncLoggerBuilder
-
-trait AsyncLoggerBuilder {
+object AsyncLogger {
 
   /**
     * Create async logger and start internal loop of sending events down the chain from the buffer once
@@ -47,7 +45,7 @@ trait AsyncLoggerBuilder {
     *                      any new events will be dropped until there is a space in the buffer.
     * @param inner logger that will receive messages from the buffer
     */
-  def withAsync[F[_]: Timer: ContextShift](maxBufferSize: Option[Int] = None)(inner: Logger[F])(
+  def withAsync[F[_]: Timer: ContextShift](maxBufferSize: Option[Int] = None, inner: Logger[F])(
       implicit F: Concurrent[F]
   ): F[Logger[F]] = {
     val queueCapacity = maxBufferSize match {
@@ -70,10 +68,8 @@ trait AsyncLoggerBuilder {
     * @param maxBufferSize If `maxBufferSize` is set to some value and buffer size grows to that value,
     *                      any new events will be dropped until there is a space in the buffer.
     */
-  def withAsyncUnsafe[F[_]: Timer: ContextShift](maxBufferSize: Option[Int])(
+  def withAsyncUnsafe[F[_]: Timer: ContextShift](maxBufferSize: Option[Int], inner: Logger[F])(
       implicit F: ConcurrentEffect[F]
-  ): Logger[F] => Logger[F] = inner => {
-    F.toIO(withAsync(maxBufferSize)(inner)).unsafeRunSync()
-  }
+  ): Logger[F] = F.toIO(withAsync(maxBufferSize, inner)).unsafeRunSync()
 
 }
