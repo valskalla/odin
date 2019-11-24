@@ -17,10 +17,8 @@ case class ContextualLogger[F[_]: Clock: Monad](inner: Logger[F])(implicit withC
     }
 }
 
-object ContextualLogger extends ContextualLoggerBuilder
-
-trait ContextualLoggerBuilder {
-  def withContextualLogger[F[_]: Clock: Monad: WithContext]: Logger[F] => Logger[F] = ContextualLogger.apply
+object ContextualLogger {
+  def withContext[F[_]: Clock: Monad: WithContext](inner: Logger[F]): Logger[F] = ContextualLogger(inner)
 }
 
 /**

@@ -54,7 +54,7 @@ trait OdinSpec extends FlatSpec with Matchers with Checkers with ScalaCheckDrive
   }
   implicit val loggerMessageArbitrary: Arbitrary[LoggerMessage] = Arbitrary(loggerMessageGen)
 
-  val formatterGen: Gen[Formatter] = Gen.const(Formatter.simple)
+  val formatterGen: Gen[Formatter] = Gen.const(Formatter.default)
   implicit val formatterArbitrary: Arbitrary[Formatter] = Arbitrary(formatterGen)
 
 }

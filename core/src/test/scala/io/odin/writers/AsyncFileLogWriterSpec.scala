@@ -36,11 +36,11 @@ class AsyncFileLogWriterSpec extends OdinSpec {
               .liftF {
                 for {
                   writer <- AsyncFileLogWriter[IO](fileName, 5.millis)
-                  _ <- loggerMessage.traverse(writer.write(_, Formatter.simple))
+                  _ <- loggerMessage.traverse(writer.write(_, Formatter.default))
                   _ <- timer.sleep(100.millis)
                 } yield {
                   new String(Files.readAllBytes(Paths.get(fileName))) shouldBe loggerMessage
-                    .map(Formatter.simple.format)
+                    .map(Formatter.default.format)
                     .mkString(lineSeparator) + (if (loggerMessage.isEmpty) "" else lineSeparator)
                 }
               }
@@ -60,7 +60,7 @@ class AsyncFileLogWriterSpec extends OdinSpec {
             Resource
               .liftF {
                 for {
-                  _ <- writer.write(loggerMessage, Formatter.simple)
+                  _ <- writer.write(loggerMessage, Formatter.default)
                   _ <- timer.sleep(200.millis)
                 } yield {
                   new String(Files.readAllBytes(Paths.get(fileName))) shouldBe empty

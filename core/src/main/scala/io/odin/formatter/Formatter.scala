@@ -14,7 +14,6 @@ trait Formatter {
 
 object Formatter {
 
-  val simple: Formatter = (msg: LoggerMessage) => p"${msg.toString}. Message: ${msg.message()}"
   val default: Formatter = (msg: LoggerMessage) => {
     msg.exception match {
       case Some(t) =>

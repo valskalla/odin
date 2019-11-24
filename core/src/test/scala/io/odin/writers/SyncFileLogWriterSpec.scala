@@ -29,10 +29,10 @@ class SyncFileLogWriterSpec extends OdinSpec with BeforeAndAfter {
           val fileName = path.toString
           val writer = SyncFileLogWriter[Task](fileName)
           Resource
-            .liftF(loggerMessage.traverse(writer.write(_, Formatter.simple)))
+            .liftF(loggerMessage.traverse(writer.write(_, Formatter.default)))
             .map { _ =>
               new String(Files.readAllBytes(Paths.get(fileName))) shouldBe loggerMessage
-                .map(Formatter.simple.format)
+                .map(Formatter.default.format)
                 .mkString(lineSeparator) + (if (loggerMessage.isEmpty) "" else lineSeparator)
             }
         }

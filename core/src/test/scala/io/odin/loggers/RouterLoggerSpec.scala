@@ -5,6 +5,7 @@ import cats.effect.{IO, Timer}
 import cats.instances.list._
 import cats.syntax.all._
 import io.odin.{Level, Logger, LoggerMessage, OdinSpec}
+import io.odin.syntax._
 
 class RouterLoggerSpec extends OdinSpec {
 
@@ -66,12 +67,10 @@ class RouterLoggerSpec extends OdinSpec {
 
     type FF[A] = WriterT[IO, List[LoggerMessage], A]
 
-    val logger = new DefaultLogger[FF] {
-      def log(msg: LoggerMessage): FF[Unit] = WriterT.tell(List(msg))
-    }
+    val logger = new WriterTLogger[IO]
 
     forAll { (level: Level, msg: LoggerMessage) =>
-      val log = RouterLogger.withMinimalLevel[FF](level)(logger)
+      val log = logger.withMinimalLevel(level)
       val written = log.log(msg).written.unsafeRunSync()
       if (msg.level >= level) {
         written shouldBe List(msg)

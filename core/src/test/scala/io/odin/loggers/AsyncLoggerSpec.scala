@@ -7,6 +7,7 @@ import io.odin.{Logger, LoggerMessage, OdinSpec}
 import monix.catnap.ConcurrentQueue
 import monix.eval.Task
 import monix.execution.schedulers.TestScheduler
+import io.odin.syntax._
 
 import scala.concurrent.duration._
 
@@ -25,7 +26,7 @@ class AsyncLoggerSpec extends OdinSpec {
     forAll { msgs: List[LoggerMessage] =>
       (for {
         ref <- Ref.of[Task, List[LoggerMessage]](List.empty)
-        logger <- AsyncLogger.withAsync[Task]()(RefLogger(ref))
+        logger <- RefLogger(ref).withAsync()
         _ <- msgs.traverse(logger.log)
         _ = scheduler.tick(10.millis)
         reported <- ref.get

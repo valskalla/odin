@@ -8,11 +8,9 @@ case class ConstContextLogger[F[_]: Clock: Monad](ctx: Map[String, String])(inne
   def log(msg: LoggerMessage): F[Unit] = inner.log(msg.copy(context = msg.context ++ ctx))
 }
 
-object ConstContextLogger extends ConstContextLoggerBuilder
+object ConstContextLogger {
 
-trait ConstContextLoggerBuilder {
-
-  def withConstContext[F[_]: Clock: Monad](ctx: Map[String, String])(inner: Logger[F]): Logger[F] =
+  def withConstContext[F[_]: Clock: Monad](ctx: Map[String, String], inner: Logger[F]): Logger[F] =
     ConstContextLogger(ctx)(inner)
 
 }

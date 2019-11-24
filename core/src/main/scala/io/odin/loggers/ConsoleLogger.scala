@@ -18,11 +18,3 @@ case class ConsoleLogger[F[_]: Clock: Monad](formatter: Formatter, out: LogWrite
     }
 }
 
-object ConsoleLogger extends ConsoleLoggerBuilder
-
-trait ConsoleLoggerBuilder {
-
-  def consoleLogger[F[_]: Sync: Clock: ContextShift](formatter: Formatter): Logger[F] =
-    ConsoleLogger(formatter, StdOutLogWriter[F], StdErrLogWriter[F])
-
-}

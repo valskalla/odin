@@ -14,9 +14,7 @@ case class RouterLogger[F[_]: Clock: Monad](router: PartialFunction[LoggerMessag
   def log(msg: LoggerMessage): F[Unit] = withFallback(msg).log(msg)
 }
 
-object RouterLogger extends RouterLoggerBuilder
-
-trait RouterLoggerBuilder {
+object RouterLogger {
 
   /**
     * Route logs to specific logger based on the fully qualified package name.
@@ -68,7 +66,7 @@ trait RouterLoggerBuilder {
   /**
     * Route logs only if the level is greater or equal to the defined level. Otherwise logs are nooped.
     */
-  def withMinimalLevel[F[_]: Clock: Monad](level: Level)(inner: Logger[F]): Logger[F] =
+  def withMinimalLevel[F[_]: Clock: Monad](level: Level, inner: Logger[F]): Logger[F] =
     RouterLogger {
       case msg if msg.level >= level => inner
     }
