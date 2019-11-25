@@ -7,6 +7,9 @@ import java.util.concurrent.TimeUnit
 import cats.effect.{ContextShift, IO, Timer}
 import io.odin.loggers.DefaultLogger
 import io.odin.syntax._
+import io.odin.formatter.Formatter
+import io.odin.json.{Formatter => JsonFormatter}
+import io.odin.meta.Position
 import org.openjdk.jmh.annotations._
 
 // $COVERAGE-OFF$
@@ -19,6 +22,20 @@ abstract class OdinBenchmarks {
   val message: String = "msg"
   val context: Map[String, String] = Map("hello" -> "world")
   val throwable = new Error()
+  val loggerMessage: LoggerMessage = LoggerMessage(
+    io.odin.Level.Debug,
+    () => message,
+    context,
+    Some(throwable),
+    Position(
+      "foobar",
+      "foo/bar/foobar.scala",
+      "io.odin.foobar",
+      100
+    ),
+    "just-a-test-thread",
+    1574716305L
+  )
 
   implicit val timer: Timer[IO] = IO.timer(scala.concurrent.ExecutionContext.global)
   implicit val contextShift: ContextShift[IO] = IO.contextShift(scala.concurrent.ExecutionContext.global)
@@ -122,5 +139,16 @@ class RouterLoggerBenchmarks extends OdinBenchmarks {
     cancelToken.unsafeRunSync()
     Files.delete(Paths.get(fileName))
   }
+}
+
+@State(Scope.Benchmark)
+class FormatterBenchmarks extends OdinBenchmarks {
+  @Benchmark
+  @OperationsPerInvocation(1000)
+  def defaultFormatter(): Unit = for (_ <- 1 to 1000) Formatter.default.format(loggerMessage)
+
+  @Benchmark
+  @OperationsPerInvocation(1000)
+  def jsonFormatter(): Unit = for (_ <- 1 to 1000) JsonFormatter.json.format(loggerMessage)
 }
 // $COVERAGE-ON$
