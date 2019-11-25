@@ -13,7 +13,6 @@ import io.odin.syntax._
 import scala.concurrent.duration._
 
 class AsyncLoggerSpec extends OdinSpec {
-
   implicit private val scheduler: TestScheduler = TestScheduler()
 
   case class RefLogger(ref: Ref[Task, List[LoggerMessage]]) extends DefaultLogger[Task] {
@@ -49,5 +48,4 @@ class AsyncLoggerSpec extends OdinSpec {
       }).runSyncUnsafe()
     }
   }
-
 }

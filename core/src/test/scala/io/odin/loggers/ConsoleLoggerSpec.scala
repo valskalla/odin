@@ -9,7 +9,6 @@ import io.odin.writers.LogWriter
 import io.odin.{Level, LoggerMessage, OdinSpec}
 
 class ConsoleLoggerSpec extends OdinSpec {
-
   private val out = "out"
   private val err = "err"
   type F[A] = WriterT[IO, List[(String, LoggerMessage)], A]
@@ -45,5 +44,4 @@ class ConsoleLoggerSpec extends OdinSpec {
       }
     }
   }
-
 }

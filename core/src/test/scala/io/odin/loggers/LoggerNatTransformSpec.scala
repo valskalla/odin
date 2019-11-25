@@ -8,7 +8,6 @@ import io.odin.{Logger, LoggerMessage, OdinSpec}
 import scala.concurrent.duration.TimeUnit
 
 class LoggerNatTransformSpec extends OdinSpec {
-
   type F[A] = Writer[List[LoggerMessage], A]
   type FF[A] = WriterT[IO, List[LoggerMessage], A]
 
@@ -45,7 +44,6 @@ class LoggerNatTransformSpec extends OdinSpec {
   }
 
   private val nat: F ~> FF = new (F ~> FF) {
-
     private val idToIo = new (Id ~> IO) {
       def apply[A](fa: Id[A]): IO[A] = IO.pure(fa)
     }
@@ -66,5 +64,4 @@ class LoggerNatTransformSpec extends OdinSpec {
     val List(loggerMessageFF) = fnFF.written.unsafeRunSync()
     loggerMessageEq.eqv(loggerMessageF, loggerMessageFF) shouldBe true
   }
-
 }

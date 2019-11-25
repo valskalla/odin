@@ -9,7 +9,6 @@ import org.scalacheck.Arbitrary
 import scala.annotation.tailrec
 
 trait EqInstances {
-
   @tailrec
   final def retrySample[T](implicit arb: Arbitrary[T]): T = arb.arbitrary.sample match {
     case Some(v) => v

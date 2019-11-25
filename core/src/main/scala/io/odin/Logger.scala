@@ -5,7 +5,6 @@ import cats.{~>, Applicative, Monoid}
 import io.odin.meta.{Position, Render}
 
 trait Logger[F[_]] {
-
   def log(msg: LoggerMessage): F[Unit]
 
   def trace[M](msg: => M)(implicit render: Render[M], position: Position): F[Unit]
@@ -62,11 +61,9 @@ trait Logger[F[_]] {
       implicit render: Render[M],
       position: Position
   ): F[Unit]
-
 }
 
 object Logger extends Noop with LoggerInstances {
-
   implicit class LoggerOps[F[_]](logger: Logger[F]) {
     def mapK[G[_]](f: F ~> G): Logger[G] = new Logger[G] {
       def log(msg: LoggerMessage): G[Unit] = f(logger.log(msg))
@@ -146,7 +143,6 @@ object Logger extends Noop with LoggerInstances {
         f(logger.error(msg, ctx, t))
     }
   }
-
 }
 
 trait Noop {

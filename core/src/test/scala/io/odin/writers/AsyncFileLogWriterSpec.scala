@@ -15,7 +15,6 @@ import retry.CatsEffect._
 import scala.concurrent.duration._
 
 class AsyncFileLogWriterSpec extends OdinSpec {
-
   implicit val timer: Timer[IO] = IO.timer(scala.concurrent.ExecutionContext.global)
   implicit val cs: ContextShift[IO] = IO.contextShift(scala.concurrent.ExecutionContext.global)
   private val retryPolicy = RetryPolicies.limitRetries[IO](5)
@@ -65,5 +64,4 @@ class AsyncFileLogWriterSpec extends OdinSpec {
       }.unsafeRunSync()
     }
   }
-
 }

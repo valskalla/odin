@@ -13,7 +13,6 @@ import monix.execution.schedulers.TestScheduler
 import org.scalatest.BeforeAndAfter
 
 class SyncFileLogWriterSpec extends OdinSpec with BeforeAndAfter {
-
   implicit private val scheduler: TestScheduler = TestScheduler()
 
   private val fileResource = Resource.make[Task, Path] {

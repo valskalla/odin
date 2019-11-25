@@ -15,7 +15,6 @@ import io.odin.{LoggerMessage, OdinSpec}
 import org.scalacheck.{Arbitrary, Gen}
 
 class WriterMonoidSpec extends OdinSpec {
-
   type F[A] = WriterT[IO, List[(LoggerMessage, Formatter, UUID)], A]
 
   implicit def arbitraryWriter: Arbitrary[LogWriter[F]] =

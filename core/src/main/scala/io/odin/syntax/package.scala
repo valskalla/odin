@@ -5,9 +5,7 @@ import cats.effect.{Clock, Concurrent, ConcurrentEffect, ContextShift, Resource,
 import io.odin.loggers.{AsyncLogger, ConstContextLogger, ContextualLogger, RouterLogger, WithContext}
 
 package object syntax {
-
   implicit class LoggerSyntax[F[_]](logger: Logger[F]) {
-
     def withMinimalLevel(level: Level)(implicit clock: Clock[F], monad: Monad[F]): Logger[F] =
       RouterLogger.withMinimalLevel(level, logger)
 
@@ -27,5 +25,4 @@ package object syntax {
     )(implicit timer: Timer[F], F: ConcurrentEffect[F], contextShift: ContextShift[F]): Logger[F] =
       AsyncLogger.withAsyncUnsafe(maxBufferSize, logger)
   }
-
 }

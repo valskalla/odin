@@ -9,7 +9,6 @@ import cats.{Order, Show}
 sealed abstract class Level(val value: Int)
 
 object Level {
-
   case object Trace extends Level(0) {
     override val toString: String = "TRACE"
   }
