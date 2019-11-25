@@ -52,7 +52,7 @@ object Simple extends IOApp {
 
 Once application starts, it prints:
 ```
-2019-11-25 [ioapp-compute-0] INFO io.odin.examples.Simple.run:12 - Hello world
+2019-11-25T22:00:51 [ioapp-compute-0] INFO io.odin.examples.HelloWorld.run:15 - Hello world
 ```
 
 Check out [examples](https://github.com/valskalla/odin/tree/master/examples) directory for more
