@@ -64,7 +64,7 @@ lazy val `odin-core` = (project in file("core"))
 lazy val benchmarks = (project in file("benchmarks"))
   .settings(sharedSettings)
   .enablePlugins(JmhPlugin)
-  .dependsOn(`odin-core`)
+  .dependsOn(`odin-core`, `odin-json`)
 
 lazy val `odin-json` = (project in file("json"))
   .settings(sharedSettings)
