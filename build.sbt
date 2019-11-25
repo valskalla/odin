@@ -30,6 +30,8 @@ lazy val monix = "io.monix" %% "monix" % versions.monix % Test
 
 lazy val perfolation = "com.outr" %% "perfolation" % "1.1.5"
 
+lazy val circeCore = "io.circe" %% "circe-core" % "0.12.3"
+
 lazy val catsRetry = List(
   "com.github.cb372" %% "cats-retry-core",
   "com.github.cb372" %% "cats-retry-cats-effect"
@@ -64,10 +66,17 @@ lazy val benchmarks = (project in file("benchmarks"))
   .enablePlugins(JmhPlugin)
   .dependsOn(`odin-core`)
 
+lazy val `odin-json` = (project in file("json"))
+  .settings(sharedSettings)
+  .settings(
+    libraryDependencies += circeCore
+  )
+  .dependsOn(`odin-core`)
+
 lazy val odin = (project in file("."))
   .settings(sharedSettings)
-  .dependsOn(`odin-core` % "compile->compile;test->test")
-  .aggregate(`odin-core`, benchmarks)
+  .dependsOn(`odin-core` % "compile->compile;test->test", `odin-json`)
+  .aggregate(`odin-core`, benchmarks, `odin-json`)
 
 def scalacOptionsVersion(scalaVersion: String) =
   Seq(

@@ -18,10 +18,10 @@ object Formatter {
     msg.exception match {
       case Some(t) =>
         val formattedThrowable = formatThrowable(t)
-        p"${msg.timestamp.t.F} [${msg.threadName}] ${msg.level.show} ${msg.position.enclosureName}:${msg.position.line} - ${msg
+        p"${msg.timestamp.t.F} ${msg.timestamp.t.T} [${msg.threadName}] ${msg.level.show} ${msg.position.enclosureName}:${msg.position.line} - ${msg
           .message()}${System.lineSeparator()}${formattedThrowable.toString}"
       case None =>
-        p"${msg.timestamp.t.F} [${msg.threadName}] ${msg.level.show} ${msg.position.enclosureName}:${msg.position.line} - ${msg.message()}"
+        p"${msg.timestamp.t.F} ${msg.timestamp.t.T} [${msg.threadName}] ${msg.level.show} ${msg.position.enclosureName}:${msg.position.line} - ${msg.message()}"
     }
   }
 
