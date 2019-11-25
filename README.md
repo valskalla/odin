@@ -14,7 +14,7 @@ top priorities.
 - Context is a first-class citizen. No more `TheadLocal` MDCs.
 - Position tracing implemented with macro instead of reflection considerably boosts the performance
 - Own performant logger backends for console and log files
-- Composable loggers and writers
+- Composable loggers to bring different loggers together
 
 Standing on the shoulders of `cats-effect` type classes, Odin abstracts away from concrete effect types, allowing
 users to decide what they feel comfortable with: `IO`, `ZIO`, `monix.Task`, `ReaderT` etc. The choice is yours.
@@ -33,7 +33,7 @@ Odin is published to Maven Central and cross-built for Scala 2.12 and 2.13. Add 
 ### Example
 
 Using `IOApp`:
-```
+```scala
 package io.odin.examples
 
 import cats.effect.{ExitCode, IO, IOApp}
