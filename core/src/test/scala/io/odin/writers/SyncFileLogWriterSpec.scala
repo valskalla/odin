@@ -3,7 +3,7 @@ package io.odin.writers
 import java.nio.file.{Files, Path, Paths}
 import java.util.UUID
 
-import cats.effect.{IO, Resource}
+import cats.effect.Resource
 import cats.instances.list._
 import cats.syntax.all._
 import io.odin.formatter.Formatter

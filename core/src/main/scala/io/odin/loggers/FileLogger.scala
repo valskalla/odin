@@ -1,13 +1,10 @@
 package io.odin.loggers
 
 import cats.Monad
-import cats.effect.{Clock, Concurrent, ConcurrentEffect, ContextShift, Timer}
-import cats.syntax.all._
+import cats.effect.Clock
+import io.odin.LoggerMessage
 import io.odin.formatter.Formatter
-import io.odin.writers.{AsyncFileLogWriter, LogWriter}
-import io.odin.{Logger, LoggerMessage}
-
-import scala.concurrent.duration._
+import io.odin.writers.LogWriter
 
 /**
   * Write to given log writer with provided formatter

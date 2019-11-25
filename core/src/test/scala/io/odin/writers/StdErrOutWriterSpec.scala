@@ -3,11 +3,10 @@ package io.odin.writers
 import java.io.{ByteArrayOutputStream, PrintStream}
 
 import cats.effect.{ContextShift, IO}
-import io.odin.formatter.Formatter
-import io.odin.{LoggerMessage, OdinSpec}
 import cats.instances.list._
 import cats.syntax.all._
-import org.scalatest.Assertion
+import io.odin.formatter.Formatter
+import io.odin.{LoggerMessage, OdinSpec}
 
 class StdErrOutWriterSpec extends OdinSpec {
 
