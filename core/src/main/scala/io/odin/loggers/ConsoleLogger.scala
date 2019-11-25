@@ -1,11 +1,11 @@
 package io.odin.loggers
 
 import cats.Monad
-import cats.effect.{Clock, ContextShift, Sync}
+import cats.effect.Clock
 import cats.syntax.all._
 import io.odin.formatter.Formatter
-import io.odin.writers.{LogWriter, StdErrLogWriter, StdOutLogWriter}
-import io.odin.{Level, Logger, LoggerMessage}
+import io.odin.writers.LogWriter
+import io.odin.{Level, LoggerMessage}
 
 case class ConsoleLogger[F[_]: Clock: Monad](formatter: Formatter, out: LogWriter[F], err: LogWriter[F])
     extends DefaultLogger[F] {

@@ -34,13 +34,13 @@ class DefaultLoggerBenchmarks extends OdinBenchmarks {
   }
 
   @Benchmark
-  def msg: Unit = defaultLogger.info(message).unsafeRunSync()
+  def msg(): Unit = defaultLogger.info(message).unsafeRunSync()
 
   @Benchmark
-  def msgAndCtx: Unit = defaultLogger.info(message, context).unsafeRunSync()
+  def msgAndCtx(): Unit = defaultLogger.info(message, context).unsafeRunSync()
 
   @Benchmark
-  def msgCtxThrowable: Unit = defaultLogger.info(message, context, throwable).unsafeRunSync()
+  def msgCtxThrowable(): Unit = defaultLogger.info(message, context, throwable).unsafeRunSync()
 }
 
 @State(Scope.Benchmark)
@@ -52,17 +52,17 @@ class FileLoggerBenchmarks extends OdinBenchmarks {
 
   @Benchmark
   @OperationsPerInvocation(1000)
-  def msg: Unit =
+  def msg(): Unit =
     for (_ <- 1 to 1000) logger.info(message).unsafeRunSync()
 
   @Benchmark
   @OperationsPerInvocation(1000)
-  def msgAndCtx: Unit =
+  def msgAndCtx(): Unit =
     for (_ <- 1 to 1000) logger.info(message, context).unsafeRunSync()
 
   @Benchmark
   @OperationsPerInvocation(1000)
-  def msgCtxThrowable: Unit =
+  def msgCtxThrowable(): Unit =
     for (_ <- 1 to 1000) logger.info(message, context, throwable).unsafeRunSync()
 
   @TearDown
@@ -86,16 +86,16 @@ class AsyncLoggerBenchmark extends OdinBenchmarks {
 
   @Benchmark
   @OperationsPerInvocation(1000)
-  def msg: Unit = for (_ <- 1 to 1000) asyncLogger.info(message).unsafeRunSync()
+  def msg(): Unit = for (_ <- 1 to 1000) asyncLogger.info(message).unsafeRunSync()
 
   @Benchmark
   @OperationsPerInvocation(1000)
-  def msgAndCtx: Unit =
+  def msgAndCtx(): Unit =
     for (_ <- 1 to 1000) asyncLogger.info(message, context).unsafeRunSync()
 
   @Benchmark
   @OperationsPerInvocation(1000)
-  def msgCtxThrowable: Unit =
+  def msgCtxThrowable(): Unit =
     for (_ <- 1 to 1000) asyncLogger.info(message, context, throwable).unsafeRunSync()
 
   @TearDown
@@ -116,11 +116,11 @@ class RouterLoggerBenchmarks extends OdinBenchmarks {
 
   @Benchmark
   @OperationsPerInvocation(1000)
-  def info: Unit = for (_ <- 1 to 1000) routerLogger.info(message).unsafeRunSync()
+  def info(): Unit = for (_ <- 1 to 1000) routerLogger.info(message).unsafeRunSync()
 
   @Benchmark
   @OperationsPerInvocation(1000)
-  def trace: Unit =
+  def trace(): Unit =
     for (_ <- 1 to 1000) routerLogger.trace(message).unsafeRunSync()
 
   @TearDown

@@ -45,10 +45,13 @@ class LoggerNatTransformSpec extends OdinSpec {
   }
 
   private val nat: F ~> FF = new (F ~> FF) {
+
+    private val idToIo = new (Id ~> IO) {
+      def apply[A](fa: Id[A]): IO[A] = IO.pure(fa)
+    }
+
     def apply[A](fa: F[A]): FF[A] =
-      fa.mapK(new (Id ~> IO) {
-        def apply[A](fa: Id[A]): IO[A] = IO.pure(fa)
-      })
+      fa.mapK(idToIo)
   }
 
   private def clock(timestamp: Long): Clock[Id] = new Clock[Id] {
