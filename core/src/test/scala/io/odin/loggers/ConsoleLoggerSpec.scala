@@ -1,46 +1,42 @@
 package io.odin.loggers
 
-import cats.data.WriterT
+import java.io.{ByteArrayOutputStream, PrintStream}
+
 import cats.effect.{IO, Timer}
-import cats.instances.list._
 import cats.syntax.all._
+import io.odin.Level._
 import io.odin.formatter.Formatter
-import io.odin.writers.LogWriter
-import io.odin.{Level, LoggerMessage, OdinSpec}
+import io.odin.{LoggerMessage, OdinSpec}
 
 class ConsoleLoggerSpec extends OdinSpec {
-  private val out = "out"
-  private val err = "err"
-  type F[A] = WriterT[IO, List[(String, LoggerMessage)], A]
-
   implicit val timer: Timer[IO] = IO.timer(scala.concurrent.ExecutionContext.global)
 
-  private val stdOutWriter = new LogWriter[F] {
-    def write(msg: LoggerMessage, formatter: Formatter): F[Unit] = WriterT.tell(List((out, msg)))
-  }
-
-  private val stdErrWriter = new LogWriter[F] {
-    def write(msg: LoggerMessage, formatter: Formatter): F[Unit] = WriterT.tell(List((err, msg)))
-  }
-
-  private val consoleLogger = ConsoleLogger[F](Formatter.default, stdOutWriter, stdErrWriter)
-
   it should "route all messages with level <= INFO to stdout" in {
-    forAll { loggerMessage: LoggerMessage =>
-      whenever(loggerMessage.level <= Level.Info) {
-        val List((o, log)) = consoleLogger.log(loggerMessage).written.unsafeRunSync()
-        o shouldBe out
-        log shouldBe loggerMessage
+    forAll { (loggerMessage: LoggerMessage, formatter: Formatter) =>
+      whenever(loggerMessage.level <= Info) {
+        val outBaos = new ByteArrayOutputStream()
+        val stdOut = new PrintStream(outBaos)
+        val errBaos = new ByteArrayOutputStream()
+        val stdErr = new PrintStream(errBaos)
+
+        val consoleLogger = ConsoleLogger[IO](Formatter.default, stdOut, stdErr)
+        consoleLogger.log(loggerMessage).unsafeRunSync()
+        outBaos.toString() shouldBe (formatter.format(loggerMessage) + System.lineSeparator())
       }
     }
   }
 
   it should "route all messages with level >= WARN to stderr" in {
-    forAll { loggerMessage: LoggerMessage =>
-      whenever(loggerMessage.level >= Level.Warn) {
-        val List((o, log)) = consoleLogger.log(loggerMessage).written.unsafeRunSync()
-        o shouldBe err
-        log shouldBe loggerMessage
+    forAll { (loggerMessage: LoggerMessage, formatter: Formatter) =>
+      whenever(loggerMessage.level > Info) {
+        val outBaos = new ByteArrayOutputStream()
+        val stdOut = new PrintStream(outBaos)
+        val errBaos = new ByteArrayOutputStream()
+        val stdErr = new PrintStream(errBaos)
+
+        val consoleLogger = ConsoleLogger[IO](Formatter.default, stdOut, stdErr)
+        consoleLogger.log(loggerMessage).unsafeRunSync()
+        errBaos.toString() shouldBe (formatter.format(loggerMessage) + System.lineSeparator())
       }
     }
   }

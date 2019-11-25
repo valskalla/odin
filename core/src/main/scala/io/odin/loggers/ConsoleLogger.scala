@@ -1,18 +1,26 @@
 package io.odin.loggers
 
-import cats.Monad
-import cats.effect.Clock
+import java.io.PrintStream
+
+import cats.effect.{Clock, Sync}
 import cats.syntax.all._
 import io.odin.formatter.Formatter
-import io.odin.writers.LogWriter
-import io.odin.{Level, LoggerMessage}
+import io.odin.{Level, Logger, LoggerMessage}
 
-case class ConsoleLogger[F[_]: Clock: Monad](formatter: Formatter, out: LogWriter[F], err: LogWriter[F])
+case class ConsoleLogger[F[_]: Clock](formatter: Formatter, out: PrintStream, err: PrintStream)(implicit F: Sync[F])
     extends DefaultLogger[F] {
+  private def println(out: PrintStream, msg: LoggerMessage, formatter: Formatter): F[Unit] =
+    F.delay(out.println(formatter.format(msg)))
+
   def log(msg: LoggerMessage): F[Unit] =
     if (msg.level < Level.Warn) {
-      out.write(msg, formatter)
+      println(out, msg, formatter)
     } else {
-      err.write(msg, formatter)
+      println(err, msg, formatter)
     }
+}
+
+object ConsoleLogger {
+  def apply[F[_]: Clock: Sync](formatter: Formatter): Logger[F] =
+    ConsoleLogger(formatter, scala.Console.out, scala.Console.err)
 }

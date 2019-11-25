@@ -17,8 +17,7 @@ class AsyncLoggerSpec extends OdinSpec {
 
   case class RefLogger(ref: Ref[Task, List[LoggerMessage]]) extends DefaultLogger[Task] {
     def log(msg: LoggerMessage): Task[Unit] = {
-      //have to run, otherwise ref never gets updated somehow
-      Task.pure(ref.update(_ :+ msg).runSyncUnsafe())
+      ref.update(_ :+ msg)
     }
   }
 
@@ -40,7 +39,7 @@ class AsyncLoggerSpec extends OdinSpec {
     forAll { msgs: List[LoggerMessage] =>
       (for {
         queue <- ConcurrentQueue.unbounded[Task, LoggerMessage]()
-        logger = AsyncLogger(queue)(Logger.noop[Task])
+        logger = AsyncLogger(queue, 1.millis, Logger.noop[Task])
         _ <- msgs.traverse(logger.log)
         reported <- queue.drain(0, Int.MaxValue)
       } yield {

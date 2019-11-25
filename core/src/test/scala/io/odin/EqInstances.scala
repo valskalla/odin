@@ -3,7 +3,6 @@ package io.odin
 import cats.Eq
 import cats.effect.IO
 import io.odin.formatter.Formatter
-import io.odin.writers.LogWriter
 import org.scalacheck.Arbitrary
 
 import scala.annotation.tailrec
@@ -61,16 +60,6 @@ trait EqInstances {
     position1 == position2 &&
     threadName1 == threadName2 &&
     timestamp1 == timestamp2
-  }
-
-  implicit def logWriterEq[F[_]](
-      implicit arbMsg: Arbitrary[LoggerMessage],
-      arbFormatter: Arbitrary[Formatter],
-      eqF: Eq[F[Unit]]
-  ): Eq[LogWriter[F]] = Eq.instance { (writer1, writer2) =>
-    val msg = retrySample[LoggerMessage]
-    val fmt = retrySample[Formatter]
-    eqF.eqv(writer1.write(msg, fmt), writer2.write(msg, fmt))
   }
 
   implicit def formatterEq(implicit arbLoggerMsg: Arbitrary[LoggerMessage]): Eq[Formatter] =

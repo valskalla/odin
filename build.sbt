@@ -44,6 +44,7 @@ lazy val sharedSettings = Seq(
   libraryDependencies ++= scalaCheck :: scalaTest :: Nil,
   addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3"),
   crossScalaVersions := scalaVersions,
+  classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.ScalaLibrary,
   scalacOptions := scalacOptionsVersion(scalaVersion.value),
   scalacOptions in(Compile, console) ~= (_.filterNot(
     Set(
@@ -73,10 +74,17 @@ lazy val `odin-json` = (project in file("json"))
   )
   .dependsOn(`odin-core`)
 
+lazy val examples = (project in file("examples"))
+  .settings(sharedSettings)
+  .settings(
+    coverageExcludedPackages := "io.odin.examples.*"
+  )
+  .dependsOn(`odin-core` % "compile->compile;test->test")
+
 lazy val odin = (project in file("."))
   .settings(sharedSettings)
   .dependsOn(`odin-core` % "compile->compile;test->test", `odin-json`)
-  .aggregate(`odin-core`, benchmarks, `odin-json`)
+  .aggregate(`odin-core`, benchmarks, `odin-json`, examples)
 
 def scalacOptionsVersion(scalaVersion: String) =
   Seq(

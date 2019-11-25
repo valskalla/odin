@@ -73,12 +73,7 @@ class FileLoggerBenchmarks extends OdinBenchmarks {
 @State(Scope.Benchmark)
 class AsyncLoggerBenchmark extends OdinBenchmarks {
   val fileName: String = Files.createTempFile(UUID.randomUUID().toString, "").toAbsolutePath.toString
-  val (asyncLogger: Logger[IO], cancelToken: IO[Unit]) = (for {
-    fl <- fileLogger[IO](fileName)
-    async <- fl.withAsync()
-  } yield {
-    async
-  }).allocated.unsafeRunSync()
+  val (asyncLogger: Logger[IO], cancelToken: IO[Unit]) = fileLogger[IO](fileName).withAsync().allocated.unsafeRunSync()
 
   @Benchmark
   @OperationsPerInvocation(1000)
@@ -106,7 +101,7 @@ class RouterLoggerBenchmarks extends OdinBenchmarks {
   val fileName: String = Files.createTempFile(UUID.randomUUID().toString, "").toAbsolutePath.toString
 
   val (routerLogger: Logger[IO], cancelToken: IO[Unit]) =
-    fileLogger[IO](fileName).map(_.withMinimalLevel(io.odin.Level.Info)).allocated.unsafeRunSync()
+    fileLogger[IO](fileName).withMinimalLevel(io.odin.Level.Info).allocated.unsafeRunSync()
 
   @Benchmark
   @OperationsPerInvocation(1000)
