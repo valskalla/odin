@@ -19,7 +19,7 @@ object Formatter {
           m.exception.map(t => formatThrowable(t).toString()),
           p"${m.position.enclosureName}:${m.position.line}",
           m.threadName,
-          m.timestamp
+          p"${m.timestamp.t.F}T${m.timestamp.t.T}"
         )
     )
 
