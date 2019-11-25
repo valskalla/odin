@@ -8,7 +8,6 @@ import io.odin.{Level, Logger, LoggerMessage, OdinSpec}
 import io.odin.syntax._
 
 class RouterLoggerSpec extends OdinSpec {
-
   implicit val timer: Timer[IO] = IO.timer(scala.concurrent.ExecutionContext.global)
 
   type F[A] = WriterT[IO, List[(String, LoggerMessage)], A]
@@ -59,12 +58,10 @@ class RouterLoggerSpec extends OdinSpec {
 
       ln1 shouldBe loggerName1
       ln2 shouldBe loggerName2
-
     }
   }
 
   it should "noop logs with level less than set" in {
-
     type FF[A] = WriterT[IO, List[LoggerMessage], A]
 
     val logger = new WriterTLogger[IO]
@@ -79,11 +76,8 @@ class RouterLoggerSpec extends OdinSpec {
       }
     }
   }
-
 }
 
 class TestClass[F[_]](logger: Logger[F]) {
-
   def log(msg: String): F[Unit] = logger.info(msg)
-
 }

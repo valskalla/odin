@@ -16,7 +16,6 @@ import org.scalacheck.{Arbitrary, Gen}
 import scala.concurrent.duration.TimeUnit
 
 class LoggerMonoidSpec extends OdinSpec {
-
   type F[A] = WriterT[IO, List[(UUID, LoggerMessage)], A]
 
   checkAll("Logger", MonoidTests[Logger[F]].monoid)

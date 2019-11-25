@@ -13,7 +13,6 @@ import io.odin.formatter.Formatter
   * Performance-wise, it's better to use [[AsyncFileLogWriter]] version that buffers the events before flushing to disk
   */
 class SyncFileLogWriter[F[_]](writer: BufferedWriter)(implicit F: Sync[F]) extends LogWriter[F] {
-
   Runtime.getRuntime.addShutdownHook {
     new Thread {
       override def run(): Unit =
@@ -33,8 +32,6 @@ class SyncFileLogWriter[F[_]](writer: BufferedWriter)(implicit F: Sync[F]) exten
 }
 
 object SyncFileLogWriter {
-
   def apply[F[_]: Sync](fileName: String): LogWriter[F] =
     new SyncFileLogWriter[F](Files.newBufferedWriter(Paths.get(fileName), StandardOpenOption.APPEND))
-
 }

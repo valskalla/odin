@@ -9,7 +9,6 @@ import io.odin.syntax._
 import io.odin.{LoggerMessage, OdinSpec}
 
 class ContextualLoggerSpec extends OdinSpec {
-
   type W[A] = WriterT[IO, List[LoggerMessage], A]
   type F[A] = ReaderT[W, Map[String, String], A]
 
@@ -25,5 +24,4 @@ class ContextualLoggerSpec extends OdinSpec {
       written.context shouldBe loggerMessage.context ++ ctx
     }
   }
-
 }

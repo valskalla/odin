@@ -7,7 +7,6 @@ import io.odin.{Level, Logger, LoggerMessage}
 
 case class RouterLogger[F[_]: Clock: Monad](router: PartialFunction[LoggerMessage, Logger[F]])
     extends DefaultLogger[F] {
-
   private val noop = Logger.noop
   private val withFallback: PartialFunction[LoggerMessage, Logger[F]] = router.orElse { case _ => noop }
 
@@ -15,7 +14,6 @@ case class RouterLogger[F[_]: Clock: Monad](router: PartialFunction[LoggerMessag
 }
 
 object RouterLogger {
-
   /**
     * Route logs to specific logger based on the fully qualified package name.
     * Beware of O(n) complexity due to the partial matching done during the logging
@@ -70,5 +68,4 @@ object RouterLogger {
     RouterLogger {
       case msg if msg.level >= level => inner
     }
-
 }

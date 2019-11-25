@@ -42,7 +42,6 @@ case class AsyncLogger[F[_]](queue: ConcurrentQueue[F, LoggerMessage])(val inner
 }
 
 object AsyncLogger {
-
   /**
     * Create async logger and start internal loop of sending events down the chain from the buffer once
     * `Resource` is used.
@@ -85,5 +84,4 @@ object AsyncLogger {
   def withAsyncUnsafe[F[_]: Timer: ContextShift](maxBufferSize: Option[Int], inner: Logger[F])(
       implicit F: ConcurrentEffect[F]
   ): Logger[F] = F.toIO(withAsync(maxBufferSize, inner).allocated).unsafeRunSync()._1
-
 }

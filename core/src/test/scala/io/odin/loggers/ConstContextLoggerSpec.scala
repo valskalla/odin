@@ -7,7 +7,6 @@ import io.odin.{LoggerMessage, OdinSpec}
 import io.odin.syntax._
 
 class ConstContextLoggerSpec extends OdinSpec {
-
   type F[A] = WriterT[IO, List[LoggerMessage], A]
 
   implicit val timer: Timer[IO] = IO.timer(scala.concurrent.ExecutionContext.global)

@@ -11,7 +11,6 @@ case class Position(
 )
 
 object Position {
-
   implicit def derivePosition(
       implicit fileName: sourcecode.File,
       enclosureName: sourcecode.FullName,
@@ -24,5 +23,4 @@ object Position {
       packageName = packageName.value,
       line = line.value
     )
-
 }

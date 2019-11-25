@@ -7,7 +7,6 @@ import io.odin.formatter.Formatter
 import io.odin.{LoggerMessage, OdinSpec}
 
 class StdLogWriterSpec extends OdinSpec {
-
   implicit val cs: ContextShift[IO] = IO.contextShift(scala.concurrent.ExecutionContext.global)
 
   it should "write formatted log to PrintStream" in {
@@ -20,5 +19,4 @@ class StdLogWriterSpec extends OdinSpec {
       ps.close()
     }
   }
-
 }

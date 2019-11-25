@@ -9,8 +9,6 @@ case class ConstContextLogger[F[_]: Clock: Monad](ctx: Map[String, String])(inne
 }
 
 object ConstContextLogger {
-
   def withConstContext[F[_]: Clock: Monad](ctx: Map[String, String], inner: Logger[F]): Logger[F] =
     ConstContextLogger(ctx)(inner)
-
 }

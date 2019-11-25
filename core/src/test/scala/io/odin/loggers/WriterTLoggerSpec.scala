@@ -9,7 +9,6 @@ import io.odin.{LoggerMessage, OdinSpec}
 import scala.concurrent.duration.TimeUnit
 
 class WriterTLoggerSpec extends OdinSpec {
-
   implicit val clock: Clock[Id] = new Clock[Id] {
     def realTime(unit: TimeUnit): Id[Long] = 0L
     def monotonic(unit: TimeUnit): Id[Long] = 0L
@@ -20,7 +19,5 @@ class WriterTLoggerSpec extends OdinSpec {
     forAll { msgs: List[LoggerMessage] =>
       msgs.traverse(logger.log).written shouldBe msgs
     }
-
   }
-
 }

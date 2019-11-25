@@ -8,7 +8,6 @@ import org.scalatestplus.scalacheck.{Checkers, ScalaCheckDrivenPropertyChecks}
 import org.typelevel.discipline.Laws
 
 trait OdinSpec extends FlatSpec with Matchers with Checkers with ScalaCheckDrivenPropertyChecks with EqInstances {
-
   def checkAll(name: String, ruleSet: Laws#RuleSet): Unit = {
     for ((id, prop) <- ruleSet.all.properties)
       it should (name + "." + id) in {
@@ -56,5 +55,4 @@ trait OdinSpec extends FlatSpec with Matchers with Checkers with ScalaCheckDrive
 
   val formatterGen: Gen[Formatter] = Gen.const(Formatter.default)
   implicit val formatterArbitrary: Arbitrary[Formatter] = Arbitrary(formatterGen)
-
 }

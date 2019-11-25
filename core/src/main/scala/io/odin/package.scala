@@ -11,7 +11,6 @@ import cats.syntax.all._
 import scala.concurrent.duration.FiniteDuration
 
 package object odin {
-
   /**
     * Basic console logger that prints to STDOUT & STDERR
     * @param formatter formatter to use for log messages

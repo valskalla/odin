@@ -7,13 +7,10 @@ import perfolation._
 import scala.annotation.tailrec
 
 trait Formatter {
-
   def format(msg: LoggerMessage): String
-
 }
 
 object Formatter {
-
   val default: Formatter = (msg: LoggerMessage) => {
     msg.exception match {
       case Some(t) =>
@@ -42,7 +39,6 @@ object Formatter {
     } else {
       formatThrowable(t.getCause, builder)
     }
-
   }
 
   @tailrec
@@ -64,5 +60,4 @@ object Formatter {
         writeStackTrace(b, elements.tail)
     }
   }
-
 }

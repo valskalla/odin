@@ -7,7 +7,6 @@ import io.odin.LoggerMessage
 import io.odin.formatter.Formatter
 
 object StdLogWriter {
-
   /**
     * Logger that writes formatted logs to the given `PrintStream` by allocating threads from
     * provided `ExecutionContext`
@@ -17,5 +16,4 @@ object StdLogWriter {
       out: PrintStream
   )(implicit F: Sync[F]): LogWriter[F] =
     (msg: LoggerMessage, formatter: Formatter) => F.delay(out.println(formatter.format(msg)))
-
 }

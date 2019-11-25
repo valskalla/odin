@@ -23,7 +23,6 @@ class AsyncFileLogWriter[F[_]](
     timer: Timer[F],
     contextShift: ContextShift[F]
 ) extends LogWriter[F] {
-
   Runtime.getRuntime.addShutdownHook {
     new Thread {
       override def run(): Unit =
@@ -56,11 +55,9 @@ class AsyncFileLogWriter[F[_]](
       close
     }
   }
-
 }
 
 object AsyncFileLogWriter {
-
   /**
     * Safely start async file writer. Cancellation of `F[_]` will be propagated down the chain to safely close the buffer.
     * BEWARE that cancellation invalidates the `BufferedWriter` as well, no `write` could be performed after that.
@@ -95,5 +92,4 @@ object AsyncFileLogWriter {
   )(implicit F: ConcurrentEffect[F]): LogWriter[F] = {
     F.toIO(apply[F](fileName, timeWindow).allocated).unsafeRunSync()._1
   }
-
 }

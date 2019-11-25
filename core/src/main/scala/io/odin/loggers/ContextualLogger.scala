@@ -25,22 +25,17 @@ object ContextualLogger {
   * Extract log context from environment
   */
 trait HasContext[Env] {
-
   def getContext(env: Env): Map[String, String]
-
 }
 
 /**
   * Resolve context stored in `F[_]` effect
   */
 trait WithContext[F[_]] {
-
   def context: F[Map[String, String]]
-
 }
 
 object WithContext {
-
   /**
     * Default implementation of `WithContext` that works for any `F[_]` with `ApplicativeAsk` instance and
     * instance of [[HasContext]] for environment of this `ApplicativeAsk`
@@ -52,5 +47,4 @@ object WithContext {
   ): WithContext[F] = new WithContext[F] {
     def context: F[Map[String, String]] = A.ask.map(hasContext.getContext)
   }
-
 }

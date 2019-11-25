@@ -13,7 +13,6 @@ import io.odin.{Level, Logger, LoggerMessage}
   * message with this timestamp
   */
 abstract class DefaultLogger[F[_]](implicit clock: Clock[F], F: Monad[F]) extends Logger[F] {
-
   private def log[M](level: Level, msg: => M, ctx: Map[String, String] = Map.empty, t: Option[Throwable] = None)(
       implicit render: Render[M],
       position: Position

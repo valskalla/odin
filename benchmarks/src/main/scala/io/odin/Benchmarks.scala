@@ -26,7 +26,6 @@ abstract class OdinBenchmarks {
 
 @State(Scope.Benchmark)
 class DefaultLoggerBenchmarks extends OdinBenchmarks {
-
   val noop: Logger[IO] = Logger.noop
 
   val defaultLogger: Logger[IO] = new DefaultLogger[IO] {
@@ -45,7 +44,6 @@ class DefaultLoggerBenchmarks extends OdinBenchmarks {
 
 @State(Scope.Benchmark)
 class FileLoggerBenchmarks extends OdinBenchmarks {
-
   val fileName: String = Files.createTempFile(UUID.randomUUID().toString, "").toAbsolutePath.toString
   val (logger: Logger[IO], cancelToken: IO[Unit]) =
     fileLogger[IO](fileName).allocated.unsafeRunSync()
@@ -70,12 +68,10 @@ class FileLoggerBenchmarks extends OdinBenchmarks {
     cancelToken.unsafeRunSync()
     Files.delete(Paths.get(fileName))
   }
-
 }
 
 @State(Scope.Benchmark)
 class AsyncLoggerBenchmark extends OdinBenchmarks {
-
   val fileName: String = Files.createTempFile(UUID.randomUUID().toString, "").toAbsolutePath.toString
   val (asyncLogger: Logger[IO], cancelToken: IO[Unit]) = (for {
     fl <- fileLogger[IO](fileName)
@@ -103,12 +99,10 @@ class AsyncLoggerBenchmark extends OdinBenchmarks {
     cancelToken.unsafeRunSync()
     Files.delete(Paths.get(fileName))
   }
-
 }
 
 @State(Scope.Benchmark)
 class RouterLoggerBenchmarks extends OdinBenchmarks {
-
   val fileName: String = Files.createTempFile(UUID.randomUUID().toString, "").toAbsolutePath.toString
 
   val (routerLogger: Logger[IO], cancelToken: IO[Unit]) =

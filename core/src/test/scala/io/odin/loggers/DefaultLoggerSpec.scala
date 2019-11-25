@@ -8,7 +8,6 @@ import io.odin.{Level, Logger, LoggerMessage, OdinSpec}
 import scala.concurrent.duration.TimeUnit
 
 class DefaultLoggerSpec extends OdinSpec {
-
   type F[A] = Writer[List[LoggerMessage], A]
 
   it should "correctly construct LoggerMessage" in {
@@ -66,5 +65,4 @@ class DefaultLoggerSpec extends OdinSpec {
     loggerMessage.threadName shouldBe Thread.currentThread().getName
     loggerMessage.timestamp shouldBe timestamp
   }
-
 }
