@@ -5,7 +5,7 @@ lazy val versions = new {
   val sourcecode = "0.1.8"
   val monix = "3.1.0"
   val scalaCheck = "1.14.2"
-  val catsRetry = "0.3.1"
+  val catsRetry = "0.3.2"
 }
 
 lazy val scalaVersions = List("2.13.1", "2.12.10")
