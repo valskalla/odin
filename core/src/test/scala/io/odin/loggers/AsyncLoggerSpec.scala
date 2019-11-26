@@ -59,7 +59,7 @@ class AsyncLoggerSpec extends OdinSpec {
         _ <- logger.log(msgs)
         result <- logger.drain
       } yield {
-        result shouldBe ()
+        result shouldBe (())
       }).runSyncUnsafe()
     }
   }

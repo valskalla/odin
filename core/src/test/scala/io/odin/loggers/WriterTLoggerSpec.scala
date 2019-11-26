@@ -1,15 +1,19 @@
 package io.odin.loggers
 
 import cats.Id
-import cats.effect.Clock
+import cats.effect.{Clock, Timer}
 import io.odin.{LoggerMessage, OdinSpec}
 
-import scala.concurrent.duration.TimeUnit
+import scala.concurrent.duration.{FiniteDuration, TimeUnit}
 
 class WriterTLoggerSpec extends OdinSpec {
-  implicit val clock: Clock[Id] = new Clock[Id] {
-    def realTime(unit: TimeUnit): Id[Long] = 0L
-    def monotonic(unit: TimeUnit): Id[Long] = 0L
+  implicit val clock: Timer[Id] = new Timer[Id] {
+    def clock: Clock[Id] = new Clock[Id] {
+      def realTime(unit: TimeUnit): Id[Long] = 0L
+      def monotonic(unit: TimeUnit): Id[Long] = 0L
+    }
+
+    def sleep(duration: FiniteDuration): Id[Unit] = ???
   }
 
   it should "write log into list" in {

@@ -25,9 +25,8 @@ case class AsyncLogger[F[_]](queue: ConcurrentQueue[F, LoggerMessage], timeWindo
   def drain: F[Unit] = {
     queue
       .drain(0, Int.MaxValue)
-      .flatMap {
-        msgs =>
-          inner.log(msgs.toList)
+      .flatMap { msgs =>
+        inner.log(msgs.toList)
       }
       .void
       .handleErrorWith { _ =>

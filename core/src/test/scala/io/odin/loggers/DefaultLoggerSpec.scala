@@ -3,17 +3,17 @@ package io.odin.loggers
 import cats.Id
 import cats.instances.list._
 import cats.data.Writer
-import cats.effect.Clock
+import cats.effect.{Clock, Timer}
 import io.odin.{Level, Logger, LoggerMessage, OdinSpec}
 
-import scala.concurrent.duration.TimeUnit
+import scala.concurrent.duration.{FiniteDuration, TimeUnit}
 
 class DefaultLoggerSpec extends OdinSpec {
   type F[A] = Writer[List[LoggerMessage], A]
 
   it should "correctly construct LoggerMessage" in {
     forAll { (msg: String, ctx: Map[String, String], throwable: Throwable, timestamp: Long) =>
-      implicit val clk: Clock[Id] = clock(timestamp)
+      implicit val clk: Timer[Id] = clock(timestamp)
       val log = logger
       check(log.trace(msg))(Level.Trace, msg, timestamp)
       check(log.trace(msg, throwable))(Level.Trace, msg, timestamp, throwable = Some(throwable))
@@ -44,18 +44,24 @@ class DefaultLoggerSpec extends OdinSpec {
 
   it should "write multiple messages" in {
     forAll { msgs: List[LoggerMessage] =>
-      implicit val clk = clock(0L)
+      implicit val clk: Timer[Id] = clock(0L)
       logger.log(msgs).written shouldBe msgs
     }
   }
 
-  private def clock(timestamp: Long): Clock[Id] = new Clock[Id] {
-    def realTime(unit: TimeUnit): Id[Long] = timestamp
-    def monotonic(unit: TimeUnit): Id[Long] = timestamp
+  private def clock(timestamp: Long): Timer[Id] = new Timer[Id] {
+    def clock: Clock[Id] = new Clock[Id] {
+      def realTime(unit: TimeUnit): Id[Long] = timestamp
+      def monotonic(unit: TimeUnit): Id[Long] = timestamp
+    }
+
+    def sleep(duration: FiniteDuration): Id[Unit] = ???
   }
 
-  private def logger(implicit clock: Clock[Id]): Logger[F] = new DefaultLogger[Writer[List[LoggerMessage], *]] {
-    def log(msg: LoggerMessage): Writer[List[LoggerMessage], Unit] = Writer.tell(List(msg))
+  private def logger(implicit timer: Timer[Id]): Logger[F] = {
+    new DefaultLogger[F] {
+      def log(msg: LoggerMessage): Writer[List[LoggerMessage], Unit] = Writer.tell(List(msg))
+    }
   }
 
   private def check(

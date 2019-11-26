@@ -16,7 +16,6 @@ import io.odin.syntax._
   * the log
   */
 object WithContextual extends IOApp {
-
   /**
     * Simple Reader monad with environment being context `Map[String, String]`
     */

@@ -1,7 +1,7 @@
 package io.odin.loggers
 
 import cats.Monad
-import cats.effect.Clock
+import cats.effect.Timer
 import cats.mtl.ApplicativeAsk
 import cats.syntax.all._
 import io.odin.{Logger, LoggerMessage}
@@ -9,7 +9,7 @@ import io.odin.{Logger, LoggerMessage}
 /**
   * Logger that extracts context from environment of `F[_]` with the help of [[WithContext]] type class
   */
-case class ContextualLogger[F[_]: Clock: Monad](inner: Logger[F])(implicit withContext: WithContext[F])
+case class ContextualLogger[F[_]: Timer: Monad](inner: Logger[F])(implicit withContext: WithContext[F])
     extends DefaultLogger[F] {
   def log(msg: LoggerMessage): F[Unit] =
     withContext.context.flatMap { ctx =>
@@ -23,7 +23,7 @@ case class ContextualLogger[F[_]: Clock: Monad](inner: Logger[F])(implicit withC
 }
 
 object ContextualLogger {
-  def withContext[F[_]: Clock: Monad: WithContext](inner: Logger[F]): Logger[F] = ContextualLogger(inner)
+  def withContext[F[_]: Timer: Monad: WithContext](inner: Logger[F]): Logger[F] = ContextualLogger(inner)
 }
 
 /**
