@@ -62,8 +62,6 @@ class RouterLoggerSpec extends OdinSpec {
   }
 
   it should "noop logs with level less than set" in {
-    type FF[A] = WriterT[IO, List[LoggerMessage], A]
-
     val logger = new WriterTLogger[IO]
 
     forAll { (level: Level, msg: LoggerMessage) =>

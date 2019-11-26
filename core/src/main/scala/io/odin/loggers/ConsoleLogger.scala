@@ -2,12 +2,12 @@ package io.odin.loggers
 
 import java.io.PrintStream
 
-import cats.effect.{Clock, Sync}
+import cats.effect.{Sync, Timer}
 import cats.syntax.all._
 import io.odin.formatter.Formatter
 import io.odin.{Level, Logger, LoggerMessage}
 
-case class ConsoleLogger[F[_]: Clock](formatter: Formatter, out: PrintStream, err: PrintStream)(implicit F: Sync[F])
+case class ConsoleLogger[F[_]: Timer](formatter: Formatter, out: PrintStream, err: PrintStream)(implicit F: Sync[F])
     extends DefaultLogger[F] {
   private def println(out: PrintStream, msg: LoggerMessage, formatter: Formatter): F[Unit] =
     F.delay(out.println(formatter.format(msg)))
@@ -21,6 +21,6 @@ case class ConsoleLogger[F[_]: Clock](formatter: Formatter, out: PrintStream, er
 }
 
 object ConsoleLogger {
-  def apply[F[_]: Clock: Sync](formatter: Formatter): Logger[F] =
+  def apply[F[_]: Timer: Sync](formatter: Formatter): Logger[F] =
     ConsoleLogger(formatter, scala.Console.out, scala.Console.err)
 }

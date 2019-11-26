@@ -37,9 +37,13 @@ lazy val catsRetry = List(
   "com.github.cb372" %% "cats-retry-cats-effect"
 ).map(_ % versions.catsRetry % Test)
 
+lazy val noPublish = Seq(
+  skip in publish := true
+)
+
 lazy val sharedSettings = Seq(
   scalaVersion := "2.13.1",
-  organization := "com.github.scala-odin",
+  organization := "com.github.valskalla",
   libraryDependencies ++= scalaCheck :: scalaTest :: Nil,
   addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3"),
   crossScalaVersions := scalaVersions,
@@ -79,6 +83,7 @@ lazy val `odin-core` = (project in file("core"))
 
 lazy val benchmarks = (project in file("benchmarks"))
   .settings(sharedSettings)
+  .settings(noPublish)
   .enablePlugins(JmhPlugin)
   .dependsOn(`odin-core`, `odin-json`)
 
@@ -94,10 +99,12 @@ lazy val examples = (project in file("examples"))
   .settings(
     coverageExcludedPackages := "io.odin.examples.*"
   )
+  .settings(noPublish)
   .dependsOn(`odin-core` % "compile->compile;test->test")
 
 lazy val odin = (project in file("."))
   .settings(sharedSettings)
+  .settings(noPublish)
   .dependsOn(`odin-core` % "compile->compile;test->test", `odin-json`)
   .aggregate(`odin-core`, benchmarks, `odin-json`, examples)
 

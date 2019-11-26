@@ -11,7 +11,6 @@ import cats.syntax.all._
   * To safely allocate, release and drain this queue, async logger is wrapped in `Resource`
   */
 object AsyncHelloWorld extends IOApp {
-
   val loggerResource: Resource[IO, Logger[IO]] = consoleLogger[IO]().withAsync()
 
   def run(args: List[String]): IO[ExitCode] =

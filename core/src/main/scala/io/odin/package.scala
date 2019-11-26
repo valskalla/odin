@@ -1,6 +1,6 @@
 package io
 
-import cats.effect.{Clock, Concurrent, ContextShift, Resource, Sync, Timer}
+import cats.effect.{Concurrent, ContextShift, Resource, Sync, Timer}
 import io.odin.formatter.Formatter
 import io.odin.loggers.{ConsoleLogger, FileLogger}
 
@@ -9,7 +9,7 @@ package object odin {
     * Basic console logger that prints to STDOUT & STDERR
     * @param formatter formatter to use for log messages
     */
-  def consoleLogger[F[_]: Sync: Clock: ContextShift](formatter: Formatter = Formatter.default): Logger[F] =
+  def consoleLogger[F[_]: Sync: Timer: ContextShift](formatter: Formatter = Formatter.default): Logger[F] =
     ConsoleLogger(formatter)
 
   /**
