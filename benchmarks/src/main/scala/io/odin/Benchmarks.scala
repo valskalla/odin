@@ -90,7 +90,8 @@ class FileLoggerBenchmarks extends OdinBenchmarks {
 @State(Scope.Benchmark)
 class AsyncLoggerBenchmark extends OdinBenchmarks {
   val fileName: String = Files.createTempFile(UUID.randomUUID().toString, "").toAbsolutePath.toString
-  val (asyncLogger: Logger[IO], cancelToken: IO[Unit]) = fileLogger[IO](fileName).withAsync().allocated.unsafeRunSync()
+  val (asyncLogger: Logger[IO], cancelToken: IO[Unit]) =
+    fileLogger[IO](fileName).withAsync(maxBufferSize = Some(1000000)).allocated.unsafeRunSync()
 
   @Benchmark
   @OperationsPerInvocation(1000)

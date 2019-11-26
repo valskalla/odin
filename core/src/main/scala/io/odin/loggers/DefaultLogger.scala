@@ -4,6 +4,7 @@ import java.util.concurrent.TimeUnit
 
 import cats.Monad
 import cats.effect.Clock
+import cats.instances.all._
 import cats.syntax.all._
 import io.odin.meta.{Position, Render}
 import io.odin.{Level, Logger, LoggerMessage}
@@ -33,6 +34,9 @@ abstract class DefaultLogger[F[_]](implicit clock: Clock[F], F: Monad[F]) extend
     } yield {
       ()
     }
+
+  def log(msgs: List[LoggerMessage]): F[Unit] =
+    msgs.traverse(msg => log(msg)).void
 
   def trace[M](msg: => M)(implicit render: Render[M], position: Position): F[Unit] =
     log(Level.Trace, msg)

@@ -19,4 +19,12 @@ class ConstContextLoggerSpec extends OdinSpec {
       written.context shouldBe loggerMessage.context ++ ctx
     }
   }
+
+  it should "add constant context to the records" in {
+    forAll { (messages: List[LoggerMessage], ctx: Map[String, String]) =>
+      val logger = new WriterTLogger[IO].withConstContext(ctx)
+      val written = logger.log(messages).written.unsafeRunSync()
+      written.map(_.context) shouldBe messages.map(_.context ++ ctx)
+    }
+  }
 }

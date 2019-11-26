@@ -24,4 +24,12 @@ class ContextualLoggerSpec extends OdinSpec {
       written.context shouldBe loggerMessage.context ++ ctx
     }
   }
+
+  it should "embed context in all messages" in {
+    forAll { (msgs: List[LoggerMessage], ctx: Map[String, String]) =>
+      val log = logger.withContext
+      val written = log.log(msgs).apply(ctx).written.unsafeRunSync()
+      written.map(_.context) shouldBe msgs.map(_.context ++ ctx)
+    }
+  }
 }
