@@ -30,6 +30,16 @@ class LoggerMonoidSpec extends OdinSpec {
     }
   }
 
+  it should "(logger1 |+| logger2).log(list) <-> (logger1.log |+| logger2.log(list))" in {
+    forAll { (uuid1: UUID, uuid2: UUID, msg: List[LoggerMessage]) =>
+      val logger1: Logger[F] = NamedLogger(uuid1)
+      val logger2: Logger[F] = NamedLogger(uuid2)
+      val a = (logger1 |+| logger2).log(msg)
+      val b = logger1.log(msg) |+| logger2.log(msg)
+      a.written.unsafeRunSync() shouldBe b.written.unsafeRunSync()
+    }
+  }
+
   case class NamedLogger(loggerId: UUID) extends DefaultLogger[F] {
     def log(msg: LoggerMessage): F[Unit] = WriterT.tell(List(loggerId -> msg))
   }

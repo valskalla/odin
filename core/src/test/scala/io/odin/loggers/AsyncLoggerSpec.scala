@@ -47,4 +47,20 @@ class AsyncLoggerSpec extends OdinSpec {
       }).runSyncUnsafe()
     }
   }
+
+  it should "ignore errors in underlying logger" in {
+    val errorLogger = new DefaultLogger[Task] {
+      def log(msg: LoggerMessage): Task[Unit] = Task.raiseError(new Error)
+    }
+    forAll { msgs: List[LoggerMessage] =>
+      (for {
+        queue <- ConcurrentQueue.unbounded[Task, LoggerMessage]()
+        logger = AsyncLogger(queue, 1.millis, errorLogger)
+        _ <- logger.log(msgs)
+        result <- logger.drain
+      } yield {
+        result shouldBe ()
+      }).runSyncUnsafe()
+    }
+  }
 }
