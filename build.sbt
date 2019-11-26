@@ -39,21 +39,36 @@ lazy val catsRetry = List(
 
 lazy val sharedSettings = Seq(
   scalaVersion := "2.13.1",
-  version := "0.1.0-SNAPSHOT",
   organization := "com.github.scala-odin",
   libraryDependencies ++= scalaCheck :: scalaTest :: Nil,
   addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3"),
   crossScalaVersions := scalaVersions,
   classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.ScalaLibrary,
   scalacOptions := scalacOptionsVersion(scalaVersion.value),
-  scalacOptions in(Compile, console) ~= (_.filterNot(
+  scalacOptions in (Compile, console) ~= (_.filterNot(
     Set(
       "-Ywarn-unused:imports",
       "-Xfatal-warnings",
       "-Wunused:implicits",
       "-Werror"
     )
-  ))
+  )),
+  homepage := Some(url("https://github.com/scalameta/sbt-scalafmt")),
+  licenses := List("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
+  developers := List(
+    Developer(
+      "sergeykolbasov",
+      "Sergey Kolbasov",
+      "whoisliar@gmail.com",
+      url("https://github.com/sergeykolbasov")
+    ),
+    Developer(
+      "Doikor",
+      "Aki Huttunen",
+      "doikor@gmail.com",
+      url("https://github.com/Doikor")
+    )
+  )
 )
 
 lazy val `odin-core` = (project in file("core"))
