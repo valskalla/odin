@@ -7,6 +7,8 @@ import io.odin.meta.{Position, Render}
 trait Logger[F[_]] {
   def log(msg: LoggerMessage): F[Unit]
 
+  def log(msgs: List[LoggerMessage]): F[Unit]
+
   def trace[M](msg: => M)(implicit render: Render[M], position: Position): F[Unit]
 
   def trace[M](msg: => M, t: Throwable)(implicit render: Render[M], position: Position): F[Unit]
@@ -67,6 +69,8 @@ object Logger extends Noop with LoggerInstances {
   implicit class LoggerOps[F[_]](logger: Logger[F]) {
     def mapK[G[_]](f: F ~> G): Logger[G] = new Logger[G] {
       def log(msg: LoggerMessage): G[Unit] = f(logger.log(msg))
+
+      def log(msgs: List[LoggerMessage]): G[Unit] = f(logger.log(msgs))
 
       def trace[M](msg: => M)(implicit render: Render[M], position: Position): G[Unit] = f(logger.trace(msg))
 
@@ -156,6 +160,8 @@ trait LoggerInstances {
 private[odin] class NoopLogger[F[_]](implicit F: Applicative[F]) extends Logger[F] {
   def log(msg: LoggerMessage): F[Unit] = F.unit
 
+  def log(msgs: List[LoggerMessage]): F[Unit] = F.unit
+
   def trace[M](msg: => M)(implicit render: Render[M], position: Position): F[Unit] = F.unit
 
   def trace[M](msg: => M, t: Throwable)(implicit render: Render[M], position: Position): F[Unit] = F.unit
@@ -218,6 +224,8 @@ private[odin] class MonoidLogger[F[_]: Applicative] extends Monoid[Logger[F]] {
   def combine(x: Logger[F], y: Logger[F]): Logger[F] = new Logger[F] {
     def log(msg: LoggerMessage): F[Unit] =
       x.log(msg) *> y.log(msg)
+
+    def log(msgs: List[LoggerMessage]): F[Unit] = x.log(msgs) *> y.log(msgs)
 
     def trace[M](msg: => M)(implicit render: Render[M], position: Position): F[Unit] =
       x.trace(msg) *> y.trace(msg)

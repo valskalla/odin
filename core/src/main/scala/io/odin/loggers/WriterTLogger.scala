@@ -11,4 +11,6 @@ import io.odin.LoggerMessage
   */
 class WriterTLogger[F[_]: Clock: Monad] extends DefaultLogger[WriterT[F, List[LoggerMessage], *]] {
   def log(msg: LoggerMessage): WriterT[F, List[LoggerMessage], Unit] = WriterT.tell(List(msg))
+
+  override def log(msgs: List[LoggerMessage]): WriterT[F, List[LoggerMessage], Unit] = WriterT.tell(msgs)
 }

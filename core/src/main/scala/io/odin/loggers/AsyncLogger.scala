@@ -1,7 +1,6 @@
 package io.odin.loggers
 
 import cats.effect.{Concurrent, ConcurrentEffect, ContextShift, Fiber, Resource, Timer}
-import cats.instances.list._
 import cats.syntax.all._
 import io.odin.{Logger, LoggerMessage}
 import monix.catnap.ConcurrentQueue
@@ -26,8 +25,14 @@ case class AsyncLogger[F[_]](queue: ConcurrentQueue[F, LoggerMessage], timeWindo
   def drain: F[Unit] = {
     queue
       .drain(0, Int.MaxValue)
-      .flatMap(msgs => msgs.toList.traverse(inner.log))
+      .flatMap {
+        msgs =>
+          inner.log(msgs.toList)
+      }
       .void
+      .handleErrorWith { _ =>
+        F.unit
+      }
   }
 
   /**

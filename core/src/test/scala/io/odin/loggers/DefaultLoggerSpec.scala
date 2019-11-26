@@ -1,6 +1,7 @@
 package io.odin.loggers
 
 import cats.Id
+import cats.instances.list._
 import cats.data.Writer
 import cats.effect.Clock
 import io.odin.{Level, Logger, LoggerMessage, OdinSpec}
@@ -41,12 +42,21 @@ class DefaultLoggerSpec extends OdinSpec {
     }
   }
 
+  it should "write multiple messages" in {
+    forAll { msgs: List[LoggerMessage] =>
+      implicit val clk = clock(0L)
+      logger.log(msgs).written shouldBe msgs
+    }
+  }
+
   private def clock(timestamp: Long): Clock[Id] = new Clock[Id] {
     def realTime(unit: TimeUnit): Id[Long] = timestamp
     def monotonic(unit: TimeUnit): Id[Long] = timestamp
   }
 
-  private def logger(implicit clock: Clock[Id]): Logger[F] = new WriterTLogger[Id]
+  private def logger(implicit clock: Clock[Id]): Logger[F] = new DefaultLogger[Writer[List[LoggerMessage], *]] {
+    def log(msg: LoggerMessage): Writer[List[LoggerMessage], Unit] = Writer.tell(List(msg))
+  }
 
   private def check(
       fn: => F[Unit]
