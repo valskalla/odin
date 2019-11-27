@@ -27,10 +27,10 @@ Documentation
 
 ### Setup
 
-Odin is published to Maven Central and cross-built for Scala 2.12 and 2.13. Add the following lines to your build:
+Odin is published to Maven Central and cross-built for Scala 2.12 and 2.13. Add the following line to your build:
 
 ```
-//yet to publish
+libraryDependencies += "com.github.valskalla" %% "odin-core" % "0.1.0"
 ```
 
 ### Example
