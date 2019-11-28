@@ -7,7 +7,11 @@ import cats.syntax.all._
 import io.odin.{Logger, LoggerMessage}
 
 /**
-  * Logger that extracts context from environment of `F[_]` with the help of [[WithContext]] type class
+  * Logger that extracts context from environment of `F[_]` with the help of [[WithContext]] type class.
+  *
+  * One of the examples of `F[_]` that has a context is `Reader` (also known as `Kleisli`) that is abstraction over
+  * function `A => M[B]`. If there is a way to extract context `Map[String, String]` from the `A` (see [[HasContext]]),
+  * then it's possible to add this context to the log.
   */
 case class ContextualLogger[F[_]: Timer: Monad](inner: Logger[F])(implicit withContext: WithContext[F])
     extends DefaultLogger[F] {
