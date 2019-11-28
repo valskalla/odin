@@ -75,14 +75,12 @@ class RouterLoggerSpec extends OdinSpec {
   it should "noop logs with level less than set" in {
     val logger = new WriterTLogger[IO]
 
-    forAll { (level: Level, msg: LoggerMessage) =>
+    forAll { (level: Level, msgs: List[LoggerMessage]) =>
       val log = logger.withMinimalLevel(level)
-      val written = log.log(msg).written.unsafeRunSync()
-      if (msg.level >= level) {
-        written shouldBe List(msg)
-      } else {
-        written shouldBe Nil
-      }
+      val written = msgs.traverse(log.log).written.unsafeRunSync()
+      val batchWritten = log.log(msgs).written.unsafeRunSync()
+      written shouldBe msgs.filter(_.level >= level)
+      batchWritten shouldBe written
     }
   }
 

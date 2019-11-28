@@ -6,30 +6,36 @@ import cats.{Order, Show}
 /**
   * Message log level
   */
-sealed abstract class Level(val value: Int)
+sealed trait Level
 
 object Level {
-  case object Trace extends Level(0) {
+  case object Trace extends Level {
     override val toString: String = "TRACE"
   }
 
-  case object Debug extends Level(1) {
+  case object Debug extends Level {
     override val toString: String = "DEBUG"
   }
 
-  case object Info extends Level(2) {
+  case object Info extends Level {
     override val toString: String = "INFO"
   }
 
-  case object Warn extends Level(3) {
+  case object Warn extends Level {
     override val toString: String = "WARN"
   }
 
-  case object Error extends Level(4) {
+  case object Error extends Level {
     override val toString: String = "ERROR"
   }
 
   implicit val show: Show[Level] = Show.fromToString[Level]
 
-  implicit val order: Order[Level] = Order.by[Level, Int](_.value)
+  implicit val order: Order[Level] = Order.by[Level, Int] {
+    case Error => 4
+    case Warn  => 3
+    case Info  => 2
+    case Debug => 1
+    case Trace => 0
+  }
 }
