@@ -13,11 +13,12 @@
 Odin library enables functional approach to logging in Scala applications with reasoning and performance being
 top priorities.
 
-- Each effect is represented with tagless `F[_]` style
-- Context is a first-class citizen. No more `TheadLocal` MDCs.
+- Each effect is represented with polymorphic `F[_]` style
+- Context is a first-class citizen. Logger is structured by default, no more `TheadLocal` MDCs
 - Position tracing implemented with macro instead of reflection considerably boosts the performance
 - Own performant logger backends for console and log files
 - Composable loggers to bring different loggers together
+- Programatically configurable. Scala is the perfect language for describing configs
 
 Standing on the shoulders of `cats-effect` type classes, Odin abstracts away from concrete effect types, allowing
 users to decide what they feel comfortable with: `IO`, `ZIO`, `monix.Task`, `ReaderT` etc. The choice is yours.
