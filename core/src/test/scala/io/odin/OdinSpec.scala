@@ -24,7 +24,7 @@ trait OdinSpec extends FlatSpec with Matchers with Checkers with ScalaCheckDrive
 
   val positionGen: Gen[Position] = for {
     fileName <- nonEmptyStringGen
-    enclosureName <- nonEmptyStringGen
+    enclosureName <- Gen.uuid.map(_.toString)
     packageName <- nonEmptyStringGen
     line <- Gen.posNum[Int]
   } yield {

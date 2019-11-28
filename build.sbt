@@ -6,6 +6,7 @@ lazy val versions = new {
   val monix = "3.1.0"
   val scalaCheck = "1.14.2"
   val catsRetry = "0.3.2"
+  val catsScalacheck = "0.2.0"
 }
 
 lazy val scalaVersions = List("2.13.1", "2.12.10")
@@ -31,6 +32,8 @@ lazy val monix = "io.monix" %% "monix" % versions.monix % Test
 lazy val perfolation = "com.outr" %% "perfolation" % "1.1.5"
 
 lazy val circeCore = "io.circe" %% "circe-core" % "0.12.3"
+
+lazy val catsScalacheck = "io.chrisdavenport" %% "cats-scalacheck" % versions.catsScalacheck % Test
 
 lazy val catsRetry = List(
   "com.github.cb372" %% "cats-retry-core",
@@ -78,7 +81,7 @@ lazy val sharedSettings = Seq(
 lazy val `odin-core` = (project in file("core"))
   .settings(sharedSettings)
   .settings(
-    libraryDependencies ++= monix :: catsMtl :: sourcecode :: monixCatnap :: perfolation :: catsRetry ::: cats
+    libraryDependencies ++= catsScalacheck :: monix :: catsMtl :: sourcecode :: monixCatnap :: perfolation :: catsRetry ::: cats
   )
 
 lazy val benchmarks = (project in file("benchmarks"))

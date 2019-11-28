@@ -4,8 +4,8 @@ import cats.data.WriterT
 import cats.effect.{IO, Timer}
 import cats.instances.list._
 import cats.syntax.all._
-import io.odin.{Level, Logger, LoggerMessage, OdinSpec}
 import io.odin.syntax._
+import io.odin.{Level, Logger, LoggerMessage, OdinSpec}
 
 class RouterLoggerSpec extends OdinSpec {
   implicit val timer: Timer[IO] = IO.timer(scala.concurrent.ExecutionContext.global)
@@ -16,62 +16,86 @@ class RouterLoggerSpec extends OdinSpec {
     def log(msg: LoggerMessage): F[Unit] = WriterT.tell(List(loggerName -> msg))
   }
 
-  it should "route logs to corresponding loggers" in {
-    forAll { (p1: (String, LoggerMessage), p2: (String, LoggerMessage)) =>
-      val routerLogger = RouterLogger[F] {
-        case msg if msg == p1._2 => TestLogger(p1._1)
-        case msg if msg == p2._2 => TestLogger(p2._1)
-      }
-
-      val List(written1) = routerLogger.log(p1._2).written.unsafeRunSync()
-      val List(written2) = routerLogger.log(p2._2).written.unsafeRunSync()
-
-      written1 shouldBe p1
-      written2 shouldBe p2
-    }
-  }
-
   it should "route based on the package" in {
-    forAll { (p1: (String, LoggerMessage), p2: (String, LoggerMessage)) =>
-      val routerLogger = RouterLogger.packageRoutingLogger[F](
-        p1._2.position.packageName -> TestLogger(p1._1),
-        p2._2.position.packageName -> TestLogger(p2._1)
-      )
+    forAll { ls: List[LoggerMessage] =>
+      val withEnclosure = ls.groupBy(_.position.enclosureName)
+      val routerLogger = RouterLogger
+        .packageRoutingLogger[F](
+          withEnclosure.toList.map {
+            case (key, _) => key -> TestLogger(key)
+          }: _*
+        )
+        .withNoopFallback
 
-      val List(written1) = routerLogger.log(p1._2).written.unsafeRunSync()
-      val List(written2) = routerLogger.log(p2._2).written.unsafeRunSync()
+      val written = ls.traverse(routerLogger.log).written.unsafeRunSync()
+      val batchWritten = routerLogger.log(ls).written.unsafeRunSync()
 
-      written1 shouldBe p1
-      written2 shouldBe p2
+      written shouldBe ls.map(msg => msg.position.enclosureName -> msg)
+      batchWritten should contain theSameElementsAs written
     }
   }
 
   it should "route based on the class" in {
-    forAll { (msg: String, loggerName1: String, loggerName2: String) =>
-      val routerLogger = RouterLogger.classRoutingLogger[F](
-        classOf[RouterLoggerSpec] -> TestLogger(loggerName1),
-        classOf[TestClass[F]] -> TestLogger(loggerName2)
-      )
+    forAll(nonEmptyStringGen, nonEmptyStringGen, nonEmptyStringGen) {
+      (msg: String, loggerName1: String, loggerName2: String) =>
+        val routerLogger = RouterLogger
+          .classRoutingLogger[F](
+            classOf[RouterLoggerSpec] -> TestLogger(loggerName1),
+            classOf[TestClass[F]] -> TestLogger(loggerName2)
+          )
+          .withNoopFallback
 
-      val List((ln1, _)) = routerLogger.info(msg).written.unsafeRunSync()
-      val List((ln2, _)) = (new TestClass[F](routerLogger)).log(msg).written.unsafeRunSync()
+        val List((ln1, _)) = routerLogger.info(msg).written.unsafeRunSync()
+        val List((ln2, _)) = (new TestClass[F](routerLogger)).log(msg).written.unsafeRunSync()
 
-      ln1 shouldBe loggerName1
-      ln2 shouldBe loggerName2
+        ln1 shouldBe loggerName1
+        ln2 shouldBe loggerName2
+    }
+  }
+
+  it should "route based on the level" in {
+    forAll { (ls: List[LoggerMessage]) =>
+      val withLevels = ls.groupBy(_.level)
+      val routerLogger = RouterLogger
+        .levelRoutingLogger[F](
+          withLevels.map {
+            case (key, _) => key -> TestLogger(key.show)
+          }
+        )
+        .withNoopFallback
+
+      val written = ls.traverse(routerLogger.log).written.unsafeRunSync()
+      val batchWritten = routerLogger.log(ls).written.unsafeRunSync()
+
+      written.toMap shouldBe ls.map(msg => msg.level.show -> msg).toMap
+      batchWritten should contain theSameElementsAs written
     }
   }
 
   it should "noop logs with level less than set" in {
     val logger = new WriterTLogger[IO]
 
-    forAll { (level: Level, msg: LoggerMessage) =>
+    forAll { (level: Level, msgs: List[LoggerMessage]) =>
       val log = logger.withMinimalLevel(level)
-      val written = log.log(msg).written.unsafeRunSync()
-      if (msg.level >= level) {
-        written shouldBe List(msg)
-      } else {
-        written shouldBe Nil
-      }
+      val written = msgs.traverse(log.log).written.unsafeRunSync()
+      val batchWritten = log.log(msgs).written.unsafeRunSync()
+      written shouldBe msgs.filter(_.level >= level)
+      batchWritten shouldBe written
+    }
+  }
+
+  it should "fallback to provided logger" in {
+    forAll { ls: List[LoggerMessage] =>
+      val fallback = TestLogger("fallback")
+      val routerLogger = RouterLogger
+        .packageRoutingLogger[F]()
+        .withFallback(fallback)
+
+      val written = ls.traverse(routerLogger.log).written.unsafeRunSync()
+      val batchWritten = routerLogger.log(ls).written.unsafeRunSync()
+
+      written shouldBe ls.map(msg => "fallback" -> msg)
+      batchWritten should contain theSameElementsAs written
     }
   }
 }

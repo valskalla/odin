@@ -51,9 +51,10 @@ object AsyncLogger {
     * Create async logger and start internal loop of sending events down the chain from the buffer once
     * `Resource` is used.
     *
+    * @param inner logger that will receive messages from the buffer
+    * @param timeWindow pause between buffer flushing
     * @param maxBufferSize If `maxBufferSize` is set to some value and buffer size grows to that value,
     *                      any new events might be dropped until there is a space in the buffer.
-    * @param inner logger that will receive messages from the buffer
     */
   def withAsync[F[_]: Timer: ContextShift](
       inner: Logger[F],
