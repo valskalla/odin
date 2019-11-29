@@ -20,7 +20,7 @@ class RouterLoggerSpec extends OdinSpec {
     forAll { ls: List[LoggerMessage] =>
       val withEnclosure = ls.groupBy(_.position.enclosureName)
       val routerLogger = RouterLogger
-        .packageRoutingLogger[F](
+        .enclosureRouting[F](
           withEnclosure.toList.map {
             case (key, _) => key -> TestLogger(key)
           }: _*
@@ -88,7 +88,7 @@ class RouterLoggerSpec extends OdinSpec {
     forAll { ls: List[LoggerMessage] =>
       val fallback = TestLogger("fallback")
       val routerLogger = RouterLogger
-        .packageRoutingLogger[F]()
+        .enclosureRouting[F]()
         .withFallback(fallback)
 
       val written = ls.traverse(routerLogger.log).written.unsafeRunSync()
