@@ -14,7 +14,7 @@ object RouterLogger {
     * Route logs to specific logger based on the fully qualified package name.
     * Beware of O(n) complexity due to the partial matching done during the logging
     */
-  def packageRoutingLogger[F[_]: Timer: Monad](router: (String, Logger[F])*): DefaultBuilder[F] = {
+  def enclosureRouting[F[_]: Timer: Monad](router: (String, Logger[F])*): DefaultBuilder[F] = {
     new DefaultBuilder[F](new EnclosureRouting(_, router.toList))
   }
 
