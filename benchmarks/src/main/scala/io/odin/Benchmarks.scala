@@ -140,11 +140,17 @@ class RouterLoggerBenchmarks extends OdinBenchmarks {
 @State(Scope.Benchmark)
 class FormatterBenchmarks extends OdinBenchmarks {
   @Benchmark
-  @OperationsPerInvocation(1000)
-  def defaultFormatter(): Unit = for (_ <- 1 to 1000) Formatter.default.format(loggerMessage)
+  def defaultFormatter(): Unit = Formatter.default.format(loggerMessage)
 
   @Benchmark
-  @OperationsPerInvocation(1000)
-  def jsonFormatter(): Unit = for (_ <- 1 to 1000) JsonFormatter.json.format(loggerMessage)
+  def jsonFormatter(): Unit = JsonFormatter.json.format(loggerMessage)
+}
+
+@State(Scope.Benchmark)
+class PositionBenchmark extends OdinBenchmarks {
+
+  @Benchmark
+  def resolve(): Unit = implicitly[Position].enclosureName
+
 }
 // $COVERAGE-ON$
