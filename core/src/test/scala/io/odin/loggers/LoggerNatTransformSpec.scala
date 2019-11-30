@@ -2,8 +2,8 @@ package io.odin.loggers
 
 import cats.data.{Writer, WriterT}
 import cats.effect.{Clock, IO, Timer}
-import cats.{~>, Id}
-import io.odin.{Logger, LoggerMessage, OdinSpec}
+import cats.{Id, ~>}
+import io.odin.{Level, Logger, LoggerMessage, OdinSpec}
 
 import scala.concurrent.duration.{FiniteDuration, TimeUnit}
 
@@ -14,8 +14,8 @@ class LoggerNatTransformSpec extends OdinSpec {
   it should "transform each method" in {
     forAll { (msg: String, ctx: Map[String, String], throwable: Throwable, timestamp: Long) =>
       implicit val clk: Timer[Id] = clock(timestamp)
-      val logF = logger
-      val logFF = logF.mapK(nat)
+      val logF = logger.withMinimalLevel(Level.Trace)
+      val logFF = logF.mapK(nat).withMinimalLevel(Level.Trace)
       check(logF.trace(msg), logFF.trace(msg))
       check(logF.trace(msg, throwable), logFF.trace(msg, throwable))
       check(logF.trace(msg, ctx), logFF.trace(msg, ctx))

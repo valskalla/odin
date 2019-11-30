@@ -17,7 +17,7 @@ case class AsyncLogger[F[_]](queue: ConcurrentQueue[F, LoggerMessage], timeWindo
     implicit F: Concurrent[F],
     timer: Timer[F],
     contextShift: ContextShift[F]
-) extends DefaultLogger[F] {
+) extends DefaultLogger[F](inner.minLevel) {
   def log(msg: LoggerMessage): F[Unit] = {
     queue.tryOffer(msg).void
   }

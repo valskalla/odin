@@ -12,8 +12,11 @@ package object odin {
     * Basic console logger that prints to STDOUT & STDERR
     * @param formatter formatter to use for log messages
     */
-  def consoleLogger[F[_]: Sync: Timer: ContextShift](formatter: Formatter = Formatter.default): Logger[F] =
-    ConsoleLogger(formatter)
+  def consoleLogger[F[_]: Sync: Timer: ContextShift](
+      formatter: Formatter = Formatter.default,
+      minLevel: Level = Level.Debug
+  ): Logger[F] =
+    ConsoleLogger(formatter, minLevel)
 
   /**
     * Create logger with safe log file allocation suspended inside of `Resource`
@@ -22,9 +25,10 @@ package object odin {
     */
   def fileLogger[F[_]: Sync: Timer](
       fileName: String,
-      formatter: Formatter = Formatter.default
+      formatter: Formatter = Formatter.default,
+      minLevel: Level = Level.Debug
   ): Resource[F, Logger[F]] = {
-    FileLogger(fileName, formatter)
+    FileLogger(fileName, formatter, minLevel)
   }
 
   /**
@@ -38,7 +42,8 @@ package object odin {
       fileName: String,
       formatter: Formatter = Formatter.default,
       timeWindow: FiniteDuration = 1.second,
-      maxBufferSize: Option[Int] = None
+      maxBufferSize: Option[Int] = None,
+      minLevel: Level = Level.Debug
   ): Resource[F, Logger[F]] =
-    fileLogger[F](fileName, formatter).withAsync(timeWindow, maxBufferSize)
+    fileLogger[F](fileName, formatter, minLevel).withAsync(timeWindow, maxBufferSize)
 }

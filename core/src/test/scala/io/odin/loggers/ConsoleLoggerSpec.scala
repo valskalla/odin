@@ -6,7 +6,7 @@ import cats.effect.{IO, Timer}
 import cats.syntax.all._
 import io.odin.Level._
 import io.odin.formatter.Formatter
-import io.odin.{LoggerMessage, OdinSpec}
+import io.odin.{Level, LoggerMessage, OdinSpec}
 
 class ConsoleLoggerSpec extends OdinSpec {
   implicit val timer: Timer[IO] = IO.timer(scala.concurrent.ExecutionContext.global)
@@ -19,7 +19,7 @@ class ConsoleLoggerSpec extends OdinSpec {
         val errBaos = new ByteArrayOutputStream()
         val stdErr = new PrintStream(errBaos)
 
-        val consoleLogger = ConsoleLogger[IO](Formatter.default, stdOut, stdErr)
+        val consoleLogger = ConsoleLogger[IO](Formatter.default, stdOut, stdErr, Level.Trace)
         consoleLogger.log(loggerMessage).unsafeRunSync()
         outBaos.toString() shouldBe (formatter.format(loggerMessage) + System.lineSeparator())
       }
@@ -34,7 +34,7 @@ class ConsoleLoggerSpec extends OdinSpec {
         val errBaos = new ByteArrayOutputStream()
         val stdErr = new PrintStream(errBaos)
 
-        val consoleLogger = ConsoleLogger[IO](Formatter.default, stdOut, stdErr)
+        val consoleLogger = ConsoleLogger[IO](Formatter.default, stdOut, stdErr, Level.Trace)
         consoleLogger.log(loggerMessage).unsafeRunSync()
         errBaos.toString() shouldBe (formatter.format(loggerMessage) + System.lineSeparator())
       }

@@ -4,6 +4,7 @@ import cats.Id
 import cats.instances.list._
 import cats.data.Writer
 import cats.effect.{Clock, Timer}
+import cats.syntax.all._
 import io.odin.{Level, Logger, LoggerMessage, OdinSpec}
 
 import scala.concurrent.duration.{FiniteDuration, TimeUnit}
@@ -14,7 +15,7 @@ class DefaultLoggerSpec extends OdinSpec {
   it should "correctly construct LoggerMessage" in {
     forAll { (msg: String, ctx: Map[String, String], throwable: Throwable, timestamp: Long) =>
       implicit val clk: Timer[Id] = clock(timestamp)
-      val log = logger
+      val log = logger.withMinimalLevel(Level.Trace)
       check(log.trace(msg))(Level.Trace, msg, timestamp)
       check(log.trace(msg, throwable))(Level.Trace, msg, timestamp, throwable = Some(throwable))
       check(log.trace(msg, ctx))(Level.Trace, msg, timestamp, ctx)
@@ -45,8 +46,30 @@ class DefaultLoggerSpec extends OdinSpec {
   it should "write multiple messages" in {
     forAll { msgs: List[LoggerMessage] =>
       implicit val clk: Timer[Id] = clock(0L)
-      logger.log(msgs).written shouldBe msgs
+      logger.withMinimalLevel(Level.Trace).log(msgs).written shouldBe msgs
     }
+  }
+
+  it should "filter by minimal level" in {
+    implicit val clk: Timer[Id] = clock(0)
+    forAll { (minLevel: Level, msgLevel: Level, msg: String) =>
+      val l = logger.withMinimalLevel(minLevel)
+      val fn = levelToFn(l, msgLevel) _
+      val written = fn(msg).written
+      if (msgLevel >= minLevel) {
+        written shouldBe Symbol("nonEmpty")
+      } else {
+        written shouldBe Symbol("empty")
+      }
+    }
+  }
+
+  private def levelToFn(logger: Logger[F], level: Level)(msg: String): F[Unit] = level match {
+    case Level.Trace => logger.trace(msg)
+    case Level.Debug => logger.debug(msg)
+    case Level.Info  => logger.info(msg)
+    case Level.Warn  => logger.warn(msg)
+    case Level.Error => logger.error(msg)
   }
 
   private def clock(timestamp: Long): Timer[Id] = new Timer[Id] {

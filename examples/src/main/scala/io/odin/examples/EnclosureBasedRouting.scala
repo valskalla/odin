@@ -3,8 +3,7 @@ package io.odin.examples
 import cats.effect.{ExitCode, IO, IOApp}
 import cats.syntax.all._
 import io.odin._
-import io.odin.syntax._
-import io.odin.loggers.RouterLogger
+import io.odin.config._
 
 /**
   * Routing based on the enclosure, would it be a package, object, class or the function.
@@ -12,8 +11,8 @@ import io.odin.loggers.RouterLogger
   * Mind that match is done in order of definition, therefore the most specific routes should always appear on top
   */
 object EnclosureBasedRouting extends IOApp {
-  val logger: Logger[IO] = RouterLogger
-    .enclosureRouting(
+  val logger: Logger[IO] =
+    enclosureRouting(
       "io.odin.examples.EnclosureBasedRouting.foo" -> consoleLogger[IO]().withMinimalLevel(Level.Warn),
       "io.odin.examples.EnclosureBasedRouting.bar" -> consoleLogger[IO]().withMinimalLevel(Level.Info),
       "io.odin.examples" -> consoleLogger[IO]()

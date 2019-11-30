@@ -2,19 +2,12 @@ package io.odin
 
 import cats.Monad
 import cats.effect.{Concurrent, ConcurrentEffect, ContextShift, Resource, Timer}
-import io.odin.loggers.{AsyncLogger, ConstContextLogger, ContextualLogger, RouterLogger, WithContext}
+import io.odin.loggers.{AsyncLogger, ConstContextLogger, ContextualLogger, WithContext}
 
 import scala.concurrent.duration._
 
 package object syntax {
   implicit class LoggerSyntax[F[_]](logger: Logger[F]) {
-    /**
-      * Create logger that filters logs with level less than required
-      * @param level minimal log level filter
-      */
-    def withMinimalLevel(level: Level)(implicit clock: Timer[F], monad: Monad[F]): Logger[F] =
-      RouterLogger.withMinimalLevel(level, logger)
-
     /**
       * Create logger that adds constant context to each log record
       * @param ctx constant context
@@ -71,13 +64,6 @@ package object syntax {
         maxBufferSize: Option[Int] = None
     )(implicit timer: Timer[F], F: Concurrent[F], contextShift: ContextShift[F]): Resource[F, Logger[F]] =
       resource.flatMap(AsyncLogger.withAsync(_, timeWindow, maxBufferSize))
-
-    /**
-      * Create logger that filters logs with level less than required
-      * @param level minimal log level filter
-      */
-    def withMinimalLevel(level: Level)(implicit clock: Timer[F], monad: Monad[F]): Resource[F, Logger[F]] =
-      resource.map(RouterLogger.withMinimalLevel(level, _))
 
     /**
       * Create logger that adds constant context to each log record
