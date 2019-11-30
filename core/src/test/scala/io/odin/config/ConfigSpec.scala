@@ -1,13 +1,13 @@
-package io.odin.loggers
+package io.odin.config
 
 import cats.data.WriterT
 import cats.effect.{IO, Timer}
 import cats.instances.list._
 import cats.syntax.all._
-import io.odin.syntax._
+import io.odin.loggers.DefaultLogger
 import io.odin.{Level, Logger, LoggerMessage, OdinSpec}
 
-class RouterLoggerSpec extends OdinSpec {
+class ConfigSpec extends OdinSpec {
   implicit val timer: Timer[IO] = IO.timer(scala.concurrent.ExecutionContext.global)
 
   type F[A] = WriterT[IO, List[(String, LoggerMessage)], A]
@@ -19,13 +19,12 @@ class RouterLoggerSpec extends OdinSpec {
   it should "route based on the package" in {
     forAll { ls: List[LoggerMessage] =>
       val withEnclosure = ls.groupBy(_.position.enclosureName)
-      val routerLogger = RouterLogger
-        .enclosureRouting[F](
+      val routerLogger =
+        enclosureRouting[F](
           withEnclosure.toList.map {
             case (key, _) => key -> TestLogger(key)
           }: _*
-        )
-        .withNoopFallback
+        ).withNoopFallback.withMinimalLevel(Level.Trace)
 
       val written = ls.traverse(routerLogger.log).written.unsafeRunSync()
       val batchWritten = routerLogger.log(ls).written.unsafeRunSync()
@@ -38,12 +37,11 @@ class RouterLoggerSpec extends OdinSpec {
   it should "route based on the class" in {
     forAll(nonEmptyStringGen, nonEmptyStringGen, nonEmptyStringGen) {
       (msg: String, loggerName1: String, loggerName2: String) =>
-        val routerLogger = RouterLogger
-          .classRoutingLogger[F](
-            classOf[RouterLoggerSpec] -> TestLogger(loggerName1),
+        val routerLogger =
+          classRouting[F](
+            classOf[ConfigSpec] -> TestLogger(loggerName1),
             classOf[TestClass[F]] -> TestLogger(loggerName2)
-          )
-          .withNoopFallback
+          ).withNoopFallback
 
         val List((ln1, _)) = routerLogger.info(msg).written.unsafeRunSync()
         val List((ln2, _)) = (new TestClass[F](routerLogger)).log(msg).written.unsafeRunSync()
@@ -56,13 +54,11 @@ class RouterLoggerSpec extends OdinSpec {
   it should "route based on the level" in {
     forAll { (ls: List[LoggerMessage]) =>
       val withLevels = ls.groupBy(_.level)
-      val routerLogger = RouterLogger
-        .levelRoutingLogger[F](
-          withLevels.map {
-            case (key, _) => key -> TestLogger(key.show)
-          }
-        )
-        .withNoopFallback
+      val routerLogger = levelRouting[F](
+        withLevels.map {
+          case (key, _) => key -> TestLogger(key.show)
+        }
+      ).withNoopFallback.withMinimalLevel(Level.Trace)
 
       val written = ls.traverse(routerLogger.log).written.unsafeRunSync()
       val batchWritten = routerLogger.log(ls).written.unsafeRunSync()
@@ -72,24 +68,10 @@ class RouterLoggerSpec extends OdinSpec {
     }
   }
 
-  it should "noop logs with level less than set" in {
-    val logger = new WriterTLogger[IO]
-
-    forAll { (level: Level, msgs: List[LoggerMessage]) =>
-      val log = logger.withMinimalLevel(level)
-      val written = msgs.traverse(log.log).written.unsafeRunSync()
-      val batchWritten = log.log(msgs).written.unsafeRunSync()
-      written shouldBe msgs.filter(_.level >= level)
-      batchWritten shouldBe written
-    }
-  }
-
   it should "fallback to provided logger" in {
     forAll { ls: List[LoggerMessage] =>
       val fallback = TestLogger("fallback")
-      val routerLogger = RouterLogger
-        .enclosureRouting[F]()
-        .withFallback(fallback)
+      val routerLogger = enclosureRouting[F]().withFallback(fallback).withMinimalLevel(Level.Trace)
 
       val written = ls.traverse(routerLogger.log).written.unsafeRunSync()
       val batchWritten = routerLogger.log(ls).written.unsafeRunSync()

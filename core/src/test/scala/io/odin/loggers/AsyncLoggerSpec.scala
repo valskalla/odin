@@ -4,7 +4,7 @@ import cats.effect.Resource
 import cats.effect.concurrent.Ref
 import cats.instances.list._
 import cats.syntax.all._
-import io.odin.{Logger, LoggerMessage, OdinSpec}
+import io.odin.{Level, Logger, LoggerMessage, OdinSpec}
 import monix.catnap.ConcurrentQueue
 import monix.eval.Task
 import monix.execution.schedulers.TestScheduler
@@ -16,8 +16,10 @@ class AsyncLoggerSpec extends OdinSpec {
   implicit private val scheduler: TestScheduler = TestScheduler()
 
   case class RefLogger(ref: Ref[Task, List[LoggerMessage]]) extends DefaultLogger[Task] {
-    def log(msg: LoggerMessage): Task[Unit] = {
-      ref.update(_ :+ msg)
+    def log(msg: LoggerMessage): Task[Unit] = Task.raiseError(new IllegalStateException("Async should always batch"))
+
+    override def log(msgs: List[LoggerMessage]): Task[Unit] = {
+      ref.update(_ ::: msgs)
     }
   }
 
@@ -25,7 +27,7 @@ class AsyncLoggerSpec extends OdinSpec {
     forAll { msgs: List[LoggerMessage] =>
       (for {
         ref <- Resource.liftF(Ref.of[Task, List[LoggerMessage]](List.empty))
-        logger <- RefLogger(ref).withAsync()
+        logger <- RefLogger(ref).withMinimalLevel(Level.Trace).withAsync()
         _ <- Resource.liftF(msgs.traverse(logger.log))
         _ = scheduler.tick(10.millis)
         reported <- Resource.liftF(ref.get)

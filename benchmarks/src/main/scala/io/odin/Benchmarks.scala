@@ -50,6 +50,9 @@ class DefaultLoggerBenchmarks extends OdinBenchmarks {
   }
 
   @Benchmark
+  def ignored(): Unit = defaultLogger.trace(message).unsafeRunSync()
+
+  @Benchmark
   def msg(): Unit = defaultLogger.info(message).unsafeRunSync()
 
   @Benchmark
@@ -115,29 +118,6 @@ class AsyncLoggerBenchmark extends OdinBenchmarks {
 }
 
 @State(Scope.Benchmark)
-class RouterLoggerBenchmarks extends OdinBenchmarks {
-  val fileName: String = Files.createTempFile(UUID.randomUUID().toString, "").toAbsolutePath.toString
-
-  val (routerLogger: Logger[IO], cancelToken: IO[Unit]) =
-    fileLogger[IO](fileName).withMinimalLevel(io.odin.Level.Info).allocated.unsafeRunSync()
-
-  @Benchmark
-  @OperationsPerInvocation(1000)
-  def info(): Unit = for (_ <- 1 to 1000) routerLogger.info(message).unsafeRunSync()
-
-  @Benchmark
-  @OperationsPerInvocation(1000)
-  def trace(): Unit =
-    for (_ <- 1 to 1000) routerLogger.trace(message).unsafeRunSync()
-
-  @TearDown
-  def tearDown(): Unit = {
-    cancelToken.unsafeRunSync()
-    Files.delete(Paths.get(fileName))
-  }
-}
-
-@State(Scope.Benchmark)
 class FormatterBenchmarks extends OdinBenchmarks {
   @Benchmark
   def defaultFormatter(): Unit = Formatter.default.format(loggerMessage)
@@ -148,9 +128,7 @@ class FormatterBenchmarks extends OdinBenchmarks {
 
 @State(Scope.Benchmark)
 class PositionBenchmark extends OdinBenchmarks {
-
   @Benchmark
   def resolve(): Unit = implicitly[Position].enclosureName
-
 }
 // $COVERAGE-ON$

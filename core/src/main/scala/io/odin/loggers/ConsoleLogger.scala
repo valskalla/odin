@@ -7,8 +7,13 @@ import cats.syntax.all._
 import io.odin.formatter.Formatter
 import io.odin.{Level, Logger, LoggerMessage}
 
-case class ConsoleLogger[F[_]: Timer](formatter: Formatter, out: PrintStream, err: PrintStream)(implicit F: Sync[F])
-    extends DefaultLogger[F] {
+case class ConsoleLogger[F[_]: Timer](
+    formatter: Formatter,
+    out: PrintStream,
+    err: PrintStream,
+    override val minLevel: Level
+)(implicit F: Sync[F])
+    extends DefaultLogger[F](minLevel) {
   private def println(out: PrintStream, msg: LoggerMessage, formatter: Formatter): F[Unit] =
     F.delay(out.println(formatter.format(msg)))
 
@@ -21,6 +26,6 @@ case class ConsoleLogger[F[_]: Timer](formatter: Formatter, out: PrintStream, er
 }
 
 object ConsoleLogger {
-  def apply[F[_]: Timer: Sync](formatter: Formatter): Logger[F] =
-    ConsoleLogger(formatter, scala.Console.out, scala.Console.err)
+  def apply[F[_]: Timer: Sync](formatter: Formatter, minLevel: Level): Logger[F] =
+    ConsoleLogger(formatter, scala.Console.out, scala.Console.err, minLevel)
 }
