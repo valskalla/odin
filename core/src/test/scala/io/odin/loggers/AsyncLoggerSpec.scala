@@ -16,8 +16,10 @@ class AsyncLoggerSpec extends OdinSpec {
   implicit private val scheduler: TestScheduler = TestScheduler()
 
   case class RefLogger(ref: Ref[Task, List[LoggerMessage]]) extends DefaultLogger[Task] {
-    def log(msg: LoggerMessage): Task[Unit] = {
-      ref.update(_ :+ msg)
+    def log(msg: LoggerMessage): Task[Unit] = Task.raiseError(new IllegalStateException("Async should always batch"))
+
+    override def log(msgs: List[LoggerMessage]): Task[Unit] = {
+      ref.update(_ ::: msgs)
     }
   }
 
