@@ -4,6 +4,7 @@ import java.nio.file.{Files, Paths}
 import java.util.UUID
 import java.util.concurrent.TimeUnit
 
+import cats.Eval
 import cats.effect.{ContextShift, IO, Timer}
 import io.odin.loggers.DefaultLogger
 import io.odin.syntax._
@@ -24,7 +25,7 @@ abstract class OdinBenchmarks {
   val throwable = new Error()
   val loggerMessage: LoggerMessage = LoggerMessage(
     io.odin.Level.Debug,
-    () => message,
+    Eval.later(message),
     context,
     Some(throwable),
     Position(

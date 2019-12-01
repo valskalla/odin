@@ -2,7 +2,7 @@ package io.odin.loggers
 
 import java.util.concurrent.TimeUnit
 
-import cats.Monad
+import cats.{Eval, Monad}
 import cats.effect.Timer
 import cats.instances.all._
 import cats.syntax.all._
@@ -25,7 +25,7 @@ abstract class DefaultLogger[F[_]](val minLevel: Level = Level.Debug)(implicit t
         _ <- log(
           LoggerMessage(
             level = level,
-            message = () => render.render(msg),
+            message = Eval.later(render.render(msg)),
             context = ctx,
             exception = t,
             position = position,

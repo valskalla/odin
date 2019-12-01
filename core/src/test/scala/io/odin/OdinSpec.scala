@@ -1,8 +1,9 @@
 package io.odin
 
+import cats.Eval
 import io.odin.formatter.Formatter
 import io.odin.meta.Position
-import org.scalacheck.{Arbitrary, Gen}
+import org.scalacheck.{Arbitrary, Cogen, Gen}
 import org.scalatest.{FlatSpec, Matchers}
 import org.scalatestplus.scalacheck.{Checkers, ScalaCheckDrivenPropertyChecks}
 import org.typelevel.discipline.Laws
@@ -32,26 +33,32 @@ trait OdinSpec extends FlatSpec with Matchers with Checkers with ScalaCheckDrive
   }
   implicit val positionArbitrary: Arbitrary[Position] = Arbitrary(positionGen)
 
-  val loggerMessageGen: Gen[LoggerMessage] = for {
-    level <- levelGen
-    msg <- Gen.alphaNumStr
-    context <- Gen.listOfN(20, Gen.alphaNumStr.flatMap(key => Gen.alphaNumStr.map(key -> _)))
-    exception <- Gen.option(Arbitrary.arbitrary[Throwable])
-    position <- positionGen
-    threadName <- nonEmptyStringGen
-    timestamp <- Gen.choose(0, System.currentTimeMillis())
-  } yield {
-    LoggerMessage(
-      level = level,
-      message = () => msg,
-      context = context.toMap,
-      exception = exception,
-      position = position,
-      threadName = threadName,
-      timestamp = timestamp
-    )
+  val loggerMessageGen: Gen[LoggerMessage] = {
+    val startTime = System.currentTimeMillis()
+    for {
+      level <- levelGen
+      msg <- Gen.alphaNumStr
+      context <- Gen.listOfN(20, Gen.alphaNumStr.flatMap(key => Gen.alphaNumStr.map(key -> _)))
+      exception <- Gen.option(Arbitrary.arbitrary[Throwable])
+      position <- positionGen
+      threadName <- nonEmptyStringGen
+      timestamp <- Gen.choose(0, startTime)
+    } yield {
+      LoggerMessage(
+        level = level,
+        message = Eval.now(msg),
+        context = context.toMap,
+        exception = exception,
+        position = position,
+        threadName = threadName,
+        timestamp = timestamp
+      )
+    }
   }
   implicit val loggerMessageArbitrary: Arbitrary[LoggerMessage] = Arbitrary(loggerMessageGen)
+
+  implicit val cogenLoggerMessage: Cogen[LoggerMessage] =
+    Cogen[LoggerMessage]((msg: LoggerMessage) => msg.level.hashCode().toLong + msg.message.value.hashCode().toLong)
 
   val formatterGen: Gen[Formatter] = Gen.const(Formatter.default)
   implicit val formatterArbitrary: Arbitrary[Formatter] = Arbitrary(formatterGen)
