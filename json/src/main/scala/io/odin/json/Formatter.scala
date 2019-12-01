@@ -14,7 +14,7 @@ object Formatter {
       m =>
         (
           m.level.show,
-          m.message(),
+          m.message.value,
           m.context,
           m.exception.map(t => formatThrowable(t).toString()),
           p"${m.position.enclosureName}:${m.position.line}",

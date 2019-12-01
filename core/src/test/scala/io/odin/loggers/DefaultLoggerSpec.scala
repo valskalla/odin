@@ -98,7 +98,7 @@ class DefaultLoggerSpec extends OdinSpec {
   ) = {
     val List(loggerMessage) = fn.written
     loggerMessage.level shouldBe level
-    loggerMessage.message() shouldBe msg
+    loggerMessage.message.value shouldBe msg
     loggerMessage.context shouldBe ctx
     loggerMessage.exception shouldBe throwable
     loggerMessage.threadName shouldBe Thread.currentThread().getName

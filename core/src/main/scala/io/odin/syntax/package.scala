@@ -2,7 +2,7 @@ package io.odin
 
 import cats.Monad
 import cats.effect.{Concurrent, ConcurrentEffect, ContextShift, Resource, Timer}
-import io.odin.loggers.{AsyncLogger, ConstContextLogger, ContextualLogger, WithContext}
+import io.odin.loggers.{AsyncLogger, ConstContextLogger, ContextualLogger, ContramapLogger, FilterLogger, WithContext}
 
 import scala.concurrent.duration._
 
@@ -46,6 +46,18 @@ package object syntax {
         maxBufferSize: Option[Int] = None
     )(implicit timer: Timer[F], F: ConcurrentEffect[F], contextShift: ContextShift[F]): Logger[F] =
       AsyncLogger.withAsyncUnsafe(logger, timeWindow, maxBufferSize)
+
+    /**
+      * Modify logger message before it's written to the logger
+      */
+    def contramap(f: LoggerMessage => LoggerMessage)(implicit timer: Timer[F], F: Monad[F]): Logger[F] =
+      ContramapLogger(f, logger)
+
+    /**
+      * Filter messages given the predicate. Falsified cases are dropped from the logging
+      */
+    def filter(f: LoggerMessage => Boolean)(implicit timer: Timer[F], F: Monad[F]): Logger[F] =
+      FilterLogger(f, logger)
   }
 
   /**
@@ -78,5 +90,17 @@ package object syntax {
       */
     def withContext(implicit clock: Timer[F], monad: Monad[F], withContext: WithContext[F]): Resource[F, Logger[F]] =
       resource.map(ContextualLogger.withContext[F])
+
+    /**
+      * Intercept logger message before it's written to the logger
+      */
+    def contramap(f: LoggerMessage => LoggerMessage)(implicit timer: Timer[F], F: Monad[F]): Resource[F, Logger[F]] =
+      resource.map(ContramapLogger(f, _))
+
+    /**
+     * Filter messages given the predicate. Falsified cases are dropped from the logging
+     */
+    def filter(f: LoggerMessage => Boolean)(implicit timer: Timer[F], F: Monad[F]): Resource[F, Logger[F]] =
+      resource.map(FilterLogger(f, _))
   }
 }

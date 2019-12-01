@@ -1,5 +1,6 @@
 package io.odin
 
+import cats.Eval
 import io.odin.meta.Position
 
 /**
@@ -15,7 +16,7 @@ import io.odin.meta.Position
   */
 case class LoggerMessage(
     level: Level,
-    message: () => String,
+    message: Eval[String],
     context: Map[String, String],
     exception: Option[Throwable],
     position: Position,

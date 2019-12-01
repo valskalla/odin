@@ -16,9 +16,9 @@ object Formatter {
       case Some(t) =>
         val formattedThrowable = formatThrowable(t)
         p"${msg.timestamp.t.F}T${msg.timestamp.t.T} [${msg.threadName}] ${msg.level.show} ${msg.position.enclosureName}:${msg.position.line} - ${msg
-          .message()}${System.lineSeparator()}${formattedThrowable.toString}"
+          .message.value}${System.lineSeparator()}${formattedThrowable.toString}"
       case None =>
-        p"${msg.timestamp.t.F}T${msg.timestamp.t.T} [${msg.threadName}] ${msg.level.show} ${msg.position.enclosureName}:${msg.position.line} - ${msg.message()}"
+        p"${msg.timestamp.t.F}T${msg.timestamp.t.T} [${msg.threadName}] ${msg.level.show} ${msg.position.enclosureName}:${msg.position.line} - ${msg.message.value}"
     }
   }
 

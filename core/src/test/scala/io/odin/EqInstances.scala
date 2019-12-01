@@ -54,7 +54,7 @@ trait EqInstances {
     val LoggerMessage(lvl1, msg1, context1, exception1, position1, threadName1, timestamp1) = lm1
     val LoggerMessage(lvl2, msg2, context2, exception2, position2, threadName2, timestamp2) = lm2
     lvl1 == lvl2 &&
-    msg1() == msg2() &&
+    msg1.value == msg2.value &&
     context1 == context2 &&
     exception1 == exception2 &&
     position1 == position2 &&
