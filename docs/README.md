@@ -36,7 +36,7 @@ Documentation
 - [Minimal level](#minimal-level)
 - File logger
 - Async logger
-- Package and enclosure routing
+- Class and enclosure routing
 - Loggers composition
 - Constant context
 - Contextual effects
@@ -50,13 +50,13 @@ Odin is published to Maven Central and cross-built for Scala 2.12 and 2.13. Add 
 libraryDependencies ++= Seq(
   "com.github.valskalla" %% "odin-core",
   "com.github.valskalla" %% "odin-json" //to enable JSON formatter if needed
-).map(_ % "0.2.0+0-c8239d1f+20191201-1927-SNAPSHOT")
+).map(_ % "@VERSION@")
 ```
 
 ## Example
 
 Using `IOApp`:
-```scala
+```scala mdoc
 import cats.effect.{ExitCode, IO, IOApp}
 import cats.syntax.all._
 import io.odin._
@@ -98,7 +98,7 @@ trait Logger[F[_]] {
 Each method returns `F[Unit]`, so most of the time effects are suspended in the context of `F[_]`.
 
 **It's important to keep in memory** that effects like `IO`, `ZIO`, `Task` etc are lazily evaluated, therefore calling
-the logger methods isn't enough to emit the actual log. User need to combine log operations with the rest of code
+the logger methods isn't enough to emit the actual log. User has to to combine log operations with the rest of code
 using plead of options: `for ... yield` comprehension, `flatMap/map` or `>>/*>` operators from cats library. 
 
 Particularly interesting are the implicit arguments: `Position` and `Render[M]`.
@@ -116,7 +116,7 @@ Logger's methods are also polymorphic for messages. Users might log every type `
 By default, Odin provides `Render[String]` instance out of the box as well as `Render.fromToString` method to construct
 instances by calling the standard method `.toString` on type `M`:
 
-```scala
+```scala mdoc
 import io.odin.meta.Render
 
 case class Log(s: String, i: Int)
@@ -130,7 +130,7 @@ object Log {
 
 The most common logger to use:
 
-```scala
+```scala mdoc:silent
 import io.odin._
 import cats.effect.IO
 import cats.effect.Timer
@@ -143,22 +143,13 @@ val logger: Logger[IO] = consoleLogger[IO]()
 
 Now to the call:
 
-```scala
+```scala mdoc
 //doesn't print anything as the effect is suspended in IO
 logger.info("Hello?")
-// res0: IO[Unit] = Map(
-//   Bind(
-//     Delay(cats.effect.Clock$$anon$1$$Lambda$30992/0x000000080337d440@5fa948ce),
-//     io.odin.loggers.DefaultLogger$$Lambda$30993/0x000000080337c040@685ae1c9
-//   ),
-//   scala.Function1$$Lambda$14579/0x00000008032eb840@4036f1ba,
-//   1
-// )
 
 //prints "Hello world" to the STDOUT.
 //Although, don't use `unsafeRunSync` in production unless you know what you're doing
 logger.info("Hello world").unsafeRunSync()
-// 2019-12-01T23:59:20 [run-main-15] INFO repl.Session.App#res1:65 - Hello world
 ```
 
 All messages of level `WARN` and higher are routed to the _STDERR_ while messages with level `INFO` and below go to the _STDOUT_.
@@ -195,18 +186,16 @@ trait Formatter {
 
 _odin-core_ provides the `Formatter.default` that prints information in a nicely structured manner:
 
-```scala
+```scala mdoc
 import cats.syntax.all._
 (logger.info("No context") *> logger.info("Some context", Map("key" -> "value"))).unsafeRunSync()
-// 2019-12-01T23:59:20 [run-main-15] INFO repl.Session.App#res2:74 - No context
-// 2019-12-01T23:59:20 [run-main-15] INFO repl.Session.App#res2:74 - Some context - key: value
 ```
 
 ### JSON Formatter
 
 Library _odin-json_ enables output of logs as newline-delimited JSON records:
 
-```scala
+```scala mdoc:silent
 import io.odin.json.Formatter
 
 val jsonLogger = consoleLogger[IO](formatter = Formatter.json)
@@ -214,16 +203,15 @@ val jsonLogger = consoleLogger[IO](formatter = Formatter.json)
 
 Now messages printed with this logger will be encoded as JSON string using circe:
 
-```scala
+```scala mdoc
 jsonLogger.info("This is JSON").unsafeRunSync()
-// {"level":"INFO","message":"This is JSON","context":{},"exception":null,"position":"repl.Session.App#res3:89","thread_name":"run-main-15","timestamp":"2019-12-01T23:59:20"}
 ```
 
 ## Minimal level
 
 It's possible to set minimal level for log messages to i.e. disable debug logs in production mode:
 
-```scala
+```scala mdoc:silent
 
 //either by constructing logger with specific parameter
 val minLevelInfoLogger = consoleLogger[IO](minLevel = Level.Info)
@@ -234,7 +222,7 @@ val minLevelWarnLogger = logger.withMinimalLevel(Level.Warn)
 
 Those lines won't print anything:
 
-```scala
+```scala mdoc
 (minLevelInfoLogger.debug("Invisible") *> minLevelWarnLogger.info("Invisible too")).unsafeRunSync()
 ```
 
