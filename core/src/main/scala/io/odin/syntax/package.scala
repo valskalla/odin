@@ -17,7 +17,7 @@ package object syntax {
 
     /**
       * Create contextual logger that is capable of picking up context from inside of `F[_]`.
-      * See [[ContextualLogger]] for more info
+      * See `ContextualLogger` for more info
       */
     def withContext(implicit clock: Timer[F], monad: Monad[F], withContext: WithContext[F]): Logger[F] =
       ContextualLogger.withContext(logger)
@@ -86,7 +86,7 @@ package object syntax {
 
     /**
       * Create contextual logger that is capable of picking up context from inside of `F[_]`.
-      * See [[ContextualLogger]] for more info
+      * See `ContextualLogger` for more info
       */
     def withContext(implicit clock: Timer[F], monad: Monad[F], withContext: WithContext[F]): Resource[F, Logger[F]] =
       resource.map(ContextualLogger.withContext[F])

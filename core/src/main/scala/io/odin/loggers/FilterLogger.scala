@@ -5,7 +5,7 @@ import cats.effect.Timer
 import io.odin.{Logger, LoggerMessage}
 
 /**
-  * Filter each [[LoggerMessage]] using given predicate before passing it to the next logger
+  * Filter each `LoggerMessage` using given predicate before passing it to the next logger
   */
 case class FilterLogger[F[_]: Timer](fn: LoggerMessage => Boolean, inner: Logger[F])(implicit F: Monad[F])
     extends DefaultLogger[F] {

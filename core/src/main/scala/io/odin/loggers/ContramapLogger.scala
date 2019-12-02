@@ -5,7 +5,7 @@ import cats.effect.Timer
 import io.odin.{Logger, LoggerMessage}
 
 /**
-  * Apply given function to each [[LoggerMessage]] before passing it to the next logger
+  * Apply given function to each `LoggerMessage` before passing it to the next logger
   */
 case class ContramapLogger[F[_]: Timer: Monad](f: LoggerMessage => LoggerMessage, inner: Logger[F])
     extends DefaultLogger[F](inner.minLevel) {
