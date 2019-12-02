@@ -50,7 +50,7 @@ Odin is published to Maven Central and cross-built for Scala 2.12 and 2.13. Add 
 libraryDependencies ++= Seq(
   "com.github.valskalla" %% "odin-core",
   "com.github.valskalla" %% "odin-json" //to enable JSON formatter if needed
-).map(_ % "0.1.0")
+).map(_ % "0.2.0")
 ```
 
 ## Example
