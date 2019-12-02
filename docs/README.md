@@ -34,13 +34,13 @@ Documentation
 - [Formatter](#formatter)
   - [JSON Formatter](#json-formatter)
 - [Minimal level](#minimal-level)
-- File logger
-- Async logger
-- Class and enclosure routing
-- Loggers composition
-- Constant context
-- Contextual effects
-- Contramap & filter
+- [File logger](#file-logger)
+- [Async logger](#async-logger)
+- [Class and enclosure routing](#class-and-enclosure-routing)
+- [Loggers composition](#loggers-composition)
+- [Constant context](#constant-context)
+- [Contextual effects](#contextual-effects)
+- [Contramap and filter](#contramap-and-filter)
 
 ## Setup
 
@@ -132,8 +132,11 @@ The most common logger to use:
 
 ```scala mdoc:silent
 import io.odin._
-import cats.effect.IO
+import cats.effect.{ContextShift, IO}
 import cats.effect.Timer
+
+//required to derive Concurrent/ConcurrentEffect for async operations with IO later. IOApp provides it out of the box
+implicit val contextShiftIO: ContextShift[IO] = IO.contextShift(scala.concurrent.ExecutionContext.global)
 
 //required for log timestamps. IOApp provides it out of the box
 implicit val timer: Timer[IO] = IO.timer(scala.concurrent.ExecutionContext.global)
@@ -227,3 +230,225 @@ Those lines won't print anything:
 ```
 
 Performance wise, it'll cost only the allocation of `F.unit` value.
+
+## File logger
+
+Another backend that Odin provides by default is the basic file logger:
+
+```scala
+def fileLogger[F[_]: Sync: Timer](
+      fileName: String,
+      formatter: Formatter = Formatter.default,
+      minLevel: Level = Level.Debug
+  ): Resource[F, Logger[F]]
+```
+
+So far it's capable only of writing to the single file by path `fileName`. One particular detail is worth to mention here:
+return type. Odin tries to guarantee safe allocation and release of file resource. Because of that `fileLogger` returns
+`Resource[F, Logger[F]]` instead of `Logger[F]`:
+
+```scala mdoc:compile-only
+val file = fileLogger[IO]("log.log")
+
+file.use { logger =>
+  logger.info("Hello file")
+}.unsafeRunSync() //Mind that here file resource is free, all buffers are flushed and closed
+```
+
+Usual pattern here is to compose and allocate such resources during the start of your program and wrap execution of
+the logic inside of `.use` block.  
+
+**Important notice**: this logger doesn't buffer and tries to flush to the file on each log due to the safety guarantees.
+Consider to use `asyncFileLogger` version with almost the same signature (except the `Concurrent[F]` constraint)
+to achieve the best performance.
+
+## Async logger
+
+To achieve the best performance with Odin, it's best to use `AsyncLogger` with the combination of any other logger.
+It uses `ConcurrentQueue[F]` from Monix as the buffer that is asynchronously flushed each fixed time period.
+
+Conversion of any logger into async one is straightforward:
+
+```scala mdoc:silent
+import cats.effect.Resource
+import io.odin.syntax._ //to enable additional implicit methods
+
+val asyncLoggerResource: Resource[IO, Logger[IO]] = consoleLogger[IO]().withAsync()
+```
+
+`Resource[F, Logger[F]]` is used to properly initialize the log buffer and flush it on the release. Therefore, use of
+async logger shall be done inside of `Resource.use` block:
+ 
+```scala mdoc
+//queue will be flushed on release even if flushing timer didn't hit the mark yet
+asyncLoggerResource.use(logger => logger.info("Async info")).unsafeRunSync()
+```
+
+Package `io.odin.syntax._` also pimps the `Resource[F, Logger[F]]` type with the same `.withAsync` method to use
+in combination with i.e. `fileLogger`. Actually, `asyncFileLogger` implemented exactly in this manner.
+The immediate gain is the acquire/release safety provided by `Resource` abstraction for combination of `FileLogger` and `AsyncLogger`,
+as well as controllable in-memory buffering for logs before they're flushed down the stream.
+
+Definition of `withAsync` is following:
+```scala
+def withAsync(
+        timeWindow: FiniteDuration = 1.millis,
+        maxBufferSize: Option[Int] = None
+    )(implicit timer: Timer[F], F: Concurrent[F], contextShift: ContextShift[F]): Resource[F, Logger[F]]
+```
+
+Following parameters are configurable if default ones don't fit:
+- Time period between flushed, default is 1 millisecond
+- Maximum underlying buffer size, by default buffer is unbounded.
+
+## Class and enclosure routing
+
+Users have an option to use different loggers for different classes, packages and even function enclosures.
+I.e. it could be applied to silence some particular class applying stricter minimal level requirements.  
+
+Class based routing works with the help of `classOf` function:
+
+```scala mdoc:silent
+import io.odin.config._
+
+case class Foo[F[_]](logger: Logger[F]) {
+  def log: F[Unit] = logger.info("foo")
+}
+
+case class Bar[F[_]](logger: Logger[F]) {
+  def log: F[Unit] = logger.info("bar")
+}
+
+val routerLogger: Logger[IO] =
+    classRouting[IO](
+      classOf[Foo[IO]] -> consoleLogger[IO]().withMinimalLevel(Level.Warn),
+      classOf[Bar[IO]] -> consoleLogger[IO]().withMinimalLevel(Level.Info)
+    ).withNoopFallback
+```
+
+Method `withNoopFallback` defines that any message that doesn't match the router is nooped.
+Use `withFallback(logger: Logger[F])` to route all non-matched messages to specific logger.
+
+Enclosure based routing is more flexible but might be error-prone as well:
+
+```scala mdoc:silent
+val enclosureLogger: Logger[IO] =
+    enclosureRouting(
+      "io.odin.foo" -> consoleLogger[IO]().withMinimalLevel(Level.Warn),
+      "io.odin.bar" -> consoleLogger[IO]().withMinimalLevel(Level.Info),
+      "io.odin" -> consoleLogger[IO]()
+    )
+    .withNoopFallback
+
+def zoo: IO[Unit] = enclosureLogger.debug("Debug")
+def foo: IO[Unit] = enclosureLogger.info("Never shown")
+def bar: IO[Unit] = enclosureLogger.warn("Warning")
+```
+
+Routing is done based on the string matching with the greedy first match logic, hence the most specific routes
+should always appear on the top, otherwise they might be ignored.
+
+## Loggers composition
+
+Odin defines `Monoid[Logger[F]]` instance to combine multiple loggers into a single one that broadcasts
+the logs to the underlying loggers:
+
+```scala mdoc:silent
+import cats.syntax.all._
+
+val combinedLogger: Resource[IO, Logger[IO]] = consoleLogger[IO]().withAsync() |+| fileLogger[IO]("log.log")
+```
+
+Example above demonstrates that it would work even for `Resource` based loggers. `combinedLogger` prints messages both
+to console and to _log.log_ file.
+
+## Constant context
+
+To append some predefined context to all the messages of the logger, use `withConstContext` syntax to construct such logger:
+
+```scala mdoc
+import io.odin.syntax._
+
+consoleLogger[IO]()
+    .withConstContext(Map("predefined" -> "context"))
+    .info("Hello world").unsafeRunSync()
+```
+
+## Contextual effects
+
+Some effects carry an extractable information that could be automatically injected as the context to each log message.
+An example is `ReaderT[F[_], Env, A]` monad, where value of type `Env` contains some additional information to log.
+
+Odin allows to build a logger that extracts this information from effect and put it as the context:
+
+```scala mdoc
+import io.odin.loggers._
+import cats.data.ReaderT
+import cats.mtl.instances.all._ //provides ApplicativeAsk instance for ReaderT
+
+case class Env(ctx: Map[String, String])
+
+object Env {
+  //it's neccessary to describe how to extract context from env
+  implicit val hasContext: HasContext[Env] = new HasContext[Env] {
+    def getContext(env: Env): Map[String, String] = env.ctx
+  }
+}
+
+type M[A] = ReaderT[IO, Env, A]
+
+consoleLogger[M]()
+    .withContext
+    .info("Hello world")
+    .run(Env(Map("env" -> "ctx")))
+    .unsafeRunSync()
+```
+
+Odin automatically derives required type classes for each type `F[_]` that has `ApplicativeAsk[F, E]` defined, or in other words
+for all the types that allow `F[A] => F[E]`.
+
+If this constraint isn't satisfied, it's required to manually provide an instance for `WithContext` type class:  
+```scala
+/**
+  * Resolve context stored in `F[_]` effect
+  */
+trait WithContext[F[_]] {
+  def context: F[Map[String, String]]
+}
+```
+
+## Contramap and filter
+
+To modify or filter log messages before they're written, use corresponding combinators `contramap` and `filter`:
+
+```scala mdoc
+import io.odin.syntax._
+
+consoleLogger[IO]()
+    .contramap(msg => msg.copy(message = msg.message.map(_ + " World")))
+    .info("Hello")
+    .unsafeRunSync()
+
+consoleLogger[IO]()
+    .filter(msg => msg.message.value.size < 10)
+    .info("Very long messages are discarded")
+    .unsafeRunSync()
+```
+
+Contributing
+---
+Feel free to open an issue, submit a Pull Request or ask [in the Gitter channel](https://gitter.im/valskalla/odin).
+We strive to provide a welcoming environment for everyone with good intentions.
+
+Also, don't hesitate to give it a star and spread the word to your friends and colleagues.
+
+License
+---
+Licensed under the **[Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0)** (the "License");
+you may not use this software except in compliance with the License.
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
