@@ -1,0 +1,26 @@
+name: Update documentation
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  publish:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v1
+      - uses: olafurpg/setup-scala@v5
+      - name: Configure git
+        shell: bash
+        run: |
+          git config --global user.name '${GITHUB_ACTOR}'
+          git config --global user.email '${GITHUB_ACTOR}@users.noreply.github.com'
+      - name: Generate documentation
+        run: sbt docs/mdoc
+      - name: Commit & push changes
+        shell: bash
+        run: |
+          git add -A && git commit -m 'Update docs' --allow-empty
+          git push -u origin HEAD
