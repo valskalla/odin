@@ -105,6 +105,18 @@ lazy val examples = (project in file("examples"))
   .settings(noPublish)
   .dependsOn(`odin-core` % "compile->compile;test->test")
 
+lazy val docs = (project in file("odin-docs"))
+  .settings(sharedSettings)
+  .settings(noPublish)
+  .settings(
+    mdocVariables := Map(
+      "VERSION" -> version.value
+    ),
+    mdocOut := file(".")
+  )
+  .dependsOn(`odin-core`, `odin-json`)
+  .enablePlugins(MdocPlugin)
+
 lazy val odin = (project in file("."))
   .settings(sharedSettings)
   .settings(noPublish)

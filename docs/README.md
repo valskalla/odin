@@ -50,13 +50,13 @@ Odin is published to Maven Central and cross-built for Scala 2.12 and 2.13. Add 
 libraryDependencies ++= Seq(
   "com.github.valskalla" %% "odin-core",
   "com.github.valskalla" %% "odin-json" //to enable JSON formatter if needed
-).map(_ % "0.1.0")
+).map(_ % "@VERSION@")
 ```
 
 ## Example
 
 Using `IOApp`:
-```scala
+```scala mdoc
 import cats.effect.{ExitCode, IO, IOApp}
 import cats.syntax.all._
 import io.odin._
@@ -116,7 +116,7 @@ Logger's methods are also polymorphic for messages. Users might log every type `
 By default, Odin provides `Render[String]` instance out of the box as well as `Render.fromToString` method to construct
 instances by calling the standard method `.toString` on type `M`:
 
-```scala
+```scala mdoc
 import io.odin.meta.Render
 
 case class Log(s: String, i: Int)
@@ -130,7 +130,7 @@ object Log {
 
 The most common logger to use:
 
-```scala
+```scala mdoc:silent
 import io.odin._
 import cats.effect.{ContextShift, IO}
 import cats.effect.Timer
@@ -146,22 +146,13 @@ val logger: Logger[IO] = consoleLogger[IO]()
 
 Now to the call:
 
-```scala
+```scala mdoc
 //doesn't print anything as the effect is suspended in IO
 logger.info("Hello?")
-// res0: IO[Unit] = Map(
-//   Bind(
-//     Delay(cats.effect.Clock$$anon$1$$Lambda$9343/0x0000000802a26840@2f65d516),
-//     io.odin.loggers.DefaultLogger$$Lambda$9344/0x0000000802a26040@7ac06374
-//   ),
-//   scala.Function1$$Lambda$7841/0x00000008022e2840@10977e93,
-//   1
-// )
 
 //prints "Hello world" to the STDOUT.
 //Although, don't use `unsafeRunSync` in production unless you know what you're doing
 logger.info("Hello world").unsafeRunSync()
-// 2019-12-03T00:59:00 [run-main-1] INFO repl.Session.App#res1:68 - Hello world
 ```
 
 All messages of level `WARN` and higher are routed to the _STDERR_ while messages with level `INFO` and below go to the _STDOUT_.
@@ -198,18 +189,16 @@ trait Formatter {
 
 _odin-core_ provides the `Formatter.default` that prints information in a nicely structured manner:
 
-```scala
+```scala mdoc
 import cats.syntax.all._
 (logger.info("No context") *> logger.info("Some context", Map("key" -> "value"))).unsafeRunSync()
-// 2019-12-03T00:59:00 [run-main-1] INFO repl.Session.App#res2:77 - No context
-// 2019-12-03T00:59:00 [run-main-1] INFO repl.Session.App#res2:77 - Some context - key: value
 ```
 
 ### JSON Formatter
 
 Library _odin-json_ enables output of logs as newline-delimited JSON records:
 
-```scala
+```scala mdoc:silent
 import io.odin.json.Formatter
 
 val jsonLogger = consoleLogger[IO](formatter = Formatter.json)
@@ -217,16 +206,15 @@ val jsonLogger = consoleLogger[IO](formatter = Formatter.json)
 
 Now messages printed with this logger will be encoded as JSON string using circe:
 
-```scala
+```scala mdoc
 jsonLogger.info("This is JSON").unsafeRunSync()
-// {"level":"INFO","message":"This is JSON","context":{},"exception":null,"position":"repl.Session.App#res3:92","thread_name":"run-main-1","timestamp":"2019-12-03T00:59:00"}
 ```
 
 ## Minimal level
 
 It's possible to set minimal level for log messages to i.e. disable debug logs in production mode:
 
-```scala
+```scala mdoc:silent
 
 //either by constructing logger with specific parameter
 val minLevelInfoLogger = consoleLogger[IO](minLevel = Level.Info)
@@ -237,7 +225,7 @@ val minLevelWarnLogger = logger.withMinimalLevel(Level.Warn)
 
 Those lines won't print anything:
 
-```scala
+```scala mdoc
 (minLevelInfoLogger.debug("Invisible") *> minLevelWarnLogger.info("Invisible too")).unsafeRunSync()
 ```
 
@@ -259,7 +247,7 @@ So far it's capable only of writing to the single file by path `fileName`. One p
 return type. Odin tries to guarantee safe allocation and release of file resource. Because of that `fileLogger` returns
 `Resource[F, Logger[F]]` instead of `Logger[F]`:
 
-```scala
+```scala mdoc:compile-only
 val file = fileLogger[IO]("log.log")
 
 file.use { logger =>
@@ -281,7 +269,7 @@ It uses `ConcurrentQueue[F]` from Monix as the buffer that is asynchronously flu
 
 Conversion of any logger into async one is straightforward:
 
-```scala
+```scala mdoc:silent
 import cats.effect.Resource
 import io.odin.syntax._ //to enable additional implicit methods
 
@@ -291,10 +279,9 @@ val asyncLoggerResource: Resource[IO, Logger[IO]] = consoleLogger[IO]().withAsyn
 `Resource[F, Logger[F]]` is used to properly initialize the log buffer and flush it on the release. Therefore, use of
 async logger shall be done inside of `Resource.use` block:
  
-```scala
+```scala mdoc
 //queue will be flushed on release even if flushing timer didn't hit the mark yet
 asyncLoggerResource.use(logger => logger.info("Async info")).unsafeRunSync()
-// 2019-12-03T00:59:01 [run-main-1] INFO repl.Session.App#res6 $anonfun:142 - Async info
 ```
 
 Package `io.odin.syntax._` also pimps the `Resource[F, Logger[F]]` type with the same `.withAsync` method to use
@@ -321,7 +308,7 @@ I.e. it could be applied to silence some particular class applying stricter mini
 
 Class based routing works with the help of `classOf` function:
 
-```scala
+```scala mdoc:silent
 import io.odin.config._
 
 case class Foo[F[_]](logger: Logger[F]) {
@@ -344,7 +331,7 @@ Use `withFallback(logger: Logger[F])` to route all non-matched messages to speci
 
 Enclosure based routing is more flexible but might be error-prone as well:
 
-```scala
+```scala mdoc:silent
 val enclosureLogger: Logger[IO] =
     enclosureRouting(
       "io.odin.foo" -> consoleLogger[IO]().withMinimalLevel(Level.Warn),
@@ -366,7 +353,7 @@ should always appear on the top, otherwise they might be ignored.
 Odin defines `Monoid[Logger[F]]` instance to combine multiple loggers into a single one that broadcasts
 the logs to the underlying loggers:
 
-```scala
+```scala mdoc:silent
 import cats.syntax.all._
 
 val combinedLogger: Resource[IO, Logger[IO]] = consoleLogger[IO]().withAsync() |+| fileLogger[IO]("log.log")
@@ -379,13 +366,12 @@ to console and to _log.log_ file.
 
 To append some predefined context to all the messages of the logger, use `withConstContext` syntax to construct such logger:
 
-```scala
+```scala mdoc
 import io.odin.syntax._
 
 consoleLogger[IO]()
     .withConstContext(Map("predefined" -> "context"))
     .info("Hello world").unsafeRunSync()
-// 2019-12-03T00:59:01 [run-main-1] INFO repl.Session.App#res7:206 - Hello world - predefined: context
 ```
 
 ## Contextual effects
@@ -395,10 +381,10 @@ An example is `ReaderT[F[_], Env, A]` monad, where value of type `Env` contains 
 
 Odin allows to build a logger that extracts this information from effect and put it as the context:
 
-```scala
+```scala mdoc
 import io.odin.loggers._
 import cats.data.ReaderT
-import cats.mtl.instances.all._ //provides ApplicativeAsk instance for ReaderT //provides ApplicativeAsk instance for ReaderT
+import cats.mtl.instances.all._ //provides ApplicativeAsk instance for ReaderT
 
 case class Env(ctx: Map[String, String])
 
@@ -416,7 +402,6 @@ consoleLogger[M]()
     .info("Hello world")
     .run(Env(Map("env" -> "ctx")))
     .unsafeRunSync()
-// 2019-12-03T00:59:01 [run-main-1] INFO repl.Session.App#res8:237 - Hello world - env: ctx
 ```
 
 Odin automatically derives required type classes for each type `F[_]` that has `ApplicativeAsk[F, E]` defined, or in other words
@@ -436,14 +421,13 @@ trait WithContext[F[_]] {
 
 To modify or filter log messages before they're written, use corresponding combinators `contramap` and `filter`:
 
-```scala
+```scala mdoc
 import io.odin.syntax._
 
 consoleLogger[IO]()
     .contramap(msg => msg.copy(message = msg.message.map(_ + " World")))
     .info("Hello")
     .unsafeRunSync()
-// 2019-12-03T00:59:01 [run-main-1] INFO repl.Session.App#res9:250 - Hello World
 
 consoleLogger[IO]()
     .filter(msg => msg.message.value.size < 10)

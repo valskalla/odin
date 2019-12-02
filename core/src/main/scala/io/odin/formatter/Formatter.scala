@@ -12,15 +12,30 @@ trait Formatter {
 
 object Formatter {
   val default: Formatter = (msg: LoggerMessage) => {
+    val ctx = formatCtx(msg.context)
     msg.exception match {
       case Some(t) =>
         val formattedThrowable = formatThrowable(t)
-        p"${msg.timestamp.t.F}T${msg.timestamp.t.T} [${msg.threadName}] ${msg.level.show} ${msg.position.enclosureName}:${msg.position.line} - ${msg
-          .message.value}${System.lineSeparator()}${formattedThrowable.toString}"
+        p"${msg.timestamp.t.F}T${msg.timestamp.t.T} [${msg.threadName}] ${msg.level.show} ${msg.position.enclosureName}:${msg.position.line} - ${msg.message.value} $ctx${System
+          .lineSeparator()}${formattedThrowable.toString}"
       case None =>
-        p"${msg.timestamp.t.F}T${msg.timestamp.t.T} [${msg.threadName}] ${msg.level.show} ${msg.position.enclosureName}:${msg.position.line} - ${msg.message.value}"
+        p"${msg.timestamp.t.F}T${msg.timestamp.t.T} [${msg.threadName}] ${msg.level.show} ${msg.position.enclosureName}:${msg.position.line} - ${msg.message.value}$ctx"
     }
   }
+
+  def formatCtx(context: Map[String, String]): String =
+    if (context.isEmpty) {
+      ""
+    } else {
+      val builder = new StringBuilder(" - ")
+      val iterator = context.iterator
+      while (iterator.hasNext) {
+        val (key, value) = iterator.next()
+        builder.append(p"$key: $value")
+        if (iterator.hasNext) builder.append(", ")
+      }
+      builder.toString()
+    }
 
   /**
     * Default Throwable printer is twice as slow. This method was borrowed from scribe library.

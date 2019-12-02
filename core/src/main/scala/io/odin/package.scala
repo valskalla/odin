@@ -11,8 +11,9 @@ package object odin {
   /**
     * Basic console logger that prints to STDOUT & STDERR
     * @param formatter formatter to use for log messages
+    * @param minLevel minimal level of logs to be printed
     */
-  def consoleLogger[F[_]: Sync: Timer: ContextShift](
+  def consoleLogger[F[_]: Sync: Timer](
       formatter: Formatter = Formatter.default,
       minLevel: Level = Level.Debug
   ): Logger[F] =

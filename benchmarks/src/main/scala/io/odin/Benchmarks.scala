@@ -120,8 +120,17 @@ class AsyncLoggerBenchmark extends OdinBenchmarks {
 
 @State(Scope.Benchmark)
 class FormatterBenchmarks extends OdinBenchmarks {
+  private val noCtx: LoggerMessage = loggerMessage.copy(context = Map.empty)
+  private val noThrowable: LoggerMessage = noCtx.copy(exception = None)
+
   @Benchmark
   def defaultFormatter(): Unit = Formatter.default.format(loggerMessage)
+
+  @Benchmark
+  def defaultFormatterNoCtx(): Unit = Formatter.default.format(noCtx)
+
+  @Benchmark
+  def defaultFormatterNoCtxThrowable(): Unit = Formatter.default.format(noThrowable)
 
   @Benchmark
   def jsonFormatter(): Unit = JsonFormatter.json.format(loggerMessage)
