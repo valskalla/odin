@@ -162,11 +162,11 @@ All messages of level `WARN` and higher are routed to the _STDERR_ while message
 ```scala
 def consoleLogger[F[_]: Sync: Timer](
       formatter: Formatter = Formatter.default,
-      minLevel: Level = Level.Debug
+      minLevel: Level = Level.Trace
   ): Logger[F]
 ```
 
-It's possible to configure minimal level of logs to print (_DEBUG_ by default) and formatter that's used to print it.
+It's possible to configure minimal level of logs to print (_TRACE_ by default) and formatter that's used to print it.
 
 ## Formatter
 
@@ -239,7 +239,7 @@ Another backend that Odin provides by default is the basic file logger:
 def fileLogger[F[_]: Sync: Timer](
       fileName: String,
       formatter: Formatter = Formatter.default,
-      minLevel: Level = Level.Debug
+      minLevel: Level = Level.Trace
   ): Resource[F, Logger[F]]
 ```
 

@@ -15,7 +15,7 @@ package object odin {
     */
   def consoleLogger[F[_]: Sync: Timer](
       formatter: Formatter = Formatter.default,
-      minLevel: Level = Level.Debug
+      minLevel: Level = Level.Trace
   ): Logger[F] =
     ConsoleLogger(formatter, minLevel)
 
@@ -27,7 +27,7 @@ package object odin {
   def fileLogger[F[_]: Sync: Timer](
       fileName: String,
       formatter: Formatter = Formatter.default,
-      minLevel: Level = Level.Debug
+      minLevel: Level = Level.Trace
   ): Resource[F, Logger[F]] = {
     FileLogger(fileName, formatter, minLevel)
   }
@@ -44,7 +44,7 @@ package object odin {
       formatter: Formatter = Formatter.default,
       timeWindow: FiniteDuration = 1.second,
       maxBufferSize: Option[Int] = None,
-      minLevel: Level = Level.Debug
+      minLevel: Level = Level.Trace
   ): Resource[F, Logger[F]] =
     fileLogger[F](fileName, formatter, minLevel).withAsync(timeWindow, maxBufferSize)
 }
