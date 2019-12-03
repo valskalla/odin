@@ -98,8 +98,8 @@ package object syntax {
       resource.map(ContramapLogger(f, _))
 
     /**
-     * Filter messages given the predicate. Falsified cases are dropped from the logging
-     */
+      * Filter messages given the predicate. Falsified cases are dropped from the logging
+      */
     def filter(f: LoggerMessage => Boolean)(implicit timer: Timer[F], F: Monad[F]): Resource[F, Logger[F]] =
       resource.map(FilterLogger(f, _))
   }

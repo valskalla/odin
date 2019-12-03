@@ -16,8 +16,7 @@ object EnclosureBasedRouting extends IOApp {
       "io.odin.examples.EnclosureBasedRouting.foo" -> consoleLogger[IO]().withMinimalLevel(Level.Warn),
       "io.odin.examples.EnclosureBasedRouting.bar" -> consoleLogger[IO]().withMinimalLevel(Level.Info),
       "io.odin.examples" -> consoleLogger[IO]()
-    )
-    .withNoopFallback
+    ).withNoopFallback
 
   def zoo: IO[Unit] = logger.debug("Debug")
   def foo: IO[Unit] = logger.info("Never shown")

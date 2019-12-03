@@ -2,7 +2,7 @@ package io.odin.loggers
 
 import cats.data.{Writer, WriterT}
 import cats.effect.{Clock, IO, Timer}
-import cats.{Id, ~>}
+import cats.{~>, Id}
 import io.odin.{Level, Logger, LoggerMessage, OdinSpec}
 
 import scala.concurrent.duration.{FiniteDuration, TimeUnit}

@@ -25,8 +25,7 @@ class ContextualLoggerSpec extends OdinSpec {
     def sleep(duration: FiniteDuration): IO[Unit] = ???
   }
 
-  private val logger = new WriterTLogger[IO].mapK(λ[FunctionK[W, F]](ReaderT.liftF(_)))
-    .withContext
+  private val logger = new WriterTLogger[IO].mapK(λ[FunctionK[W, F]](ReaderT.liftF(_))).withContext
 
   checkAll("ContContextLogger", LoggerTests[F](logger, reader => reader.run(Map()).written.unsafeRunSync()).all)
 
