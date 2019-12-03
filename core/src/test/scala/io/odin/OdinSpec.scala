@@ -1,6 +1,7 @@
 package io.odin
 
-import cats.Eval
+import cats.effect.{Clock, Timer}
+import cats.{Applicative, Eval}
 import io.odin.formatter.Formatter
 import io.odin.meta.Position
 import org.scalacheck.{Arbitrary, Cogen, Gen}
@@ -8,12 +9,24 @@ import org.scalatest.{FlatSpec, Matchers}
 import org.scalatestplus.scalacheck.{Checkers, ScalaCheckDrivenPropertyChecks}
 import org.typelevel.discipline.Laws
 
+import scala.concurrent.duration.{FiniteDuration, TimeUnit}
+
 trait OdinSpec extends FlatSpec with Matchers with Checkers with ScalaCheckDrivenPropertyChecks with EqInstances {
   def checkAll(name: String, ruleSet: Laws#RuleSet): Unit = {
     for ((id, prop) <- ruleSet.all.properties)
       it should (name + "." + id) in {
         check(prop)
       }
+  }
+
+  def zeroTimer[F[_]](implicit F: Applicative[F]): Timer[F] = new Timer[F] {
+    def clock: Clock[F] = new Clock[F] {
+      def realTime(unit: TimeUnit): F[Long] = F.pure(0L)
+
+      def monotonic(unit: TimeUnit): F[Long] = F.pure(0L)
+    }
+
+    def sleep(duration: FiniteDuration): F[Unit] = ???
   }
 
   val lineSeparator: String = System.lineSeparator()
