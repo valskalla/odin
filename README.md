@@ -50,7 +50,7 @@ Odin is published to Maven Central and cross-built for Scala 2.12 and 2.13. Add 
 libraryDependencies ++= Seq(
   "com.github.valskalla" %% "odin-core",
   "com.github.valskalla" %% "odin-json" //to enable JSON formatter if needed
-).map(_ % "0.2.0")
+).map(_ % "0.2.1")
 ```
 
 ## Example
@@ -151,17 +151,17 @@ Now to the call:
 logger.info("Hello?")
 // res0: IO[Unit] = Map(
 //   Bind(
-//     Delay(cats.effect.Clock$$anon$1$$Lambda$9343/0x0000000802a26840@2f65d516),
-//     io.odin.loggers.DefaultLogger$$Lambda$9344/0x0000000802a26040@7ac06374
+//     Delay(cats.effect.Clock$$anon$1$$Lambda$8313/1937365130@5937523f),
+//     io.odin.loggers.DefaultLogger$$Lambda$8314/1338650656@70792605
 //   ),
-//   scala.Function1$$Lambda$7841/0x00000008022e2840@10977e93,
+//   scala.Function1$$Lambda$8321/417051948@7271111c,
 //   1
 // )
 
 //prints "Hello world" to the STDOUT.
 //Although, don't use `unsafeRunSync` in production unless you know what you're doing
 logger.info("Hello world").unsafeRunSync()
-// 2019-12-03T00:59:00 [run-main-1] INFO repl.Session.App#res1:68 - Hello world
+// 2019-12-03T15:57:29 [run-main-0] INFO repl.Session.App#res1:68 - Hello world
 ```
 
 All messages of level `WARN` and higher are routed to the _STDERR_ while messages with level `INFO` and below go to the _STDOUT_.
@@ -171,11 +171,11 @@ All messages of level `WARN` and higher are routed to the _STDERR_ while message
 ```scala
 def consoleLogger[F[_]: Sync: Timer](
       formatter: Formatter = Formatter.default,
-      minLevel: Level = Level.Debug
+      minLevel: Level = Level.Trace
   ): Logger[F]
 ```
 
-It's possible to configure minimal level of logs to print (_DEBUG_ by default) and formatter that's used to print it.
+It's possible to configure minimal level of logs to print (_TRACE_ by default) and formatter that's used to print it.
 
 ## Formatter
 
@@ -201,8 +201,8 @@ _odin-core_ provides the `Formatter.default` that prints information in a nicely
 ```scala
 import cats.syntax.all._
 (logger.info("No context") *> logger.info("Some context", Map("key" -> "value"))).unsafeRunSync()
-// 2019-12-03T00:59:00 [run-main-1] INFO repl.Session.App#res2:77 - No context
-// 2019-12-03T00:59:00 [run-main-1] INFO repl.Session.App#res2:77 - Some context - key: value
+// 2019-12-03T15:57:29 [run-main-0] INFO repl.Session.App#res2:77 - No context
+// 2019-12-03T15:57:29 [run-main-0] INFO repl.Session.App#res2:77 - Some context - key: value
 ```
 
 ### JSON Formatter
@@ -219,7 +219,7 @@ Now messages printed with this logger will be encoded as JSON string using circe
 
 ```scala
 jsonLogger.info("This is JSON").unsafeRunSync()
-// {"level":"INFO","message":"This is JSON","context":{},"exception":null,"position":"repl.Session.App#res3:92","thread_name":"run-main-1","timestamp":"2019-12-03T00:59:00"}
+// {"level":"INFO","message":"This is JSON","context":{},"exception":null,"position":"repl.Session.App#res3:92","thread_name":"run-main-0","timestamp":"2019-12-03T15:57:29"}
 ```
 
 ## Minimal level
@@ -251,7 +251,7 @@ Another backend that Odin provides by default is the basic file logger:
 def fileLogger[F[_]: Sync: Timer](
       fileName: String,
       formatter: Formatter = Formatter.default,
-      minLevel: Level = Level.Debug
+      minLevel: Level = Level.Trace
   ): Resource[F, Logger[F]]
 ```
 
@@ -294,7 +294,7 @@ async logger shall be done inside of `Resource.use` block:
 ```scala
 //queue will be flushed on release even if flushing timer didn't hit the mark yet
 asyncLoggerResource.use(logger => logger.info("Async info")).unsafeRunSync()
-// 2019-12-03T00:59:01 [run-main-1] INFO repl.Session.App#res6 $anonfun:142 - Async info
+// 2019-12-03T15:57:30 [run-main-0] INFO repl.Session.App#res6 $anonfun:142 - Async info
 ```
 
 Package `io.odin.syntax._` also pimps the `Resource[F, Logger[F]]` type with the same `.withAsync` method to use
@@ -385,7 +385,7 @@ import io.odin.syntax._
 consoleLogger[IO]()
     .withConstContext(Map("predefined" -> "context"))
     .info("Hello world").unsafeRunSync()
-// 2019-12-03T00:59:01 [run-main-1] INFO repl.Session.App#res7:206 - Hello world - predefined: context
+// 2019-12-03T15:57:30 [run-main-0] INFO repl.Session.App#res7:206 - Hello world - predefined: context
 ```
 
 ## Contextual effects
@@ -416,7 +416,7 @@ consoleLogger[M]()
     .info("Hello world")
     .run(Env(Map("env" -> "ctx")))
     .unsafeRunSync()
-// 2019-12-03T00:59:01 [run-main-1] INFO repl.Session.App#res8:237 - Hello world - env: ctx
+// 2019-12-03T15:57:30 [run-main-0] INFO repl.Session.App#res8:237 - Hello world - env: ctx
 ```
 
 Odin automatically derives required type classes for each type `F[_]` that has `ApplicativeAsk[F, E]` defined, or in other words
@@ -443,7 +443,7 @@ consoleLogger[IO]()
     .contramap(msg => msg.copy(message = msg.message.map(_ + " World")))
     .info("Hello")
     .unsafeRunSync()
-// 2019-12-03T00:59:01 [run-main-1] INFO repl.Session.App#res9:250 - Hello World
+// 2019-12-03T15:57:30 [run-main-0] INFO repl.Session.App#res9:250 - Hello World
 
 consoleLogger[IO]()
     .filter(msg => msg.message.value.size < 10)
