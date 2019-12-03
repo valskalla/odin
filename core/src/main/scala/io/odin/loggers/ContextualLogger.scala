@@ -14,7 +14,7 @@ import io.odin.{Logger, LoggerMessage}
   * then it's possible to add this context to the log.
   */
 case class ContextualLogger[F[_]: Timer: Monad](inner: Logger[F])(implicit withContext: WithContext[F])
-    extends DefaultLogger[F] {
+    extends DefaultLogger[F](inner.minLevel) {
   def log(msg: LoggerMessage): F[Unit] =
     withContext.context.flatMap { ctx =>
       inner.log(msg.copy(context = msg.context ++ ctx))
