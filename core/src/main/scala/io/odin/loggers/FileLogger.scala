@@ -31,7 +31,9 @@ case class FileLogger[F[_]: Timer](buffer: BufferedWriter, formatter: Formatter,
 }
 
 object FileLogger {
-  def apply[F[_]: Timer](fileName: String, formatter: Formatter, minLevel: Level)(implicit F: Sync[F]): Resource[F, Logger[F]] = {
+  def apply[F[_]: Timer](fileName: String, formatter: Formatter, minLevel: Level)(
+      implicit F: Sync[F]
+  ): Resource[F, Logger[F]] = {
     def mkBuffer: F[BufferedWriter] = F.delay(Files.newBufferedWriter(Paths.get(fileName)))
     def closeBuffer(buffer: BufferedWriter): F[Unit] = F.delay {
       buffer.close()

@@ -5,22 +5,26 @@ on:
     types: [published]
 
 jobs:
-  publish:
+  update:
 
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v1
       - uses: olafurpg/setup-scala@v5
-      - name: Configure git
-        shell: bash
-        run: |
-          git config --global user.name '${GITHUB_ACTOR}'
-          git config --global user.email '${GITHUB_ACTOR}@users.noreply.github.com'
+      - name: Checkout
+        run: git checkout master
       - name: Generate documentation
         run: sbt docs/mdoc
-      - name: Commit & push changes
-        shell: bash
+      - name: Commit to repository
+        env:
+          GITHUB_TOKEN: ${{ secrets.github_token }}
+          COMMIT_MSG: |
+            Update documentation
+            skip-checks: true
         run: |
-          git add -A && git commit -m 'Update docs' --allow-empty
-          git push -u origin HEAD
+          git config user.email "whoisliar@gmail.com"
+          git config user.name "sergeykolbasov"
+          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
+          git add .
+          git diff --quiet && git diff --staged --quiet || (git commit -m "${COMMIT_MSG}"; git push origin master)

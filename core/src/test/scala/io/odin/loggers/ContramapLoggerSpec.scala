@@ -1,5 +1,6 @@
 package io.odin.loggers
 
+import cats.data.WriterT
 import cats.effect.{IO, Timer}
 import cats.instances.list._
 import cats.syntax.all._
@@ -7,7 +8,10 @@ import io.odin.{LoggerMessage, OdinSpec}
 import io.odin.syntax._
 
 class ContramapLoggerSpec extends OdinSpec {
-  implicit val timer: Timer[IO] = IO.timer(scala.concurrent.ExecutionContext.global)
+  type F[A] = WriterT[IO, List[LoggerMessage], A]
+  implicit val timer: Timer[IO] = zeroTimer
+
+  checkAll("ContramapLogger", LoggerTests[F](new WriterTLogger[IO].contramap(identity), _.written.unsafeRunSync()).all)
 
   it should "contramap(identity).log(msg) <-> log(msg)" in {
     val logger = new WriterTLogger[IO].contramap(identity)
