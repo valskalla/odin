@@ -29,7 +29,7 @@ lazy val monixCatnap = "io.monix" %% "monix-catnap" % versions.monix
 
 lazy val scalaCheck = "org.scalacheck" %% "scalacheck" % versions.scalaCheck % Test
 
-lazy val monix = "io.monix" %% "monix" % versions.monix % Test
+lazy val monix = "io.monix" %% "monix" % versions.monix
 
 lazy val perfolation = "com.outr" %% "perfolation" % "1.1.5"
 
@@ -83,7 +83,8 @@ lazy val sharedSettings = Seq(
 lazy val `odin-core` = (project in file("core"))
   .settings(sharedSettings)
   .settings(
-    libraryDependencies ++= catsScalacheck :: monix :: catsMtl :: sourcecode :: monixCatnap :: perfolation :: catsRetry ::: cats
+    libraryDependencies ++=
+      catsScalacheck :: (monix % Test) :: catsMtl :: sourcecode :: monixCatnap :: perfolation :: catsRetry ::: cats
   )
 
 lazy val `odin-json` = (project in file("json"))
@@ -92,7 +93,6 @@ lazy val `odin-json` = (project in file("json"))
     libraryDependencies += circeCore
   )
   .dependsOn(`odin-core`)
-
 
 lazy val `odin-zio` = (project in file("zio"))
   .settings(sharedSettings)
@@ -104,6 +104,12 @@ lazy val `odin-zio` = (project in file("zio"))
   )
   .dependsOn(`odin-core` % "compile->compile;test->test")
 
+lazy val `odin-monix` = (project in file("monix"))
+  .settings(sharedSettings)
+  .settings(
+    libraryDependencies += monix
+  )
+  .dependsOn(`odin-core` % "compile->compile;test->test")
 
 lazy val benchmarks = (project in file("benchmarks"))
   .settings(sharedSettings)
