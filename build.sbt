@@ -7,6 +7,8 @@ lazy val versions = new {
   val scalaCheck = "1.14.2"
   val catsRetry = "0.3.2"
   val catsScalacheck = "0.2.0"
+  val zio = "1.0.0-RC17"
+  val zioCats = "2.0.0.0-RC10"
 }
 
 lazy val scalaVersions = List("2.13.1", "2.12.10")
@@ -84,12 +86,6 @@ lazy val `odin-core` = (project in file("core"))
     libraryDependencies ++= catsScalacheck :: monix :: catsMtl :: sourcecode :: monixCatnap :: perfolation :: catsRetry ::: cats
   )
 
-lazy val benchmarks = (project in file("benchmarks"))
-  .settings(sharedSettings)
-  .settings(noPublish)
-  .enablePlugins(JmhPlugin)
-  .dependsOn(`odin-core`, `odin-json`)
-
 lazy val `odin-json` = (project in file("json"))
   .settings(sharedSettings)
   .settings(
@@ -97,13 +93,23 @@ lazy val `odin-json` = (project in file("json"))
   )
   .dependsOn(`odin-core`)
 
-lazy val examples = (project in file("examples"))
+
+lazy val `odin-zio` = (project in file("zio"))
   .settings(sharedSettings)
   .settings(
-    coverageExcludedPackages := "io.odin.examples.*"
+    libraryDependencies ++= Seq(
+      "dev.zio" %% "zio" % versions.zio,
+      "dev.zio" %% "zio-interop-cats" % versions.zioCats
+    )
   )
-  .settings(noPublish)
   .dependsOn(`odin-core` % "compile->compile;test->test")
+
+
+lazy val benchmarks = (project in file("benchmarks"))
+  .settings(sharedSettings)
+  .settings(noPublish)
+  .enablePlugins(JmhPlugin)
+  .dependsOn(`odin-core`, `odin-json`)
 
 lazy val docs = (project in file("odin-docs"))
   .settings(sharedSettings)
@@ -117,11 +123,19 @@ lazy val docs = (project in file("odin-docs"))
   .dependsOn(`odin-core`, `odin-json`)
   .enablePlugins(MdocPlugin)
 
+lazy val examples = (project in file("examples"))
+  .settings(sharedSettings)
+  .settings(
+    coverageExcludedPackages := "io.odin.examples.*"
+  )
+  .settings(noPublish)
+  .dependsOn(`odin-core` % "compile->compile;test->test", `odin-zio`)
+
 lazy val odin = (project in file("."))
   .settings(sharedSettings)
   .settings(noPublish)
   .dependsOn(`odin-core` % "compile->compile;test->test", `odin-json`)
-  .aggregate(`odin-core`, benchmarks, `odin-json`, examples)
+  .aggregate(`odin-core`, benchmarks, `odin-json`, examples, `odin-zio`)
 
 def scalacOptionsVersion(scalaVersion: String) =
   Seq(
