@@ -35,9 +35,8 @@ object FileLogger {
       implicit F: Sync[F]
   ): Resource[F, Logger[F]] = {
     def mkBuffer: F[BufferedWriter] = F.delay(Files.newBufferedWriter(Paths.get(fileName)))
-    def closeBuffer(buffer: BufferedWriter): F[Unit] = F.delay {
-      buffer.close()
-    }
+    def closeBuffer(buffer: BufferedWriter): F[Unit] =
+      F.delay(buffer.close()).handleErrorWith(_ => F.unit)
 
     Resource.make(mkBuffer)(closeBuffer).map { buffer =>
       FileLogger(buffer, formatter, minLevel)

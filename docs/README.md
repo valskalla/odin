@@ -23,10 +23,41 @@ top priorities.
 Standing on the shoulders of `cats-effect` type classes, Odin abstracts away from concrete effect types, allowing
 users to decide what they feel comfortable with: `IO`, `ZIO`, `monix.Task`, `ReaderT` etc. The choice is yours.
 
+Setup
+---
+
+Odin is published to Maven Central and cross-built for Scala 2.12 and 2.13. Add the following lines to your build:
+
+```scala
+libraryDependencies ++= Seq(
+  "com.github.valskalla" %% "odin-core",
+  "com.github.valskalla" %% "odin-json" //to enable JSON formatter if needed
+).map(_ % "@VERSION@")
+```
+
+Effects out of the box
+---
+
+Some time could be saved by using the effect-predefined variants of Odin. There are options for ZIO and Monix users: 
+
+```scala
+//ZIO
+libraryDependencies += "com.github.valskalla" %% "odin-zio" % "@VERSION@"
+//or Monix
+libraryDependencies += "com.github.valskalla" %% "odin-monix" % "@VERSION@"
+```
+
+Use corresponding import to get an access to the loggers:
+
+```scala
+import io.odin.zio._
+//or
+import io.odin.monix._
+```
+
 Documentation
 ---
 
-- [Setup](#setup)
 - [Example](#example)
 - [Logger Interface](#logger-interface)
 - [Render](#render)
@@ -41,17 +72,6 @@ Documentation
 - [Constant context](#constant-context)
 - [Contextual effects](#contextual-effects)
 - [Contramap and filter](#contramap-and-filter)
-
-## Setup
-
-Odin is published to Maven Central and cross-built for Scala 2.12 and 2.13. Add the following lines to your build:
-
-```scala
-libraryDependencies ++= Seq(
-  "com.github.valskalla" %% "odin-core",
-  "com.github.valskalla" %% "odin-json" //to enable JSON formatter if needed
-).map(_ % "@VERSION@")
-```
 
 ## Example
 
