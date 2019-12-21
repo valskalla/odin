@@ -1,5 +1,6 @@
 lazy val versions = new {
-  val scalaTest = "3.0.8"
+  val scalaTest = "3.1.0"
+  val scalaTestScalaCheck = "3.2.0.1-M1"
   val cats = "2.0.0"
   val catsMtl = "0.7.0"
   val sourcecode = "0.1.8"
@@ -14,6 +15,7 @@ lazy val versions = new {
 lazy val scalaVersions = List("2.13.1", "2.12.10")
 
 lazy val scalaTest = "org.scalatest" %% "scalatest" % versions.scalaTest % Test
+lazy val scalaTestScalaCheck = "org.scalatestplus" % "scalacheck-1-14_2.13" % versions.scalaTestScalaCheck % Test
 
 lazy val cats = List(
   (version: String) => "org.typelevel" %% "cats-core" % version,
@@ -49,7 +51,7 @@ lazy val noPublish = Seq(
 lazy val sharedSettings = Seq(
   scalaVersion := "2.13.1",
   organization := "com.github.valskalla",
-  libraryDependencies ++= scalaCheck :: scalaTest :: Nil,
+  libraryDependencies ++= scalaTestScalaCheck :: scalaCheck :: scalaTest :: Nil,
   addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3"),
   crossScalaVersions := scalaVersions,
   classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.ScalaLibrary,
