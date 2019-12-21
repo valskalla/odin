@@ -5,13 +5,14 @@ import cats.{Applicative, Eval}
 import io.odin.formatter.Formatter
 import io.odin.meta.Position
 import org.scalacheck.{Arbitrary, Cogen, Gen}
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.{Checkers, ScalaCheckDrivenPropertyChecks}
 import org.typelevel.discipline.Laws
 
 import scala.concurrent.duration.{FiniteDuration, TimeUnit}
 
-trait OdinSpec extends FlatSpec with Matchers with Checkers with ScalaCheckDrivenPropertyChecks with EqInstances {
+trait OdinSpec extends AnyFlatSpec with Matchers with Checkers with ScalaCheckDrivenPropertyChecks with EqInstances {
   def checkAll(name: String, ruleSet: Laws#RuleSet): Unit = {
     for ((id, prop) <- ruleSet.all.properties)
       it should (name + "." + id) in {
