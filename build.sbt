@@ -1,7 +1,8 @@
 lazy val versions = new {
   val scalaTest = "3.1.0"
   val scalaTestScalaCheck = "3.2.0.1-M1"
-  val cats = "2.0.0"
+  val cats = "2.1.0"
+  val catsEffect = "2.0.0"
   val catsMtl = "0.7.0"
   val sourcecode = "0.1.8"
   val monix = "3.1.0"
@@ -15,13 +16,14 @@ lazy val versions = new {
 lazy val scalaVersions = List("2.13.1", "2.12.10")
 
 lazy val scalaTest = "org.scalatest" %% "scalatest" % versions.scalaTest % Test
-lazy val scalaTestScalaCheck = "org.scalatestplus" % "scalacheck-1-14_2.13" % versions.scalaTestScalaCheck % Test
+lazy val scalaTestScalaCheck = "org.scalatestplus" %% "scalacheck-1-14" % versions.scalaTestScalaCheck % Test
 
 lazy val cats = List(
   (version: String) => "org.typelevel" %% "cats-core" % version,
-  (version: String) => "org.typelevel" %% "cats-laws" % version % Test,
-  (version: String) => "org.typelevel" %% "cats-effect" % version
+  (version: String) => "org.typelevel" %% "cats-laws" % version % Test
 ).map(_.apply(versions.cats))
+
+lazy val catsEffect = "org.typelevel" %% "cats-effect" % versions.catsEffect
 
 lazy val catsMtl = "org.typelevel" %% "cats-mtl-core" % versions.catsMtl
 
