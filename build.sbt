@@ -154,8 +154,8 @@ lazy val examples = (project in file("examples"))
 lazy val odin = (project in file("."))
   .settings(sharedSettings)
   .settings(noPublish)
-  .dependsOn(`odin-core`, `odin-json`, `odin-zio`, `odin-monix`)
-  .aggregate(`odin-core`, `odin-json`, `odin-zio`, `odin-monix`, benchmarks, examples)
+  .dependsOn(`odin-core`, `odin-json`, `odin-zio`, `odin-monix`, `odin-slf4j`)
+  .aggregate(`odin-core`, `odin-json`, `odin-zio`, `odin-monix`, `odin-slf4j`, benchmarks, examples)
 
 def scalacOptionsVersion(scalaVersion: String) =
   Seq(
