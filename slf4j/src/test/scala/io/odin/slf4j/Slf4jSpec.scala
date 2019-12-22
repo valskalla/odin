@@ -29,6 +29,25 @@ class Slf4jSpec extends OdinSpec {
 
   }
 
+  it should "log exceptions" in {
+    forAll { (msgs: List[LoggerMessage], t: Throwable) =>
+      val (logger, buffer) = getLogger
+      msgs.foreach { msg =>
+        msg.level match {
+          case Level.Trace => logger.trace(msg.message.value, t)
+          case Level.Debug => logger.debug(msg.message.value, t)
+          case Level.Info  => logger.info(msg.message.value, t)
+          case Level.Warn  => logger.warn(msg.message.value, t)
+          case Level.Error => logger.error(msg.message.value, t)
+        }
+      }
+
+      buffer.get.unsafeRunSync().map(msg => (msg.message.value, msg.level, msg.exception)) shouldBe msgs.map(msg =>
+        (msg.message.value, msg.level, Some(t))
+      )
+    }
+  }
+
   it should "resolve minimal level" in {
     LoggerFactory.getLogger(Level.Trace.toString).isTraceEnabled shouldBe true
 
