@@ -1,0 +1,129 @@
+package io.odin.slf4j
+
+import cats.effect.IO
+import cats.effect.concurrent.Ref
+import io.odin.{Level, LoggerMessage, OdinSpec}
+import org.slf4j.{Logger, LoggerFactory}
+
+import scala.collection.immutable.Queue
+
+class Slf4jSpec extends OdinSpec {
+
+  it should "log with correct level" in {
+    forAll { msgs: List[LoggerMessage] =>
+      val (logger, buffer) = getLogger
+      msgs.foreach { msg =>
+        msg.level match {
+          case Level.Trace => logger.trace(msg.message.value)
+          case Level.Debug => logger.debug(msg.message.value)
+          case Level.Info  => logger.info(msg.message.value)
+          case Level.Warn  => logger.warn(msg.message.value)
+          case Level.Error => logger.error(msg.message.value)
+        }
+      }
+
+      buffer.get.unsafeRunSync().map(msg => (msg.message.value, msg.level)) shouldBe msgs.map(msg =>
+        (msg.message.value, msg.level)
+      )
+    }
+
+  }
+
+  it should "log exceptions" in {
+    forAll { (msgs: List[LoggerMessage], t: Throwable) =>
+      val (logger, buffer) = getLogger
+      msgs.foreach { msg =>
+        msg.level match {
+          case Level.Trace => logger.trace(msg.message.value, t)
+          case Level.Debug => logger.debug(msg.message.value, t)
+          case Level.Info  => logger.info(msg.message.value, t)
+          case Level.Warn  => logger.warn(msg.message.value, t)
+          case Level.Error => logger.error(msg.message.value, t)
+        }
+      }
+
+      buffer.get.unsafeRunSync().map(msg => (msg.message.value, msg.level, msg.exception)) shouldBe msgs.map(msg =>
+        (msg.message.value, msg.level, Some(t))
+      )
+    }
+  }
+
+  it should "resolve minimal level" in {
+    LoggerFactory.getLogger(Level.Trace.toString).isTraceEnabled shouldBe true
+
+    LoggerFactory.getLogger(Level.Debug.toString).isDebugEnabled shouldBe true
+    LoggerFactory.getLogger(Level.Debug.toString).isTraceEnabled shouldBe false
+
+    LoggerFactory.getLogger(Level.Info.toString).isInfoEnabled shouldBe true
+    LoggerFactory.getLogger(Level.Info.toString).isDebugEnabled shouldBe false
+
+    LoggerFactory.getLogger(Level.Warn.toString).isWarnEnabled shouldBe true
+    LoggerFactory.getLogger(Level.Warn.toString).isInfoEnabled shouldBe false
+
+    LoggerFactory.getLogger(Level.Error.toString).isErrorEnabled shouldBe true
+    LoggerFactory.getLogger(Level.Error.toString).isWarnEnabled shouldBe false
+  }
+
+  it should "format logs" in {
+    forAll { msgs: List[LoggerMessage] =>
+      val (logger, buffer) = getLogger
+      msgs.foreach { msg =>
+        msg.level match {
+          case Level.Trace => logger.trace("{}", msg.message.value)
+          case Level.Debug => logger.debug("{}", msg.message.value)
+          case Level.Info  => logger.info("{}", msg.message.value)
+          case Level.Warn  => logger.warn("{}", msg.message.value)
+          case Level.Error => logger.error("{}", msg.message.value)
+        }
+      }
+
+      buffer.get.unsafeRunSync().map(msg => (msg.message.value, msg.level)) shouldBe msgs.map(msg =>
+        (msg.message.value, msg.level)
+      )
+    }
+  }
+
+  it should "format logs with two arguments" in {
+    forAll { (msgs: List[LoggerMessage], i: String) =>
+      val (logger, buffer) = getLogger
+      msgs.foreach { msg =>
+        msg.level match {
+          case Level.Trace => logger.trace("{} {}", msg.message.value: Any, i: Any)
+          case Level.Debug => logger.debug("{} {}", msg.message.value: Any, i: Any)
+          case Level.Info  => logger.info("{} {}", msg.message.value: Any, i: Any)
+          case Level.Warn  => logger.warn("{} {}", msg.message.value: Any, i: Any)
+          case Level.Error => logger.error("{} {}", msg.message.value: Any, i: Any)
+        }
+      }
+
+      buffer.get.unsafeRunSync().map(msg => (msg.message.value, msg.level)) shouldBe msgs.map(msg =>
+        (s"${msg.message.value} $i", msg.level)
+      )
+    }
+  }
+
+  it should "format logs with multiple arguments" in {
+    forAll { (msgs: List[LoggerMessage], i: String, i2: String) =>
+      val (logger, buffer) = getLogger
+      msgs.foreach { msg =>
+        msg.level match {
+          case Level.Trace => logger.trace("{} {} {}", msg.message.value, i, i2)
+          case Level.Debug => logger.debug("{} {} {}", msg.message.value, i, i2)
+          case Level.Info  => logger.info("{} {} {}", msg.message.value, i, i2)
+          case Level.Warn  => logger.warn("{} {} {}", msg.message.value, i, i2)
+          case Level.Error => logger.error("{} {} {}", msg.message.value, i, i2)
+        }
+      }
+
+      buffer.get.unsafeRunSync().map(msg => (msg.message.value, msg.level)) shouldBe msgs.map(msg =>
+        (s"${msg.message.value} $i $i2", msg.level)
+      )
+    }
+  }
+
+  def getLogger: (Logger, Ref[IO, Queue[LoggerMessage]]) = {
+    val logger = LoggerFactory.getLogger(this.getClass).asInstanceOf[OdinLoggerAdapter[IO]]
+    (logger, logger.underlying.asInstanceOf[BufferingLogger[IO]].buffer)
+  }
+
+}

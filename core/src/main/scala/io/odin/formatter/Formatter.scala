@@ -13,13 +13,14 @@ trait Formatter {
 object Formatter {
   val default: Formatter = (msg: LoggerMessage) => {
     val ctx = formatCtx(msg.context)
+    val lineNumber = if (msg.position.line >= 0) p":${msg.position.line}" else ""
     msg.exception match {
       case Some(t) =>
         val formattedThrowable = formatThrowable(t)
-        p"${msg.timestamp.t.F}T${msg.timestamp.t.T} [${msg.threadName}] ${msg.level.show} ${msg.position.enclosureName}:${msg.position.line} - ${msg.message.value} $ctx${System
+        p"${msg.timestamp.t.F}T${msg.timestamp.t.T} [${msg.threadName}] ${msg.level.show} ${msg.position.enclosureName}$lineNumber - ${msg.message.value} $ctx${System
           .lineSeparator()}${formattedThrowable.toString}"
       case None =>
-        p"${msg.timestamp.t.F}T${msg.timestamp.t.T} [${msg.threadName}] ${msg.level.show} ${msg.position.enclosureName}:${msg.position.line} - ${msg.message.value}$ctx"
+        p"${msg.timestamp.t.F}T${msg.timestamp.t.T} [${msg.threadName}] ${msg.level.show} ${msg.position.enclosureName}$lineNumber - ${msg.message.value}$ctx"
     }
   }
 

@@ -28,7 +28,7 @@ jobs:
     - name: Run tests
       shell: bash
       run: |
-        JAVA_TOOL_OPTIONS=-Dfile.encoding=UTF8 sbt coverage +test
+        JAVA_TOOL_OPTIONS=-Dfile.encoding=UTF8 sbt coverage +test docs/mdoc
         sbt coverageReport coverageAggregate
     - uses: codecov/codecov-action@v1
       if: matrix.os != 'windows-latest' #doesn't work properly on Windows
