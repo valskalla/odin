@@ -19,6 +19,7 @@ top priorities.
 - Position tracing implemented with macro instead of reflection considerably boosts the performance
 - Own performant logger backends for console and log files
 - Composable loggers to bring different loggers together with `Monoid[Logger[F]]`
+- Backend for SLF4J API
 
 Standing on the shoulders of `cats-effect` type classes, Odin abstracts away from concrete effect types, allowing
 users to decide what they feel comfortable with: `IO`, `ZIO`, `monix.Task`, `ReaderT` etc. The choice is yours.
@@ -59,11 +60,11 @@ Documentation
 ---
 
 - [Example](#example)
-- [Logger Interface](#logger-interface)
+- [Logger interface](#logger-interface)
 - [Render](#render)
-- [Console Logger](#console-logger)
+- [Console logger](#console-logger)
 - [Formatter](#formatter)
-  - [JSON Formatter](#json-formatter)
+  - [JSON formatter](#json-formatter)
 - [Minimal level](#minimal-level)
 - [File logger](#file-logger)
 - [Async logger](#async-logger)
@@ -72,6 +73,7 @@ Documentation
 - [Constant context](#constant-context)
 - [Contextual effects](#contextual-effects)
 - [Contramap and filter](#contramap-and-filter)
+- [SL4FJ bridge](#slf4j-bridge)
 
 ## Example
 
@@ -454,6 +456,55 @@ consoleLogger[IO]()
     .info("Very long messages are discarded")
     .unsafeRunSync()
 ```
+
+## SLF4J bridge
+
+In case if some dependencies in the project use SL4J as a logging API, it's possible to provide Odin logger as a backend.
+It requires a two-step setup:
+
+- Add following dependency to your build:
+```scala
+libraryDependencies += "com.github.valskalla" %% "odin-slf4j" % "@VERSION@"
+```
+- Create `StaticLoggerBuilder` class/object in the package `org.slf4j.impl` with a similar content:
+```scala mdoc:reset
+//package org.slf4j.impl
+
+import cats.effect.{ConcurrentEffect, ContextShift, IO, Timer}
+import io.odin._
+import io.odin.slf4j.OdinLoggerBinder
+
+import scala.concurrent.ExecutionContext
+
+//effect type should be specified inbefore
+//log line will be recorded right after the call with no suspension
+class StaticLoggerBinder extends OdinLoggerBinder[IO] {
+
+val ec: ExecutionContext = scala.concurrent.ExecutionContext.global //or other EC of your choice
+implicit val timer: Timer[IO] = IO.timer(ec)
+implicit val cs: ContextShift[IO] = IO.contextShift(ec)
+implicit val F: ConcurrentEffect[IO] = IO.ioConcurrentEffect
+
+val loggers: PartialFunction[String, Logger[IO]] = {
+  case "some.external.package.SpecificClass" =>
+    consoleLogger[IO](minLevel = Level.Warn) //disable noisy external logs
+  case _ => //if wildcard case isn't provided, default logger is no-op
+    consoleLogger[IO]()
+}
+}
+
+object StaticLoggerBinder extends StaticLoggerBinder {
+
+var REQUESTED_API_VERSION: String = "1.7"
+
+def getSingleton: StaticLoggerBinder = this
+
+}
+```
+
+Latter is required for SL4J API to load it in runtime and use as a binder for `LoggerFactory`. Partial function is used
+as a factory router to load correct logger backend. On undefined case the no-op logger is provided by default,
+so no logs are recorded. 
 
 Contributing
 ---

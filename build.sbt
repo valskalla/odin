@@ -140,7 +140,7 @@ lazy val docs = (project in file("odin-docs"))
     ),
     mdocOut := file(".")
   )
-  .dependsOn(`odin-core`, `odin-json`, `odin-zio`, `odin-monix`)
+  .dependsOn(`odin-core`, `odin-json`, `odin-zio`, `odin-monix`, `odin-slf4j`)
   .enablePlugins(MdocPlugin)
 
 lazy val examples = (project in file("examples"))
