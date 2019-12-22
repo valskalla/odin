@@ -11,6 +11,7 @@ lazy val versions = new {
   val catsScalacheck = "0.2.0"
   val zio = "1.0.0-RC17"
   val zioCats = "2.0.0.0-RC10"
+  val slf4j = "1.7.30"
 }
 
 lazy val scalaVersions = List("2.13.1", "2.12.10")
@@ -38,6 +39,8 @@ lazy val monix = "io.monix" %% "monix" % versions.monix
 lazy val perfolation = "com.outr" %% "perfolation" % "1.1.5"
 
 lazy val circeCore = "io.circe" %% "circe-core" % "0.12.3"
+
+lazy val slf4j = "org.slf4j" % "slf4j-api" % versions.slf4j
 
 lazy val catsScalacheck = "io.chrisdavenport" %% "cats-scalacheck" % versions.catsScalacheck % Test
 
@@ -112,6 +115,13 @@ lazy val `odin-monix` = (project in file("monix"))
   .settings(sharedSettings)
   .settings(
     libraryDependencies += monix
+  )
+  .dependsOn(`odin-core` % "compile->compile;test->test")
+
+lazy val `odin-slf4j` = (project in file("slf4j"))
+  .settings(sharedSettings)
+  .settings(
+    libraryDependencies += slf4j
   )
   .dependsOn(`odin-core` % "compile->compile;test->test")
 
