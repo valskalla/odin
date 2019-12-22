@@ -65,15 +65,15 @@ class Slf4jSpec extends OdinSpec {
   }
 
   it should "format logs with two arguments" in {
-    forAll { (msgs: List[LoggerMessage], i: Int) =>
+    forAll { (msgs: List[LoggerMessage], i: String) =>
       val (logger, buffer) = getLogger
       msgs.foreach { msg =>
         msg.level match {
-          case Level.Trace => logger.trace("{} {}", msg.message.value, i)
-          case Level.Debug => logger.debug("{} {}", msg.message.value, i)
-          case Level.Info  => logger.info("{} {}", msg.message.value, i)
-          case Level.Warn  => logger.warn("{} {}", msg.message.value, i)
-          case Level.Error => logger.error("{} {}", msg.message.value, i)
+          case Level.Trace => logger.trace("{} {}", msg.message.value: Any, i: Any)
+          case Level.Debug => logger.debug("{} {}", msg.message.value: Any, i: Any)
+          case Level.Info  => logger.info("{} {}", msg.message.value: Any, i: Any)
+          case Level.Warn  => logger.warn("{} {}", msg.message.value: Any, i: Any)
+          case Level.Error => logger.error("{} {}", msg.message.value: Any, i: Any)
         }
       }
 
@@ -84,7 +84,7 @@ class Slf4jSpec extends OdinSpec {
   }
 
   it should "format logs with multiple arguments" in {
-    forAll { (msgs: List[LoggerMessage], i: Int, i2: Int) =>
+    forAll { (msgs: List[LoggerMessage], i: String, i2: String) =>
       val (logger, buffer) = getLogger
       msgs.foreach { msg =>
         msg.level match {
