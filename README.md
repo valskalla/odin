@@ -19,6 +19,7 @@ top priorities.
 - Position tracing implemented with macro instead of reflection considerably boosts the performance
 - Own performant logger backends for console and log files
 - Composable loggers to bring different loggers together with `Monoid[Logger[F]]`
+- Backend for SLF4J API
 
 Standing on the shoulders of `cats-effect` type classes, Odin abstracts away from concrete effect types, allowing
 users to decide what they feel comfortable with: `IO`, `ZIO`, `monix.Task`, `ReaderT` etc. The choice is yours.
@@ -32,7 +33,7 @@ Odin is published to Maven Central and cross-built for Scala 2.12 and 2.13. Add 
 libraryDependencies ++= Seq(
   "com.github.valskalla" %% "odin-core",
   "com.github.valskalla" %% "odin-json" //to enable JSON formatter if needed
-).map(_ % "0.3.1")
+).map(_ % "0.4.0")
 ```
 
 Effects out of the box
@@ -42,9 +43,9 @@ Some time could be saved by using the effect-predefined variants of Odin. There 
 
 ```scala
 //ZIO
-libraryDependencies += "com.github.valskalla" %% "odin-zio" % "0.3.1"
+libraryDependencies += "com.github.valskalla" %% "odin-zio" % "0.4.0"
 //or Monix
-libraryDependencies += "com.github.valskalla" %% "odin-monix" % "0.3.1"
+libraryDependencies += "com.github.valskalla" %% "odin-monix" % "0.4.0"
 ```
 
 Use corresponding import to get an access to the loggers:
@@ -59,11 +60,11 @@ Documentation
 ---
 
 - [Example](#example)
-- [Logger Interface](#logger-interface)
+- [Logger interface](#logger-interface)
 - [Render](#render)
-- [Console Logger](#console-logger)
+- [Console logger](#console-logger)
 - [Formatter](#formatter)
-  - [JSON Formatter](#json-formatter)
+  - [JSON formatter](#json-formatter)
 - [Minimal level](#minimal-level)
 - [File logger](#file-logger)
 - [Async logger](#async-logger)
@@ -72,6 +73,7 @@ Documentation
 - [Constant context](#constant-context)
 - [Contextual effects](#contextual-effects)
 - [Contramap and filter](#contramap-and-filter)
+- [SL4FJ bridge](#slf4j-bridge)
 
 ## Example
 
@@ -171,17 +173,17 @@ Now to the call:
 logger.info("Hello?")
 // res0: IO[Unit] = Map(
 //   Bind(
-//     Delay(cats.effect.Clock$$anon$1$$Lambda$8389/811257321@22ec686d),
-//     io.odin.loggers.DefaultLogger$$Lambda$8390/911627027@5c8e1347
+//     Delay(cats.effect.Clock$$anon$1$$Lambda$8389/1647645555@326caed7),
+//     io.odin.loggers.DefaultLogger$$Lambda$8390/1772882548@3ea46f1f
 //   ),
-//   scala.Function1$$Lambda$8397/1642982619@648dd791,
+//   scala.Function1$$Lambda$8397/2103954291@4285f78d,
 //   1
 // )
 
 //prints "Hello world" to the STDOUT.
 //Although, don't use `unsafeRunSync` in production unless you know what you're doing
 logger.info("Hello world").unsafeRunSync()
-// 2019-12-21T10:23:22 [run-main-0] INFO repl.Session.App#res1:68 - Hello world
+// 2019-12-22T21:46:57 [run-main-0] INFO repl.Session.App#res1:68 - Hello world
 ```
 
 All messages of level `WARN` and higher are routed to the _STDERR_ while messages with level `INFO` and below go to the _STDOUT_.
@@ -221,8 +223,8 @@ _odin-core_ provides the `Formatter.default` that prints information in a nicely
 ```scala
 import cats.syntax.all._
 (logger.info("No context") *> logger.info("Some context", Map("key" -> "value"))).unsafeRunSync()
-// 2019-12-21T10:23:22 [run-main-0] INFO repl.Session.App#res2:77 - No context
-// 2019-12-21T10:23:22 [run-main-0] INFO repl.Session.App#res2:77 - Some context - key: value
+// 2019-12-22T21:46:57 [run-main-0] INFO repl.Session.App#res2:77 - No context
+// 2019-12-22T21:46:57 [run-main-0] INFO repl.Session.App#res2:77 - Some context - key: value
 ```
 
 ### JSON Formatter
@@ -239,7 +241,7 @@ Now messages printed with this logger will be encoded as JSON string using circe
 
 ```scala
 jsonLogger.info("This is JSON").unsafeRunSync()
-// {"level":"INFO","message":"This is JSON","context":{},"exception":null,"position":"repl.Session.App#res3:92","thread_name":"run-main-0","timestamp":"2019-12-21T10:23:22"}
+// {"level":"INFO","message":"This is JSON","context":{},"exception":null,"position":"repl.Session.App#res3:92","thread_name":"run-main-0","timestamp":"2019-12-22T21:46:57"}
 ```
 
 ## Minimal level
@@ -314,7 +316,6 @@ async logger shall be done inside of `Resource.use` block:
 ```scala
 //queue will be flushed on release even if flushing timer didn't hit the mark yet
 asyncLoggerResource.use(logger => logger.info("Async info")).unsafeRunSync()
-// 2019-12-21T10:23:22 [run-main-0] INFO repl.Session.App#res6:142 - Async info
 ```
 
 Package `io.odin.syntax._` also pimps the `Resource[F, Logger[F]]` type with the same `.withAsync` method to use
@@ -405,7 +406,7 @@ import io.odin.syntax._
 consoleLogger[IO]()
     .withConstContext(Map("predefined" -> "context"))
     .info("Hello world").unsafeRunSync()
-// 2019-12-21T10:23:22 [run-main-0] INFO repl.Session.App#res7:206 - Hello world - predefined: context
+// 2019-12-22T21:46:57 [run-main-0] INFO repl.Session.App#res7:206 - Hello world - predefined: context
 ```
 
 ## Contextual effects
@@ -436,7 +437,7 @@ consoleLogger[M]()
     .info("Hello world")
     .run(Env(Map("env" -> "ctx")))
     .unsafeRunSync()
-// 2019-12-21T10:23:22 [run-main-0] INFO repl.Session.App#res8:237 - Hello world - env: ctx
+// 2019-12-22T21:46:57 [run-main-0] INFO repl.Session.App#res8:237 - Hello world - env: ctx
 ```
 
 Odin automatically derives required type classes for each type `F[_]` that has `ApplicativeAsk[F, E]` defined, or in other words
@@ -463,13 +464,62 @@ consoleLogger[IO]()
     .contramap(msg => msg.copy(message = msg.message.map(_ + " World")))
     .info("Hello")
     .unsafeRunSync()
-// 2019-12-21T10:23:22 [run-main-0] INFO repl.Session.App#res9:250 - Hello World
+// 2019-12-22T21:46:57 [run-main-0] INFO repl.Session.App#res9:250 - Hello World
 
 consoleLogger[IO]()
     .filter(msg => msg.message.value.size < 10)
     .info("Very long messages are discarded")
     .unsafeRunSync()
 ```
+
+## SLF4J bridge
+
+In case if some dependencies in the project use SL4J as a logging API, it's possible to provide Odin logger as a backend.
+It requires a two-step setup:
+
+- Add following dependency to your build:
+```scala
+libraryDependencies += "com.github.valskalla" %% "odin-slf4j" % "0.4.0"
+```
+- Create `StaticLoggerBuilder` class/object in the package `org.slf4j.impl` with a similar content:
+```scala
+//package org.slf4j.impl
+
+import cats.effect.{ConcurrentEffect, ContextShift, IO, Timer}
+import io.odin._
+import io.odin.slf4j.OdinLoggerBinder
+
+import scala.concurrent.ExecutionContext
+
+//effect type should be specified inbefore
+//log line will be recorded right after the call with no suspension
+class StaticLoggerBinder extends OdinLoggerBinder[IO] {
+
+val ec: ExecutionContext = scala.concurrent.ExecutionContext.global //or other EC of your choice
+implicit val timer: Timer[IO] = IO.timer(ec)
+implicit val cs: ContextShift[IO] = IO.contextShift(ec)
+implicit val F: ConcurrentEffect[IO] = IO.ioConcurrentEffect
+
+val loggers: PartialFunction[String, Logger[IO]] = {
+  case "some.external.package.SpecificClass" =>
+    consoleLogger[IO](minLevel = Level.Warn) //disable noisy external logs
+  case _ => //if wildcard case isn't provided, default logger is no-op
+    consoleLogger[IO]()
+}
+}
+
+object StaticLoggerBinder extends StaticLoggerBinder {
+
+var REQUESTED_API_VERSION: String = "1.7"
+
+def getSingleton: StaticLoggerBinder = this
+
+}
+```
+
+Latter is required for SL4J API to load it in runtime and use as a binder for `LoggerFactory`. Partial function is used
+as a factory router to load correct logger backend. On undefined case the no-op logger is provided by default,
+so no logs are recorded. 
 
 Contributing
 ---
