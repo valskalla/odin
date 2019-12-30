@@ -480,24 +480,24 @@ import scala.concurrent.ExecutionContext
 //log line will be recorded right after the call with no suspension
 class StaticLoggerBinder extends OdinLoggerBinder[IO] {
 
-val ec: ExecutionContext = scala.concurrent.ExecutionContext.global //or other EC of your choice
-implicit val timer: Timer[IO] = IO.timer(ec)
-implicit val cs: ContextShift[IO] = IO.contextShift(ec)
-implicit val F: ConcurrentEffect[IO] = IO.ioConcurrentEffect
-
-val loggers: PartialFunction[String, Logger[IO]] = {
-  case "some.external.package.SpecificClass" =>
-    consoleLogger[IO](minLevel = Level.Warn) //disable noisy external logs
-  case _ => //if wildcard case isn't provided, default logger is no-op
-    consoleLogger[IO]()
-}
+  val ec: ExecutionContext = scala.concurrent.ExecutionContext.global //or other EC of your choice
+  implicit val timer: Timer[IO] = IO.timer(ec)
+  implicit val cs: ContextShift[IO] = IO.contextShift(ec)
+  implicit val F: ConcurrentEffect[IO] = IO.ioConcurrentEffect
+    
+  val loggers: PartialFunction[String, Logger[IO]] = {
+    case "some.external.package.SpecificClass" =>
+      consoleLogger[IO](minLevel = Level.Warn) //disable noisy external logs
+    case _ => //if wildcard case isn't provided, default logger is no-op
+      consoleLogger[IO]()
+  }
 }
 
 object StaticLoggerBinder extends StaticLoggerBinder {
 
-var REQUESTED_API_VERSION: String = "1.7"
+    var REQUESTED_API_VERSION: String = "1.7"
 
-def getSingleton: StaticLoggerBinder = this
+    def getSingleton: StaticLoggerBinder = this
 
 }
 ```
