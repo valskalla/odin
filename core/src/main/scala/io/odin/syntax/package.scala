@@ -8,6 +8,7 @@ import scala.concurrent.duration._
 
 package object syntax {
   implicit class LoggerSyntax[F[_]](logger: Logger[F]) {
+
     /**
       * Create logger that adds constant context to each log record
       * @param ctx constant context
@@ -64,6 +65,7 @@ package object syntax {
     * Syntax for loggers suspended in `Resource` (i.e. `AsyncLogger` or `FileLogger`)
     */
   implicit class ResourceLoggerSyntax[F[_]](resource: Resource[F, Logger[F]]) {
+
     /**
       * Create async logger that buffers the messages up to the limit (if any) and flushes it down the chain each `timeWindow`
       * @param timeWindow pause between async buffer flushing

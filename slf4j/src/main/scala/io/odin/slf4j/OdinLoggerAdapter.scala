@@ -17,7 +17,7 @@ case class OdinLoggerAdapter[F[_]](loggerName: String, underlying: OdinLogger[F]
     with Logger {
 
   private def run(level: Level, msg: String, t: Option[Throwable] = None): Unit =
-    F.toIO(for {
+    F.toIO(F.whenA(level >= underlying.minLevel)(for {
         timestamp <- timer.clock.realTime(TimeUnit.MILLISECONDS)
         _ <- underlying.log(
           LoggerMessage(
@@ -37,7 +37,7 @@ case class OdinLoggerAdapter[F[_]](loggerName: String, underlying: OdinLogger[F]
         )
       } yield {
         ()
-      })
+      }))
       .unsafeRunSync()
 
   private def runFormatted(level: Level, tuple: FormattingTuple): Unit =

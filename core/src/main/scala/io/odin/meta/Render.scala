@@ -10,6 +10,7 @@ trait Render[M] {
 }
 
 object Render extends LowPriorityRender {
+
   /**
     * Construct [[Render]] using default `.toString` method
     */
@@ -19,6 +20,7 @@ object Render extends LowPriorityRender {
 }
 
 trait LowPriorityRender {
+
   /**
     * Automatically derive [[Render]] instance given `cats.Show`
     */

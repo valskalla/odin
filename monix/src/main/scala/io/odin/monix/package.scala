@@ -7,6 +7,7 @@ import cats.effect.Resource
 import scala.concurrent.duration._
 
 package object monix {
+
   /**
     * See `io.odin.consoleLogger`
     */

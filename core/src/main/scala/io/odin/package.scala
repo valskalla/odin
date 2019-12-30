@@ -8,6 +8,7 @@ import io.odin.syntax._
 import scala.concurrent.duration._
 
 package object odin {
+
   /**
     * Basic console logger that prints to STDOUT & STDERR
     * @param formatter formatter to use for log messages
