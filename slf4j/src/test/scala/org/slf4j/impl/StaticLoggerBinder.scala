@@ -14,13 +14,13 @@ class StaticLoggerBinder extends OdinLoggerBinder[IO] {
   implicit val F: ConcurrentEffect[IO] = IO.ioConcurrentEffect
 
   val loggers: PartialFunction[String, Logger[IO]] = {
-    case Level.Trace.toString => consoleLogger(minLevel = Level.Trace)
-    case Level.Debug.toString => consoleLogger(minLevel = Level.Debug)
-    case Level.Info.toString  => consoleLogger(minLevel = Level.Info)
-    case Level.Warn.toString  => consoleLogger(minLevel = Level.Warn)
-    case Level.Error.toString => consoleLogger(minLevel = Level.Error)
+    case Level.Trace.toString => new BufferingLogger[IO](Level.Trace)
+    case Level.Debug.toString => new BufferingLogger[IO](Level.Debug)
+    case Level.Info.toString  => new BufferingLogger[IO](Level.Info)
+    case Level.Warn.toString  => new BufferingLogger[IO](Level.Warn)
+    case Level.Error.toString => new BufferingLogger[IO](Level.Error)
     case _ =>
-      new BufferingLogger[IO]()
+      new BufferingLogger[IO](Level.Trace)
   }
 }
 

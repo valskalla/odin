@@ -47,6 +47,7 @@ case class AsyncLogger[F[_]](queue: ConcurrentQueue[F, LoggerMessage], timeWindo
 }
 
 object AsyncLogger {
+
   /**
     * Create async logger and start internal loop of sending events down the chain from the buffer once
     * `Resource` is used.

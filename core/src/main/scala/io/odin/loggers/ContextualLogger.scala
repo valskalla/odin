@@ -45,6 +45,7 @@ trait WithContext[F[_]] {
 }
 
 object WithContext {
+
   /**
     * Default implementation of `WithContext` that works for any `F[_]` with `ApplicativeAsk` instance and
     * instance of [[HasContext]] for environment of this `ApplicativeAsk`

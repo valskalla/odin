@@ -1,5 +1,6 @@
 package io.odin.slf4j
 
+import cats.syntax.all._
 import cats.effect.IO
 import cats.effect.concurrent.Ref
 import io.odin.{Level, LoggerMessage, OdinSpec}
@@ -118,6 +119,28 @@ class Slf4jSpec extends OdinSpec {
       buffer.get.unsafeRunSync().map(msg => (msg.message.value, msg.level)) shouldBe msgs.map(msg =>
         (s"${msg.message.value} $i $i2", msg.level)
       )
+    }
+  }
+
+  it should "not log messages with level lower than set" in {
+    forAll { (msgs: List[LoggerMessage], minLevel: Level) =>
+      val expected = msgs.filter(_.level >= minLevel)
+      val (logger, buffer) = {
+        val l = LoggerFactory.getLogger(minLevel.show).asInstanceOf[OdinLoggerAdapter[IO]]
+        (l, l.underlying.asInstanceOf[BufferingLogger[IO]].buffer)
+      }
+
+      msgs.foreach { msg =>
+        msg.level match {
+          case Level.Trace => logger.trace(msg.message.value)
+          case Level.Debug => logger.debug(msg.message.value)
+          case Level.Info  => logger.info(msg.message.value)
+          case Level.Warn  => logger.warn(msg.message.value)
+          case Level.Error => logger.error(msg.message.value)
+        }
+      }
+
+      buffer.get.unsafeRunSync().size shouldBe expected.size
     }
   }
 
