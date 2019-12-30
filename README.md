@@ -5,7 +5,7 @@
 </p>
 
 ----
-[![Build Status](https://github.com/valskalla/odin/workflows/Scala%20CI/badge.svg)](https://github.com/valskalla/odin/actions)
+[![Build Status](https://img.shields.io/github/workflow/status/valskalla/odin/Scala%20CI)](https://github.com/valskalla/odin/actions)
 [![Maven Central](https://img.shields.io/maven-central/v/com.github.valskalla/odin-core_2.13)](https://search.maven.org/search?q=com.github.valskalla)
 [![Codecov](https://img.shields.io/codecov/c/github/valskalla/odin)](https://codecov.io/gh/valskalla/odin)
 [![License](https://img.shields.io/github/license/valskalla/odin)](https://github.com/valskalla/odin/blob/master/LICENSE)
@@ -173,17 +173,17 @@ Now to the call:
 logger.info("Hello?")
 // res0: IO[Unit] = Map(
 //   Bind(
-//     Delay(cats.effect.Clock$$anon$1$$Lambda$8417/1043986447@4c2f5b8b),
-//     io.odin.loggers.DefaultLogger$$Lambda$8418/1658669015@12145e81
+//     Delay(cats.effect.Clock$$anon$1$$Lambda$10514/0x00000008028f6440@3200f2d9),
+//     io.odin.loggers.DefaultLogger$$Lambda$10515/0x00000008028f5040@2bd1191a
 //   ),
-//   scala.Function1$$Lambda$8425/631928800@7f98162e,
+//   scala.Function1$$Lambda$10522/0x0000000802918840@5dcb7aaa,
 //   1
 // )
 
 //prints "Hello world" to the STDOUT.
 //Although, don't use `unsafeRunSync` in production unless you know what you're doing
 logger.info("Hello world").unsafeRunSync()
-// 2019-12-30T13:52:39 [run-main-0] INFO repl.Session.App#res1:68 - Hello world
+// 2019-12-31T01:11:53 [run-main-0] INFO repl.Session.App#res1:68 - Hello world
 ```
 
 All messages of level `WARN` and higher are routed to the _STDERR_ while messages with level `INFO` and below go to the _STDOUT_.
@@ -223,8 +223,8 @@ _odin-core_ provides the `Formatter.default` that prints information in a nicely
 ```scala
 import cats.syntax.all._
 (logger.info("No context") *> logger.info("Some context", Map("key" -> "value"))).unsafeRunSync()
-// 2019-12-30T13:52:39 [run-main-0] INFO repl.Session.App#res2:77 - No context
-// 2019-12-30T13:52:39 [run-main-0] INFO repl.Session.App#res2:77 - Some context - key: value
+// 2019-12-31T01:11:53 [run-main-0] INFO repl.Session.App#res2:77 - No context
+// 2019-12-31T01:11:53 [run-main-0] INFO repl.Session.App#res2:77 - Some context - key: value
 ```
 
 ### JSON Formatter
@@ -241,7 +241,7 @@ Now messages printed with this logger will be encoded as JSON string using circe
 
 ```scala
 jsonLogger.info("This is JSON").unsafeRunSync()
-// {"level":"INFO","message":"This is JSON","context":{},"exception":null,"position":"repl.Session.App#res3:92","thread_name":"run-main-0","timestamp":"2019-12-30T13:52:39"}
+// {"level":"INFO","message":"This is JSON","context":{},"exception":null,"position":"repl.Session.App#res3:92","thread_name":"run-main-0","timestamp":"2019-12-31T01:11:53"}
 ```
 
 ## Minimal level
@@ -316,7 +316,7 @@ async logger shall be done inside of `Resource.use` block:
 ```scala
 //queue will be flushed on release even if flushing timer didn't hit the mark yet
 asyncLoggerResource.use(logger => logger.info("Async info")).unsafeRunSync()
-// 2019-12-30T13:52:39 [run-main-0] INFO repl.Session.App#res6:142 - Async info
+// 2019-12-31T01:11:54 [run-main-0] INFO repl.Session.App#res6:142 - Async info
 ```
 
 Package `io.odin.syntax._` also pimps the `Resource[F, Logger[F]]` type with the same `.withAsync` method to use
@@ -407,7 +407,7 @@ import io.odin.syntax._
 consoleLogger[IO]()
     .withConstContext(Map("predefined" -> "context"))
     .info("Hello world").unsafeRunSync()
-// 2019-12-30T13:52:39 [run-main-0] INFO repl.Session.App#res7:206 - Hello world - predefined: context
+// 2019-12-31T01:11:54 [run-main-0] INFO repl.Session.App#res7:206 - Hello world - predefined: context
 ```
 
 ## Contextual effects
@@ -438,7 +438,7 @@ consoleLogger[M]()
     .info("Hello world")
     .run(Env(Map("env" -> "ctx")))
     .unsafeRunSync()
-// 2019-12-30T13:52:39 [run-main-0] INFO repl.Session.App#res8:237 - Hello world - env: ctx
+// 2019-12-31T01:11:54 [run-main-0] INFO repl.Session.App#res8:237 - Hello world - env: ctx
 ```
 
 Odin automatically derives required type classes for each type `F[_]` that has `ApplicativeAsk[F, E]` defined, or in other words
@@ -465,7 +465,7 @@ consoleLogger[IO]()
     .contramap(msg => msg.copy(message = msg.message.map(_ + " World")))
     .info("Hello")
     .unsafeRunSync()
-// 2019-12-30T13:52:39 [run-main-0] INFO repl.Session.App#res9:250 - Hello World
+// 2019-12-31T01:11:54 [run-main-0] INFO repl.Session.App#res9:250 - Hello World
 
 consoleLogger[IO]()
     .filter(msg => msg.message.value.size < 10)
@@ -496,24 +496,24 @@ import scala.concurrent.ExecutionContext
 //log line will be recorded right after the call with no suspension
 class StaticLoggerBinder extends OdinLoggerBinder[IO] {
 
-val ec: ExecutionContext = scala.concurrent.ExecutionContext.global //or other EC of your choice
-implicit val timer: Timer[IO] = IO.timer(ec)
-implicit val cs: ContextShift[IO] = IO.contextShift(ec)
-implicit val F: ConcurrentEffect[IO] = IO.ioConcurrentEffect
-
-val loggers: PartialFunction[String, Logger[IO]] = {
-  case "some.external.package.SpecificClass" =>
-    consoleLogger[IO](minLevel = Level.Warn) //disable noisy external logs
-  case _ => //if wildcard case isn't provided, default logger is no-op
-    consoleLogger[IO]()
-}
+  val ec: ExecutionContext = scala.concurrent.ExecutionContext.global //or other EC of your choice
+  implicit val timer: Timer[IO] = IO.timer(ec)
+  implicit val cs: ContextShift[IO] = IO.contextShift(ec)
+  implicit val F: ConcurrentEffect[IO] = IO.ioConcurrentEffect
+    
+  val loggers: PartialFunction[String, Logger[IO]] = {
+    case "some.external.package.SpecificClass" =>
+      consoleLogger[IO](minLevel = Level.Warn) //disable noisy external logs
+    case _ => //if wildcard case isn't provided, default logger is no-op
+      consoleLogger[IO]()
+  }
 }
 
 object StaticLoggerBinder extends StaticLoggerBinder {
 
-var REQUESTED_API_VERSION: String = "1.7"
+    var REQUESTED_API_VERSION: String = "1.7"
 
-def getSingleton: StaticLoggerBinder = this
+    def getSingleton: StaticLoggerBinder = this
 
 }
 ```
