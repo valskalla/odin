@@ -17,11 +17,10 @@ trait LoggerTests[F[_]] extends Laws {
       eqF: Eq[List[LoggerMessage]]
   ): RuleSet = new SimpleRuleSet(
     "logger",
-    "checks minLevel" -> Prop.forAll(
-      (msg: LoggerMessage, level: Level) => loggerLaws.checksMinLevel(logger, msg, level)
+    "checks minLevel" -> Prop.forAll((msg: LoggerMessage, level: Level) => loggerLaws.checksMinLevel(logger, msg, level)
     ),
-    "log(list) <-> list.traverse(log)" -> Prop.forAll(
-      (msgs: List[LoggerMessage]) => loggerLaws.batchEqualsToTraverse(logger, msgs)
+    "log(list) <-> list.traverse(log)" -> Prop.forAll((msgs: List[LoggerMessage]) =>
+      loggerLaws.batchEqualsToTraverse(logger, msgs)
     )
   )
 }

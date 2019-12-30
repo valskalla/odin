@@ -9,6 +9,7 @@ import io.odin.syntax._
   * Modify logger message before it's written
   */
 object ContramapExample extends IOApp {
+
   /**
     * This logger always appends " World" string to each message
     */

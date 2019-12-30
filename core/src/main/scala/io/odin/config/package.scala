@@ -7,6 +7,7 @@ import cats.syntax.all._
 import io.odin.loggers.DefaultLogger
 
 package object config {
+
   /**
     * Route logs to specific logger based on the fully qualified package name.
     * Beware of O(n) complexity due to the partial matching done during the logging

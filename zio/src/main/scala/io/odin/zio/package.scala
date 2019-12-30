@@ -10,6 +10,7 @@ import io.odin.formatter.Formatter
 import scala.concurrent.duration._
 
 package object zio {
+
   /**
     * See `io.odin.consoleLogger`
     */

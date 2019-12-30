@@ -10,17 +10,16 @@ import perfolation._
 
 object Formatter {
   implicit val loggerMessageEncoder: Encoder[LoggerMessage] =
-    Encoder.forProduct7("level", "message", "context", "exception", "position", "thread_name", "timestamp")(
-      m =>
-        (
-          m.level.show,
-          m.message.value,
-          m.context,
-          m.exception.map(t => formatThrowable(t).toString()),
-          p"${m.position.enclosureName}:${m.position.line}",
-          m.threadName,
-          p"${m.timestamp.t.F}T${m.timestamp.t.T}"
-        )
+    Encoder.forProduct7("level", "message", "context", "exception", "position", "thread_name", "timestamp")(m =>
+      (
+        m.level.show,
+        m.message.value,
+        m.context,
+        m.exception.map(t => formatThrowable(t).toString()),
+        p"${m.position.enclosureName}:${m.position.line}",
+        m.threadName,
+        p"${m.timestamp.t.F}T${m.timestamp.t.T}"
+      )
     )
 
   val json: OFormatter = (msg: LoggerMessage) => msg.asJson.noSpaces
