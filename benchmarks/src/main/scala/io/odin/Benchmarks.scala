@@ -13,6 +13,10 @@ import io.odin.json.{Formatter => JsonFormatter}
 import io.odin.meta.Position
 import org.openjdk.jmh.annotations._
 import org.apache.logging.log4j.LogManager
+import scribe.handler.AsynchronousLogHandler
+import scribe.writer.FileWriter
+import scribe.writer.file.LogPath
+import scribe.{MDC, Logger => ScribeLogger}
 
 // $COVERAGE-OFF$
 @BenchmarkMode(Array(Mode.AverageTime))
@@ -22,7 +26,9 @@ import org.apache.logging.log4j.LogManager
 @Fork(warmups = 2, jvmArgsAppend = Array("-XX:MaxInlineLevel=18", "-XX:MaxInlineSize=270", "-XX:MaxTrivialSize=12"))
 abstract class OdinBenchmarks {
   val message: String = "msg"
-  val context: Map[String, String] = Map("hello" -> "world")
+  val contextKey: String = "hello"
+  val contextValue: String = "world"
+  val context: Map[String, String] = Map(contextKey -> contextValue)
   val throwable = new Error()
   val loggerMessage: LoggerMessage = LoggerMessage(
     io.odin.Level.Debug,
@@ -119,6 +125,51 @@ class Log4jBenchmark extends OdinBenchmarks {
     Files.delete(Paths.get("log4j.log"))
     Files.delete(Paths.get("log4j-trace.log"))
     Files.delete(Paths.get("log4j-async.log"))
+  }
+}
+
+@State(Scope.Benchmark)
+class ScribeBenchmark extends OdinBenchmarks {
+  private val writer = FileWriter().path(LogPath.simple("scribe.log"))
+  private val asyncWriter = FileWriter().path(LogPath.simple("scribe-async.log"))
+
+  private val logger =
+    ScribeLogger.empty.orphan().withHandler(writer = writer)
+
+  private val asyncLogger = ScribeLogger.empty.orphan().withHandler {
+    AsynchronousLogHandler(scribe.format.Formatter.default, asyncWriter)
+  }
+
+  @Benchmark
+  @OperationsPerInvocation(1000)
+  def msg(): Unit =
+    for (_ <- 1 to 1000) logger.info(message)
+
+  @Benchmark
+  @OperationsPerInvocation(1000)
+  def msgAndCtx(): Unit =
+    for (_ <- 1 to 1000) {
+      MDC(contextKey) = contextValue
+      logger.info(message)
+    }
+
+  @Benchmark
+  @OperationsPerInvocation(1000)
+  def asyncMsg(): Unit =
+    for (_ <- 1 to 1000) asyncLogger.info(message)
+
+  @Benchmark
+  @OperationsPerInvocation(1000)
+  def asyncMsgCtx(): Unit =
+    for (_ <- 1 to 1000) {
+      MDC(contextKey) = contextValue
+      asyncLogger.info(message)
+    }
+
+  @TearDown
+  def tearDown(): Unit = {
+    writer.dispose()
+    asyncWriter.dispose()
   }
 }
 

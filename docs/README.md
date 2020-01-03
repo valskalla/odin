@@ -516,7 +516,11 @@ inspection for deriving callee enclosure and line number, Odin achieves quite im
 with existing mature solutions.
 
 Following [benchmark](https://github.com/valskalla/odin/blob/master/benchmarks/src/main/scala/io/odin/Benchmarks.scala)
-results reflect comparison of Odin file logger in sync and async modes with log4j file loggers with enabled tracing.
+results reflect comparison of:
+ - log4j file loggers with enabled tracing
+ - Odin file loggers
+ - scribe file loggers 
+ 
 Lower number is better: 
 
 ```
@@ -538,11 +542,22 @@ Lower number is better:
 [info] AsyncLoggerBenchmark.msgAndCtx        avgt   25  477.833 ±  87.207  ns/op
 [info] AsyncLoggerBenchmark.msgCtxThrowable  avgt   25  292.481 ±  34.979  ns/op
 
+-- scribe
+[info] Benchmark                    Mode  Cnt     Score    Error  Units
+[info] ScribeBenchmark.asyncMsg     avgt   25   124.507 ± 35.444  ns/op
+[info] ScribeBenchmark.asyncMsgCtx  avgt   25   122.867 ±  6.833  ns/op
+[info] ScribeBenchmark.msg          avgt   25  1105.457 ± 77.251  ns/op
+[info] ScribeBenchmark.msgAndCtx    avgt   25  1235.908 ± 21.112  ns/op
+
 Hardware:
 MacBook Pro (13-inch, 2018)
 2.3 GHz Quad-Core Intel Core i5
 16 GB 2133 MHz LPDDR3
 ```
+
+Odin outperforms log4j by the order of magnitude, although scribe does it even better. Mind that due to
+safety guarantees default file logger in Odin is flushed after each record, so it's recommended to use it in combination
+with async logger to achieve the maximum performance. 
 
 Adopters
 ---

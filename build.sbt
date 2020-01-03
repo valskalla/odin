@@ -14,6 +14,7 @@ lazy val versions = new {
   val slf4j = "1.7.30"
   val log4j = "2.13.0"
   val disruptor = "3.4.2"
+  val scribe = "2.7.10"
 }
 
 lazy val scalaVersions = List("2.13.1", "2.12.10")
@@ -55,6 +56,8 @@ lazy val log4j = ("com.lmax" % "disruptor" % versions.disruptor) :: List(
   "org.apache.logging.log4j" % "log4j-api",
   "org.apache.logging.log4j" % "log4j-core"
 ).map(_ % versions.log4j)
+
+lazy val scribe = "com.outr" %% "scribe" % versions.scribe
 
 lazy val noPublish = Seq(
   skip in publish := true
@@ -137,7 +140,7 @@ lazy val benchmarks = (project in file("benchmarks"))
   .settings(noPublish)
   .enablePlugins(JmhPlugin)
   .settings(
-    libraryDependencies ++= log4j
+    libraryDependencies ++= scribe :: log4j
   )
   .dependsOn(`odin-core`, `odin-json`)
 

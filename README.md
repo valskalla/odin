@@ -174,17 +174,17 @@ Now to the call:
 logger.info("Hello?")
 // res0: IO[Unit] = Map(
 //   Bind(
-//     Delay(cats.effect.Clock$$anon$1$$Lambda$6665/0x0000000801d46440@a7ea6f8),
-//     io.odin.loggers.DefaultLogger$$Lambda$6666/0x0000000801d45040@7f717438
+//     Delay(cats.effect.Clock$$anon$1$$Lambda$7490/0x0000000801fe6440@5672a594),
+//     io.odin.loggers.DefaultLogger$$Lambda$7491/0x0000000801fe5040@368204bd
 //   ),
-//   scala.Function1$$Lambda$6673/0x0000000801d6a840@3e96cf54,
+//   scala.Function1$$Lambda$7498/0x000000080200c040@e9d8fa6,
 //   1
 // )
 
 //prints "Hello world" to the STDOUT.
 //Although, don't use `unsafeRunSync` in production unless you know what you're doing
 logger.info("Hello world").unsafeRunSync()
-// 2020-01-03T02:07:03 [run-main-0] INFO repl.Session.App#res1:68 - Hello world
+// 2020-01-03T13:36:21 [run-main-0] INFO repl.Session.App#res1:68 - Hello world
 ```
 
 All messages of level `WARN` and higher are routed to the _STDERR_ while messages with level `INFO` and below go to the _STDOUT_.
@@ -224,8 +224,8 @@ _odin-core_ provides the `Formatter.default` that prints information in a nicely
 ```scala
 import cats.syntax.all._
 (logger.info("No context") *> logger.info("Some context", Map("key" -> "value"))).unsafeRunSync()
-// 2020-01-03T02:07:03 [run-main-0] INFO repl.Session.App#res2:77 - No context
-// 2020-01-03T02:07:03 [run-main-0] INFO repl.Session.App#res2:77 - Some context - key: value
+// 2020-01-03T13:36:21 [run-main-0] INFO repl.Session.App#res2:77 - No context
+// 2020-01-03T13:36:21 [run-main-0] INFO repl.Session.App#res2:77 - Some context - key: value
 ```
 
 ### JSON Formatter
@@ -242,7 +242,7 @@ Now messages printed with this logger will be encoded as JSON string using circe
 
 ```scala
 jsonLogger.info("This is JSON").unsafeRunSync()
-// {"level":"INFO","message":"This is JSON","context":{},"exception":null,"position":"repl.Session.App#res3:92","thread_name":"run-main-0","timestamp":"2020-01-03T02:07:03"}
+// {"level":"INFO","message":"This is JSON","context":{},"exception":null,"position":"repl.Session.App#res3:92","thread_name":"run-main-0","timestamp":"2020-01-03T13:36:21"}
 ```
 
 ## Minimal level
@@ -317,7 +317,7 @@ async logger shall be done inside of `Resource.use` block:
 ```scala
 //queue will be flushed on release even if flushing timer didn't hit the mark yet
 asyncLoggerResource.use(logger => logger.info("Async info")).unsafeRunSync()
-// 2020-01-03T02:07:03 [run-main-0] INFO repl.Session.App#res6:142 - Async info
+// 2020-01-03T13:36:21 [run-main-0] INFO repl.Session.App#res6:142 - Async info
 ```
 
 Package `io.odin.syntax._` also pimps the `Resource[F, Logger[F]]` type with the same `.withAsync` method to use
@@ -408,7 +408,7 @@ import io.odin.syntax._
 consoleLogger[IO]()
     .withConstContext(Map("predefined" -> "context"))
     .info("Hello world").unsafeRunSync()
-// 2020-01-03T02:07:03 [run-main-0] INFO repl.Session.App#res7:206 - Hello world - predefined: context
+// 2020-01-03T13:36:21 [run-main-0] INFO repl.Session.App#res7:206 - Hello world - predefined: context
 ```
 
 ## Contextual effects
@@ -439,7 +439,7 @@ consoleLogger[M]()
     .info("Hello world")
     .run(Env(Map("env" -> "ctx")))
     .unsafeRunSync()
-// 2020-01-03T02:07:03 [run-main-0] INFO repl.Session.App#res8:237 - Hello world - env: ctx
+// 2020-01-03T13:36:21 [run-main-0] INFO repl.Session.App#res8:237 - Hello world - env: ctx
 ```
 
 Odin automatically derives required type classes for each type `F[_]` that has `ApplicativeAsk[F, E]` defined, or in other words
@@ -466,7 +466,7 @@ consoleLogger[IO]()
     .contramap(msg => msg.copy(message = msg.message.map(_ + " World")))
     .info("Hello")
     .unsafeRunSync()
-// 2020-01-03T02:07:03 [run-main-0] INFO repl.Session.App#res9:250 - Hello World
+// 2020-01-03T13:36:21 [run-main-0] INFO repl.Session.App#res9:250 - Hello World
 
 consoleLogger[IO]()
     .filter(msg => msg.message.value.size < 10)
@@ -532,7 +532,11 @@ inspection for deriving callee enclosure and line number, Odin achieves quite im
 with existing mature solutions.
 
 Following [benchmark](https://github.com/valskalla/odin/blob/master/benchmarks/src/main/scala/io/odin/Benchmarks.scala)
-results reflect comparison of Odin file logger in sync and async modes with log4j file loggers with enabled tracing.
+results reflect comparison of:
+ - log4j file loggers with enabled tracing
+ - Odin file loggers
+ - scribe file loggers 
+ 
 Lower number is better: 
 
 ```
@@ -554,11 +558,22 @@ Lower number is better:
 [info] AsyncLoggerBenchmark.msgAndCtx        avgt   25  477.833 ±  87.207  ns/op
 [info] AsyncLoggerBenchmark.msgCtxThrowable  avgt   25  292.481 ±  34.979  ns/op
 
+-- scribe
+[info] Benchmark                    Mode  Cnt     Score    Error  Units
+[info] ScribeBenchmark.asyncMsg     avgt   25   124.507 ± 35.444  ns/op
+[info] ScribeBenchmark.asyncMsgCtx  avgt   25   122.867 ±  6.833  ns/op
+[info] ScribeBenchmark.msg          avgt   25  1105.457 ± 77.251  ns/op
+[info] ScribeBenchmark.msgAndCtx    avgt   25  1235.908 ± 21.112  ns/op
+
 Hardware:
 MacBook Pro (13-inch, 2018)
 2.3 GHz Quad-Core Intel Core i5
 16 GB 2133 MHz LPDDR3
 ```
+
+Odin outperforms log4j by the order of magnitude, although scribe does it even better. Mind that due to
+safety guarantees default file logger in Odin is flushed after each record, so it's recommended to use it in combination
+with async logger to achieve the maximum performance. 
 
 Adopters
 ---
