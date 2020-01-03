@@ -12,6 +12,9 @@ lazy val versions = new {
   val zio = "1.0.0-RC17"
   val zioCats = "2.0.0.0-RC10"
   val slf4j = "1.7.30"
+  val log4j = "2.13.0"
+  val disruptor = "3.4.2"
+  val scribe = "2.7.10"
 }
 
 lazy val scalaVersions = List("2.13.1", "2.12.10")
@@ -48,6 +51,13 @@ lazy val catsRetry = List(
   "com.github.cb372" %% "cats-retry-core",
   "com.github.cb372" %% "cats-retry-cats-effect"
 ).map(_ % versions.catsRetry % Test)
+
+lazy val log4j = ("com.lmax" % "disruptor" % versions.disruptor) :: List(
+  "org.apache.logging.log4j" % "log4j-api",
+  "org.apache.logging.log4j" % "log4j-core"
+).map(_ % versions.log4j)
+
+lazy val scribe = "com.outr" %% "scribe" % versions.scribe
 
 lazy val noPublish = Seq(
   skip in publish := true
@@ -129,6 +139,9 @@ lazy val benchmarks = (project in file("benchmarks"))
   .settings(sharedSettings)
   .settings(noPublish)
   .enablePlugins(JmhPlugin)
+  .settings(
+    libraryDependencies ++= scribe :: log4j
+  )
   .dependsOn(`odin-core`, `odin-json`)
 
 lazy val docs = (project in file("odin-docs"))

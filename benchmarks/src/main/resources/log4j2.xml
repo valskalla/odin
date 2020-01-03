@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="INFO">
+    <Appenders>
+        <File name="log4j" fileName="log4j.log">
+            <PatternLayout>
+                <Pattern>%d %p %c{1.} [%t] %m%n</Pattern>
+            </PatternLayout>
+        </File>
+        <File name="log4j-trace" fileName="log4j-trace.log">
+            <PatternLayout>
+                <Pattern>%d %p %c{1.} [%t] (%F:%L) - %m%n</Pattern>
+            </PatternLayout>
+        </File>
+        <File name="log4j-async" fileName="log4j-async.log" immediateFlush="false">
+            <PatternLayout>
+                <Pattern>%d %p %c{1.} [%t] (%F:%L) - %m%n</Pattern>
+            </PatternLayout>
+        </File>
+    </Appenders>
+    <Loggers>
+        <Root level="trace">
+            <AppenderRef ref="log4j"/>
+        </Root>
+        <Logger name="log4j" level="trace">
+            <AppenderRef ref="log4j"/>
+        </Logger>
+        <Logger name="log4j-trace" level="trace" includeLocation="true">
+            <AppenderRef ref="log4j-trace"/>
+        </Logger>
+        <AsyncLogger name="log4j-async" level="trace" includeLocation="true">
+            <AppenderRef ref="log4j-async"/>
+        </AsyncLogger>
+    </Loggers>
+</Configuration>
