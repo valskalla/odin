@@ -36,46 +36,8 @@ libraryDependencies ++= Seq(
 ).map(_ % "0.4.1")
 ```
 
-Effects out of the box
+Example
 ---
-
-Some time could be saved by using the effect-predefined variants of Odin. There are options for ZIO and Monix users: 
-
-```scala
-//ZIO
-libraryDependencies += "com.github.valskalla" %% "odin-zio" % "0.4.1"
-//or Monix
-libraryDependencies += "com.github.valskalla" %% "odin-monix" % "0.4.1"
-```
-
-Use corresponding import to get an access to the loggers:
-
-```scala
-import io.odin.zio._
-//or
-import io.odin.monix._
-```
-
-Documentation
----
-
-- [Example](#example)
-- [Logger interface](#logger-interface)
-- [Render](#render)
-- [Console logger](#console-logger)
-- [Formatter](#formatter)
-  - [JSON formatter](#json-formatter)
-- [Minimal level](#minimal-level)
-- [File logger](#file-logger)
-- [Async logger](#async-logger)
-- [Class and enclosure routing](#class-and-enclosure-routing)
-- [Loggers composition](#loggers-composition)
-- [Constant context](#constant-context)
-- [Contextual effects](#contextual-effects)
-- [Contramap and filter](#contramap-and-filter)
-- [SL4FJ bridge](#slf4j-bridge)
-
-## Example
 
 Using `IOApp`:
 ```scala
@@ -99,6 +61,45 @@ Once application starts, it prints:
 ```
 
 Check out [examples](https://github.com/valskalla/odin/tree/master/examples) directory for more
+
+Effects out of the box
+---
+
+Some time could be saved by using the effect-predefined variants of Odin. There are options for ZIO and Monix users: 
+
+```scala
+//ZIO
+libraryDependencies += "com.github.valskalla" %% "odin-zio" % "0.4.1"
+//or Monix
+libraryDependencies += "com.github.valskalla" %% "odin-monix" % "0.4.1"
+```
+
+Use corresponding import to get an access to the loggers:
+
+```scala
+import io.odin.zio._
+//or
+import io.odin.monix._
+```
+
+Documentation
+---
+
+- [Logger interface](#logger-interface)
+- [Render](#render)
+- [Console logger](#console-logger)
+- [Formatter](#formatter)
+  - [JSON formatter](#json-formatter)
+- [Minimal level](#minimal-level)
+- [File logger](#file-logger)
+- [Async logger](#async-logger)
+- [Class and enclosure routing](#class-and-enclosure-routing)
+- [Loggers composition](#loggers-composition)
+- [Constant context](#constant-context)
+- [Contextual effects](#contextual-effects)
+- [Contramap and filter](#contramap-and-filter)
+- [SL4FJ bridge](#slf4j-bridge)
+- [Benchmarks](#benchmarks)
 
 ## Logger interface
 
@@ -173,17 +174,17 @@ Now to the call:
 logger.info("Hello?")
 // res0: IO[Unit] = Map(
 //   Bind(
-//     Delay(cats.effect.Clock$$anon$1$$Lambda$10514/0x00000008028f6440@3200f2d9),
-//     io.odin.loggers.DefaultLogger$$Lambda$10515/0x00000008028f5040@2bd1191a
+//     Delay(cats.effect.Clock$$anon$1$$Lambda$6665/0x0000000801d46440@a7ea6f8),
+//     io.odin.loggers.DefaultLogger$$Lambda$6666/0x0000000801d45040@7f717438
 //   ),
-//   scala.Function1$$Lambda$10522/0x0000000802918840@5dcb7aaa,
+//   scala.Function1$$Lambda$6673/0x0000000801d6a840@3e96cf54,
 //   1
 // )
 
 //prints "Hello world" to the STDOUT.
 //Although, don't use `unsafeRunSync` in production unless you know what you're doing
 logger.info("Hello world").unsafeRunSync()
-// 2019-12-31T01:11:53 [run-main-0] INFO repl.Session.App#res1:68 - Hello world
+// 2020-01-03T02:07:03 [run-main-0] INFO repl.Session.App#res1:68 - Hello world
 ```
 
 All messages of level `WARN` and higher are routed to the _STDERR_ while messages with level `INFO` and below go to the _STDOUT_.
@@ -223,8 +224,8 @@ _odin-core_ provides the `Formatter.default` that prints information in a nicely
 ```scala
 import cats.syntax.all._
 (logger.info("No context") *> logger.info("Some context", Map("key" -> "value"))).unsafeRunSync()
-// 2019-12-31T01:11:53 [run-main-0] INFO repl.Session.App#res2:77 - No context
-// 2019-12-31T01:11:53 [run-main-0] INFO repl.Session.App#res2:77 - Some context - key: value
+// 2020-01-03T02:07:03 [run-main-0] INFO repl.Session.App#res2:77 - No context
+// 2020-01-03T02:07:03 [run-main-0] INFO repl.Session.App#res2:77 - Some context - key: value
 ```
 
 ### JSON Formatter
@@ -241,7 +242,7 @@ Now messages printed with this logger will be encoded as JSON string using circe
 
 ```scala
 jsonLogger.info("This is JSON").unsafeRunSync()
-// {"level":"INFO","message":"This is JSON","context":{},"exception":null,"position":"repl.Session.App#res3:92","thread_name":"run-main-0","timestamp":"2019-12-31T01:11:53"}
+// {"level":"INFO","message":"This is JSON","context":{},"exception":null,"position":"repl.Session.App#res3:92","thread_name":"run-main-0","timestamp":"2020-01-03T02:07:03"}
 ```
 
 ## Minimal level
@@ -316,7 +317,7 @@ async logger shall be done inside of `Resource.use` block:
 ```scala
 //queue will be flushed on release even if flushing timer didn't hit the mark yet
 asyncLoggerResource.use(logger => logger.info("Async info")).unsafeRunSync()
-// 2019-12-31T01:11:54 [run-main-0] INFO repl.Session.App#res6:142 - Async info
+// 2020-01-03T02:07:03 [run-main-0] INFO repl.Session.App#res6:142 - Async info
 ```
 
 Package `io.odin.syntax._` also pimps the `Resource[F, Logger[F]]` type with the same `.withAsync` method to use
@@ -407,7 +408,7 @@ import io.odin.syntax._
 consoleLogger[IO]()
     .withConstContext(Map("predefined" -> "context"))
     .info("Hello world").unsafeRunSync()
-// 2019-12-31T01:11:54 [run-main-0] INFO repl.Session.App#res7:206 - Hello world - predefined: context
+// 2020-01-03T02:07:03 [run-main-0] INFO repl.Session.App#res7:206 - Hello world - predefined: context
 ```
 
 ## Contextual effects
@@ -438,7 +439,7 @@ consoleLogger[M]()
     .info("Hello world")
     .run(Env(Map("env" -> "ctx")))
     .unsafeRunSync()
-// 2019-12-31T01:11:54 [run-main-0] INFO repl.Session.App#res8:237 - Hello world - env: ctx
+// 2020-01-03T02:07:03 [run-main-0] INFO repl.Session.App#res8:237 - Hello world - env: ctx
 ```
 
 Odin automatically derives required type classes for each type `F[_]` that has `ApplicativeAsk[F, E]` defined, or in other words
@@ -465,7 +466,7 @@ consoleLogger[IO]()
     .contramap(msg => msg.copy(message = msg.message.map(_ + " World")))
     .info("Hello")
     .unsafeRunSync()
-// 2019-12-31T01:11:54 [run-main-0] INFO repl.Session.App#res9:250 - Hello World
+// 2020-01-03T02:07:03 [run-main-0] INFO repl.Session.App#res9:250 - Hello World
 
 consoleLogger[IO]()
     .filter(msg => msg.message.value.size < 10)
@@ -522,12 +523,62 @@ Latter is required for SL4J API to load it in runtime and use as a binder for `L
 as a factory router to load correct logger backend. On undefined case the no-op logger is provided by default,
 so no logs are recorded. 
 
+This bridge doesn't support MDC.
+
+## Benchmarks
+
+Odin is one of the fastest JVM tracing loggers in the wild. By relying on Scala macro machinery instead of stack trace
+inspection for deriving callee enclosure and line number, Odin achieves quite impressive throughput numbers comparing
+with existing mature solutions.
+
+Following [benchmark](https://github.com/valskalla/odin/blob/master/benchmarks/src/main/scala/io/odin/Benchmarks.scala)
+results reflect comparison of Odin file logger in sync and async modes with log4j file loggers with enabled tracing.
+Lower number is better: 
+
+```
+-- log4j
+[info] Benchmark                 Mode  Cnt      Score      Error  Units
+[info] Log4jBenchmark.asyncMsg   avgt   25  23316.067 ± 1179.658  ns/op
+[info] Log4jBenchmark.msg        avgt   25  12421.523 ± 1773.842  ns/op
+[info] Log4jBenchmark.tracedMsg  avgt   25  24754.219 ± 4001.198  ns/op
+
+-- odin sync
+[info] Benchmark                             Mode  Cnt      Score     Error  Units
+[info] FileLoggerBenchmarks.msg              avgt   25   6264.891 ± 510.206  ns/op
+[info] FileLoggerBenchmarks.msgAndCtx        avgt   25   5903.032 ± 243.277  ns/op
+[info] FileLoggerBenchmarks.msgCtxThrowable  avgt   25  11868.172 ± 275.807  ns/op
+
+-- odin async
+[info] Benchmark                             Mode  Cnt    Score     Error  Units
+[info] AsyncLoggerBenchmark.msg              avgt   25  532.986 ± 126.094  ns/op
+[info] AsyncLoggerBenchmark.msgAndCtx        avgt   25  477.833 ±  87.207  ns/op
+[info] AsyncLoggerBenchmark.msgCtxThrowable  avgt   25  292.481 ±  34.979  ns/op
+
+Hardware:
+MacBook Pro (13-inch, 2018)
+2.3 GHz Quad-Core Intel Core i5
+16 GB 2133 MHz LPDDR3
+```
+
+Adopters
+---
+- [Zalando](https://jobs.zalando.com/en/tech)
+
 Contributing
 ---
 Feel free to open an issue, submit a Pull Request or ask [in the Gitter channel](https://gitter.im/valskalla/odin).
 We strive to provide a welcoming environment for everyone with good intentions.
 
 Also, don't hesitate to give it a star and spread the word to your friends and colleagues.
+
+Odin is maintained by [Sergey Kolbasov](https://github.com/sergeykolbasov) and [Aki Huttunen](https://github.com/Doikor).
+
+Acknowledgements
+---
+- [scribe](https://github.com/outr/scribe/) logging framework as a source of performance optimizations and inspiration
+- [sourcecode](https://github.com/lihaoyi/sourcecode) is _the_ library for position tracing in compile-time
+- [cats-effect](https://github.com/typelevel/cats-effect) as a repository of all the nice type classes to describe effects
+- [sbt-ci-release](https://github.com/olafurpg/sbt-ci-release) for the smooth experience with central Maven releases from CI
 
 License
 ---

@@ -12,6 +12,7 @@ import io.odin.formatter.Formatter
 import io.odin.json.{Formatter => JsonFormatter}
 import io.odin.meta.Position
 import org.openjdk.jmh.annotations._
+import org.apache.logging.log4j.LogManager
 
 // $COVERAGE-OFF$
 @BenchmarkMode(Array(Mode.AverageTime))
@@ -88,6 +89,36 @@ class FileLoggerBenchmarks extends OdinBenchmarks {
   def tearDown(): Unit = {
     cancelToken.unsafeRunSync()
     Files.delete(Paths.get(fileName))
+  }
+}
+
+@State(Scope.Benchmark)
+class Log4jBenchmark extends OdinBenchmarks {
+
+  private val logger = LogManager.getLogger("log4j")
+  private val tracingLogger = LogManager.getLogger("log4j-trace")
+  private val asyncLogger = LogManager.getLogger("log4j-async")
+
+  @Benchmark
+  @OperationsPerInvocation(1000)
+  def msg(): Unit =
+    for (_ <- 1 to 1000) logger.info(message)
+
+  @Benchmark
+  @OperationsPerInvocation(1000)
+  def tracedMsg(): Unit =
+    for (_ <- 1 to 1000) tracingLogger.info(message)
+
+  @Benchmark
+  @OperationsPerInvocation(1000)
+  def asyncMsg(): Unit =
+    for (_ <- 1 to 1000) asyncLogger.info(message)
+
+  @TearDown
+  def tearDown(): Unit = {
+    Files.delete(Paths.get("log4j.log"))
+    Files.delete(Paths.get("log4j-trace.log"))
+    Files.delete(Paths.get("log4j-async.log"))
   }
 }
 
