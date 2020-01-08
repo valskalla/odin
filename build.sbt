@@ -79,7 +79,7 @@ lazy val sharedSettings = Seq(
       "-Werror"
     )
   )),
-  homepage := Some(url("https://github.com/scalameta/sbt-scalafmt")),
+  homepage := Some(url("https://github.com/valskalla/odin")),
   licenses := List("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
   developers := List(
     Developer(
