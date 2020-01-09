@@ -71,6 +71,9 @@ trait Logger[F[_]] {
 }
 
 object Logger extends Noop with LoggerInstances {
+
+  def apply[F[_]](implicit instance: Logger[F]): Logger[F] = instance
+
   implicit class LoggerOps[F[_]](logger: Logger[F]) {
     def mapK[G[_]](f: F ~> G): Logger[G] = new Logger[G] {
       val minLevel: Level = logger.minLevel
