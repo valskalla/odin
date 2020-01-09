@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
       - uses: olafurpg/setup-scala@v5
       - name: Checkout
         run: git checkout master
@@ -18,13 +18,11 @@ jobs:
         run: sbt docs/mdoc
       - name: Commit to repository
         env:
-          GITHUB_TOKEN: ${{ secrets.github_token }}
           COMMIT_MSG: |
             Update documentation
             skip-checks: true
         run: |
           git config user.email "whoisliar@gmail.com"
           git config user.name "sergeykolbasov"
-          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
           git add .
           git diff --quiet && git diff --staged --quiet || (git commit -m "${COMMIT_MSG}"; git push origin master)
