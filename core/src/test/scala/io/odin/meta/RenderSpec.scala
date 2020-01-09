@@ -7,7 +7,7 @@ import cats.syntax.all._
 
 class RenderSpec extends OdinSpec {
   it should "derive Render instance from cats.Show" in {
-    val renderer = implicitly[Render[Foo]]
+    val renderer = Render[Foo]
     forAll { foo: Foo =>
       renderer.render(foo) shouldBe foo.show
     }
@@ -19,6 +19,17 @@ class RenderSpec extends OdinSpec {
       renderer.render(foo) shouldBe foo.toString
     }
   }
+
+  it should "interpolate a string using Render for every argument" in {
+    import io.odin.syntax._
+
+    implicit val intRender: Render[Int] = Render.fromToString
+
+    forAll { (foo: Foo, string: String, int: Int) =>
+      render"The interpolated $foo + $int = $string" shouldBe s"The interpolated ${foo.x} + $int = $string"
+    }
+  }
+
 }
 
 case class Foo(x: String)

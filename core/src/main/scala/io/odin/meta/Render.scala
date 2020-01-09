@@ -5,11 +5,22 @@ import cats.Show
 /**
   * Type class that defines how message of type `M` got rendered into String
   */
+@scala.annotation.implicitNotFound("""
+ No Render found for type ${M}. Try to implement an implicit Render[${M}].
+ You can implement it in ${M} companion class.
+""")
 trait Render[M] {
   def render(m: M): String
 }
 
 object Render extends LowPriorityRender {
+
+  def apply[A](implicit instance: Render[A]): Render[A] = instance
+
+  final case class Shown(override val toString: String) extends AnyVal
+  object Shown {
+    implicit def mat[A](a: A)(implicit r: Render[A]): Shown = Shown(r.render(a))
+  }
 
   /**
     * Construct [[Render]] using default `.toString` method

@@ -3,6 +3,7 @@ package io.odin
 import cats.Monad
 import cats.effect.{Concurrent, ConcurrentEffect, ContextShift, Resource, Timer}
 import io.odin.loggers.{AsyncLogger, ConstContextLogger, ContextualLogger, ContramapLogger, FilterLogger, WithContext}
+import io.odin.meta.Render
 
 import scala.concurrent.duration._
 
@@ -104,5 +105,9 @@ package object syntax {
       */
     def filter(f: LoggerMessage => Boolean)(implicit timer: Timer[F], F: Monad[F]): Resource[F, Logger[F]] =
       resource.map(FilterLogger(f, _))
+  }
+
+  implicit class RenderInterpolator(private val sc: StringContext) extends AnyVal {
+    def render(args: Render.Shown*): String = sc.s(args: _*)
   }
 }
