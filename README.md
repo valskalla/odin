@@ -9,6 +9,7 @@
 [![Maven Central](https://img.shields.io/maven-central/v/com.github.valskalla/odin-core_2.13)](https://search.maven.org/search?q=com.github.valskalla)
 [![Codecov](https://img.shields.io/codecov/c/github/valskalla/odin)](https://codecov.io/gh/valskalla/odin)
 [![License](https://img.shields.io/github/license/valskalla/odin)](https://github.com/valskalla/odin/blob/master/LICENSE)
+[![Gitter](https://img.shields.io/gitter/room/valskalla/odin)](https://gitter.im/valskalla/odin)
 
 Odin library enables functional approach to logging in Scala applications with reasoning and performance as the
 top priorities.
