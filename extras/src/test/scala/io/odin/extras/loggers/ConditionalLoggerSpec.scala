@@ -1,13 +1,15 @@
-package io.odin.loggers
+package io.odin.extras.loggers
 
 import cats.data.Kleisli
-import cats.effect.concurrent.Ref
 import cats.effect.Sync
+import cats.effect.concurrent.Ref
 import cats.mtl.instances.all._
 import cats.syntax.applicativeError._
-import cats.syntax.order._
 import cats.syntax.flatMap._
+import cats.syntax.order._
+import io.odin.loggers.{DefaultLogger, HasContext}
 import io.odin.syntax._
+import io.odin.extras.syntax._
 import io.odin.{Level, LoggerMessage, OdinSpec}
 import monix.eval.Task
 import monix.execution.schedulers.TestScheduler
@@ -33,7 +35,7 @@ class ConditionalLoggerSpec extends OdinSpec {
           _ <- RefLogger(ref)
             .withMinimalLevel(Level.Info)
             .withContext
-            .conditional(Level.Debug)
+            .withErrorLevel(Level.Debug)
             .use(logger => logger.log(messages))
 
           written <- ref.get
@@ -57,7 +59,7 @@ class ConditionalLoggerSpec extends OdinSpec {
           attempt <- RefLogger(ref)
             .withMinimalLevel(Level.Info)
             .withContext
-            .conditional(Level.Debug)
+            .withErrorLevel(Level.Debug)
             .use(logger => logger.log(messages) >> Sync[F].raiseError[Unit](error))
             .attempt
 

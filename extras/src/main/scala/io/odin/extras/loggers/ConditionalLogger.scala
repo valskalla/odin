@@ -1,4 +1,4 @@
-package io.odin.loggers
+package io.odin.extras.loggers
 
 import cats.MonadError
 import cats.effect.{Concurrent, ContextShift, ExitCase, Resource, Timer}
@@ -6,6 +6,7 @@ import cats.syntax.applicativeError._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import cats.syntax.order._
+import io.odin.loggers.DefaultLogger
 import io.odin.{Level, Logger, LoggerMessage}
 import monix.catnap.ConcurrentQueue
 import monix.execution.{BufferCapacity, ChannelType}
@@ -63,13 +64,25 @@ object ConditionalLogger {
     * The message will be logged after 10 seconds. Thus use the logger with caution.
     *
     * @param inner logger that will receive messages from the buffer
-    * @param fallbackLevel min level that will be used in case of error
+    * @param minLevelOnError min level that will be used in case of error
+    * @param maxBufferSize If `maxBufferSize` is set to some value and buffer size grows to that value,
+    *                      any new events might be dropped until there is a space in the buffer.
     */
-  def create[F[_]: Timer: Concurrent: ContextShift](inner: Logger[F], fallbackLevel: Level): Resource[F, Logger[F]] = {
+  def create[F[_]: Timer: Concurrent: ContextShift](
+      inner: Logger[F],
+      minLevelOnError: Level,
+      maxBufferSize: Option[Int]
+  ): Resource[F, Logger[F]] = {
+
+    val queueCapacity = maxBufferSize match {
+      case Some(value) => BufferCapacity.Bounded(value)
+      case None        => BufferCapacity.Unbounded()
+    }
+
     def acquire: F[ConditionalLogger[F]] =
       for {
-        queue <- ConcurrentQueue.withConfig[F, LoggerMessage](BufferCapacity.Unbounded(), ChannelType.MPSC)
-      } yield ConditionalLogger(queue, inner, fallbackLevel)
+        queue <- ConcurrentQueue.withConfig[F, LoggerMessage](queueCapacity, ChannelType.MPSC)
+      } yield ConditionalLogger(queue, inner, minLevelOnError)
 
     def release(logger: ConditionalLogger[F], exitCase: ExitCase[Throwable]): F[Unit] =
       logger.drain(exitCase)

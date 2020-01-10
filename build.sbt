@@ -67,7 +67,7 @@ lazy val sharedSettings = Seq(
   scalaVersion := "2.13.1",
   organization := "com.github.valskalla",
   libraryDependencies ++= scalaTestScalaCheck :: scalaCheck :: scalaTest :: Nil,
-  addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3"),
+  addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.11.0" cross CrossVersion.full),
   crossScalaVersions := scalaVersions,
   classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.ScalaLibrary,
   scalacOptions := scalacOptionsVersion(scalaVersion.value),
@@ -135,6 +135,10 @@ lazy val `odin-slf4j` = (project in file("slf4j"))
   )
   .dependsOn(`odin-core` % "compile->compile;test->test")
 
+lazy val `odin-extras` = (project in file("extras"))
+  .settings(sharedSettings)
+  .dependsOn(`odin-core` % "compile->compile;test->test")
+
 lazy val benchmarks = (project in file("benchmarks"))
   .settings(sharedSettings)
   .settings(noPublish)
@@ -153,7 +157,7 @@ lazy val docs = (project in file("odin-docs"))
     ),
     mdocOut := file(".")
   )
-  .dependsOn(`odin-core`, `odin-json`, `odin-zio`, `odin-monix`, `odin-slf4j`)
+  .dependsOn(`odin-core`, `odin-json`, `odin-zio`, `odin-monix`, `odin-slf4j`, `odin-extras`)
   .enablePlugins(MdocPlugin)
 
 lazy val examples = (project in file("examples"))
@@ -167,8 +171,8 @@ lazy val examples = (project in file("examples"))
 lazy val odin = (project in file("."))
   .settings(sharedSettings)
   .settings(noPublish)
-  .dependsOn(`odin-core`, `odin-json`, `odin-zio`, `odin-monix`, `odin-slf4j`)
-  .aggregate(`odin-core`, `odin-json`, `odin-zio`, `odin-monix`, `odin-slf4j`, benchmarks, examples)
+  .dependsOn(`odin-core`, `odin-json`, `odin-zio`, `odin-monix`, `odin-slf4j`, `odin-extras`)
+  .aggregate(`odin-core`, `odin-json`, `odin-zio`, `odin-monix`, `odin-slf4j`, `odin-extras`, benchmarks, examples)
 
 def scalacOptionsVersion(scalaVersion: String) =
   Seq(

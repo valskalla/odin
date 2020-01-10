@@ -441,7 +441,35 @@ trait WithContext[F[_]] {
 }
 ```
 
-## Conditional logging
+## Contramap and filter
+
+To modify or filter log messages before they're written, use corresponding combinators `contramap` and `filter`:
+
+```scala mdoc
+import io.odin.syntax._
+
+consoleLogger[IO]()
+    .contramap(msg => msg.copy(message = msg.message.map(_ + " World")))
+    .info("Hello")
+    .unsafeRunSync()
+
+consoleLogger[IO]()
+    .filter(msg => msg.message.value.size < 10)
+    .info("Very long messages are discarded")
+    .unsafeRunSync()
+```
+
+## Extras
+
+The `odin-extras` module provides additional loggers: ConditionalLogger, etc.
+
+- Add following dependency to your build:
+
+```scala
+libraryDependencies += "com.github.valskalla" %% "odin-extras" % "@VERSION@"
+```
+
+## Extras. Conditional logging
 
 In some scenarios, it is necessary to have different logging levels depending on the result of the execution.
 For example, the default log level can be `Info`, but once an error is raised, previous messages with log level `Debug` will be logged as well.
@@ -453,6 +481,7 @@ Example:
 ```scala mdoc
 import cats.effect.Concurrent
 import io.odin.Logger
+import io.odin.extras.syntax._
 
 case class User(id: String)
 
@@ -464,7 +493,7 @@ class UserService[F[_]: Timer: ContextShift](logger: Logger[F])(implicit F: Conc
   private val BadSuffix = "bad-user" 
   
   def findAndVerify(userId: String): F[Unit] = 
-    logger.conditional(Level.Debug).use { log => 
+    logger.withErrorLevel(Level.Debug).use { log => 
       for {
         _ <- log.debug(s"Looking for user by id [$userId]")
         user <- findUser(userId)
@@ -488,24 +517,6 @@ val service = new UserService[IO](consoleLogger[IO](minLevel = Level.Info))
 
 service.findAndVerify("good-user").attempt.unsafeRunSync()
 service.findAndVerify("bad-user").attempt.unsafeRunSync()
-```
-
-## Contramap and filter
-
-To modify or filter log messages before they're written, use corresponding combinators `contramap` and `filter`:
-
-```scala mdoc
-import io.odin.syntax._
-
-consoleLogger[IO]()
-    .contramap(msg => msg.copy(message = msg.message.map(_ + " World")))
-    .info("Hello")
-    .unsafeRunSync()
-
-consoleLogger[IO]()
-    .filter(msg => msg.message.value.size < 10)
-    .info("Very long messages are discarded")
-    .unsafeRunSync()
 ```
 
 ## SLF4J bridge
