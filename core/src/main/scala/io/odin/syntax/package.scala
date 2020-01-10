@@ -2,7 +2,7 @@ package io.odin
 
 import cats.Monad
 import cats.effect.{Concurrent, ConcurrentEffect, ContextShift, Resource, Timer}
-import io.odin.loggers.{AsyncLogger, ConstContextLogger, ContextualLogger, ContramapLogger, FilterLogger, WithContext}
+import io.odin.loggers._
 import io.odin.meta.Render
 
 import scala.concurrent.duration._
@@ -50,6 +50,16 @@ package object syntax {
       AsyncLogger.withAsyncUnsafe(logger, timeWindow, maxBufferSize)
 
     /**
+      * Create conditional logger that buffers messages and sends them to the inner logger when the resource is released.
+      * @param fallbackLevel min log level that will be used in case of error
+      * @return Logger suspended in [[Resource]]. Once resource is released, the messages are being sent to the inner logger.
+      */
+    def conditional(
+        fallbackLevel: Level
+    )(implicit timer: Timer[F], F: Concurrent[F], contextShift: ContextShift[F]): Resource[F, Logger[F]] =
+      ConditionalLogger.create[F](logger, fallbackLevel)
+
+    /**
       * Modify logger message before it's written to the logger
       */
     def contramap(f: LoggerMessage => LoggerMessage)(implicit timer: Timer[F], F: Monad[F]): Logger[F] =
@@ -93,6 +103,15 @@ package object syntax {
       */
     def withContext(implicit clock: Timer[F], monad: Monad[F], withContext: WithContext[F]): Resource[F, Logger[F]] =
       resource.map(ContextualLogger.withContext[F])
+
+    /**
+      * Create conditional logger that buffers messages and sends them to the inner logger when the resource is released.
+      * See [[ConditionalLogger]] for more info
+      */
+    def conditional(
+        fallbackLevel: Level
+    )(implicit timer: Timer[F], F: Concurrent[F], contextShift: ContextShift[F]): Resource[F, Logger[F]] =
+      resource.flatMap(ConditionalLogger.create[F](_, fallbackLevel))
 
     /**
       * Intercept logger message before it's written to the logger
