@@ -5,10 +5,12 @@ import cats.Show
 /**
   * Type class that defines how message of type `M` got rendered into String
   */
-@scala.annotation.implicitNotFound("""
- No Render found for type ${M}. Try to implement an implicit Render[${M}].
- You can implement it in ${M} companion class.
-""")
+@scala.annotation.implicitNotFound(
+  """
+A value of type ${M} you're trying to log is missing a renderer.
+Make sure you have an implicit Render[${M}] in scope, i.e. inside of companion object of ${M}.
+"""
+)
 trait Render[M] {
   def render(m: M): String
 }
@@ -17,9 +19,9 @@ object Render extends LowPriorityRender {
 
   def apply[A](implicit instance: Render[A]): Render[A] = instance
 
-  final case class Shown(override val toString: String) extends AnyVal
-  object Shown {
-    implicit def mat[A](a: A)(implicit r: Render[A]): Shown = Shown(r.render(a))
+  final case class Rendered(override val toString: String) extends AnyVal
+  object Rendered {
+    implicit def mat[A](a: A)(implicit r: Render[A]): Rendered = Rendered(r.render(a))
   }
 
   /**

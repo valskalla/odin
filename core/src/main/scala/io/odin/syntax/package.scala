@@ -108,6 +108,6 @@ package object syntax {
   }
 
   implicit class RenderInterpolator(private val sc: StringContext) extends AnyVal {
-    def render(args: Render.Shown*): String = sc.s(args: _*)
+    def render(args: Render.Rendered*): String = sc.s(args: _*)
   }
 }
