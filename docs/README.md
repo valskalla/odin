@@ -9,6 +9,7 @@
 [![Maven Central](https://img.shields.io/maven-central/v/com.github.valskalla/odin-core_2.13)](https://search.maven.org/search?q=com.github.valskalla)
 [![Codecov](https://img.shields.io/codecov/c/github/valskalla/odin)](https://codecov.io/gh/valskalla/odin)
 [![License](https://img.shields.io/github/license/valskalla/odin)](https://github.com/valskalla/odin/blob/master/LICENSE)
+[![Gitter](https://img.shields.io/gitter/room/valskalla/odin)](https://gitter.im/valskalla/odin)
 
 Odin library enables functional approach to logging in Scala applications with reasoning and performance as the
 top priorities.
@@ -456,6 +457,64 @@ consoleLogger[IO]()
     .filter(msg => msg.message.value.size < 10)
     .info("Very long messages are discarded")
     .unsafeRunSync()
+```
+
+## Extras
+
+The `odin-extras` module provides additional loggers: ConditionalLogger, etc.
+
+- Add following dependency to your build:
+
+```scala
+libraryDependencies += "com.github.valskalla" %% "odin-extras" % "@VERSION@"
+```
+
+## Extras. Conditional logging
+
+In some scenarios, it is necessary to have different logging levels depending on the result of the execution.
+For example, the default log level can be `Info`, but once an error is raised, previous messages with log level `Debug` will be logged as well.
+
+Example:
+
+```scala mdoc
+import cats.effect.Concurrent
+import io.odin.Logger
+import io.odin.extras.syntax._
+
+case class User(id: String)
+
+class UserService[F[_]: Timer: ContextShift](logger: Logger[F])(implicit F: Concurrent[F]) {
+
+  import cats.syntax.functor._
+  import cats.syntax.flatMap._
+
+  private val BadSuffix = "bad-user" 
+  
+  def findAndVerify(userId: String): F[Unit] = 
+    logger.withErrorLevel(Level.Debug) { log => 
+      for {
+        _ <- log.debug(s"Looking for user by id [$userId]")
+        user <- findUser(userId)
+        _ <- log.debug(s"Found user $user")
+        _ <- verify(user)
+        _ <- log.info(s"User found and verified $user")
+      } yield ()
+    }
+
+  private def findUser(userId: String): F[User] = 
+    F.delay(User(s"my-user-$userId"))
+  
+  private def verify(user: User): F[Unit] = 
+    F.whenA(user.id.endsWith(BadSuffix)) {
+      F.raiseError(new RuntimeException("Bad User"))
+    }
+
+}
+
+val service = new UserService[IO](consoleLogger[IO](minLevel = Level.Info))
+
+service.findAndVerify("good-user").attempt.unsafeRunSync()
+service.findAndVerify("bad-user").attempt.unsafeRunSync()
 ```
 
 ## SLF4J bridge
