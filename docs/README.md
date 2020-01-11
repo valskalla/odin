@@ -473,8 +473,6 @@ libraryDependencies += "com.github.valskalla" %% "odin-extras" % "@VERSION@"
 
 In some scenarios, it is necessary to have different logging levels depending on the result of the execution.
 For example, the default log level can be `Info`, but once an error is raised, previous messages with log level `Debug` will be logged as well.
-Since the log level can be determined when the result of the execution is available, the `ConditionalLogger` can be created only within `cats.effect.Resource`. 
-*Therefore nothing is logged until the resource is released*. 
 
 Example:
 
@@ -493,7 +491,7 @@ class UserService[F[_]: Timer: ContextShift](logger: Logger[F])(implicit F: Conc
   private val BadSuffix = "bad-user" 
   
   def findAndVerify(userId: String): F[Unit] = 
-    logger.withErrorLevel(Level.Debug).use { log => 
+    logger.withErrorLevel(Level.Debug) { log => 
       for {
         _ <- log.debug(s"Looking for user by id [$userId]")
         user <- findUser(userId)

@@ -44,9 +44,9 @@ object ConditionalLogger {
     *
     * Example:
     * {{{
-    *   consoleLogger[F](minLevel = Level.Info)
-    *     .conditional(Level.Debug)
-    *     .use(logger => logger.debug("debug message") >> trickyCode)
+    *   consoleLogger[F](minLevel = Level.Info).withErrorLevel(Level.Debug) { logger =>
+    *     logger.debug("debug message") >> trickyCode
+    *   }
     * }}}
     *
     * If evaluation completed with an error, the messages with `level >= Level.Debug` will be sent to an inner logger.
@@ -56,9 +56,9 @@ object ConditionalLogger {
     * '''Important:''' nothing is logged until the resource is released.
     * Example:
     * {{{
-    * consoleLogger[F](minLevel = Level.Info)
-    *   .conditional(Level.Debug)
-    *   .use(logger => logger.info("conditional logger") >> Timer[F].sleep(10.seconds))
+    * consoleLogger[F](minLevel = Level.Info).withErrorLevel(Level.Debug) { logger =>
+    *   logger.info("info log") >> Timer[F].sleep(10.seconds) >> logger.debug("debug log")
+    * }
     * }}}
     *
     * The message will be logged after 10 seconds. Thus use the logger with caution.

@@ -35,8 +35,7 @@ class ConditionalLoggerSpec extends OdinSpec {
           _ <- RefLogger(ref)
             .withMinimalLevel(Level.Info)
             .withContext
-            .withErrorLevel(Level.Debug)
-            .use(logger => logger.log(messages))
+            .withErrorLevel(Level.Debug)(logger => logger.log(messages))
 
           written <- ref.get
         } yield written
@@ -59,8 +58,7 @@ class ConditionalLoggerSpec extends OdinSpec {
           attempt <- RefLogger(ref)
             .withMinimalLevel(Level.Info)
             .withContext
-            .withErrorLevel(Level.Debug)
-            .use(logger => logger.log(messages) >> Sync[F].raiseError[Unit](error))
+            .withErrorLevel(Level.Debug)(logger => logger.log(messages) >> Sync[F].raiseError[Unit](error))
             .attempt
 
           written <- ref.get
