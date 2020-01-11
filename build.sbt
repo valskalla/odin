@@ -6,6 +6,7 @@ lazy val versions = new {
   val catsMtl = "0.7.0"
   val sourcecode = "0.1.9"
   val monix = "3.1.0"
+  val magnolia = "0.12.6"
   val scalaCheck = "1.14.3"
   val catsRetry = "0.3.2"
   val catsScalacheck = "0.2.0"
@@ -38,6 +39,8 @@ lazy val monixCatnap = "io.monix" %% "monix-catnap" % versions.monix
 lazy val scalaCheck = "org.scalacheck" %% "scalacheck" % versions.scalaCheck % Test
 
 lazy val monix = "io.monix" %% "monix" % versions.monix
+
+lazy val magnolia = "com.propensive" %% "magnolia" % versions.magnolia
 
 lazy val perfolation = "com.outr" %% "perfolation" % "1.1.5"
 
@@ -137,6 +140,9 @@ lazy val `odin-slf4j` = (project in file("slf4j"))
 
 lazy val `odin-extras` = (project in file("extras"))
   .settings(sharedSettings)
+  .settings(
+    libraryDependencies += magnolia
+  )
   .dependsOn(`odin-core` % "compile->compile;test->test")
 
 lazy val benchmarks = (project in file("benchmarks"))
