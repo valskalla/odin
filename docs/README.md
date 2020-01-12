@@ -211,12 +211,16 @@ trait Formatter {
 }
 ```
 
-_odin-core_ provides the `Formatter.default` that prints information in a nicely structured manner:
+_odin-core_ provides the `Formatter.default` and `Formatter.colorful` that prints information in a nicely structured manner:
 
 ```scala mdoc
 import cats.syntax.all._
 (logger.info("No context") *> logger.info("Some context", Map("key" -> "value"))).unsafeRunSync()
 ```
+
+The latter adds a bit of colors to the default formatter:
+
+<img src="https://user-images.githubusercontent.com/2317121/72221238-5c02ab00-3561-11ea-8413-155dc309ecd2.png">
 
 ### JSON Formatter
 
