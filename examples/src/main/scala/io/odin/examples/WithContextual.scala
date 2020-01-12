@@ -5,6 +5,7 @@ import cats.effect.{ExitCode, IO, IOApp}
 import io.odin._
 import cats.mtl.instances.all._
 import cats.syntax.all._
+import io.odin.formatter.Formatter
 import io.odin.loggers.HasContext
 import io.odin.syntax._
 
@@ -33,7 +34,7 @@ object WithContextual extends IOApp {
     * `withContext` requires `WithContext[F]` type class but with `import cats.mtl.instances.all._` that provides
     * `ApplicativeAsk[F, Env]` and corresponding `HasContext` instance defined, this type class is derived automatically
     */
-  val logger: Logger[F] = consoleLogger[F]().withContext
+  val logger: Logger[F] = consoleLogger[F](formatter = Formatter.colorful).withContext
 
   def run(args: List[String]): IO[ExitCode] =
     logger.info("Hello world").run(Map("this is" -> "context")).as(ExitCode.Success)

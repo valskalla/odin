@@ -3,6 +3,7 @@ package io.odin.formatter
 import cats.syntax.show._
 import io.odin.LoggerMessage
 import perfolation._
+import scala.io.AnsiColor._
 
 import scala.annotation.tailrec
 
@@ -11,17 +12,32 @@ trait Formatter {
 }
 
 object Formatter {
+
+  val BRIGHT_BLACK = "\u001b[30;1m"
+
   val default: Formatter = (msg: LoggerMessage) => {
     val ctx = formatCtx(msg.context)
     val lineNumber = if (msg.position.line >= 0) p":${msg.position.line}" else ""
-    msg.exception match {
+    val throwable = msg.exception match {
       case Some(t) =>
-        val formattedThrowable = formatThrowable(t)
-        p"${msg.timestamp.t.F}T${msg.timestamp.t.T} [${msg.threadName}] ${msg.level.show} ${msg.position.enclosureName}$lineNumber - ${msg.message.value} $ctx${System
-          .lineSeparator()}${formattedThrowable.toString}"
+        p"${System.lineSeparator()}${formatThrowable(t).toString}"
       case None =>
-        p"${msg.timestamp.t.F}T${msg.timestamp.t.T} [${msg.threadName}] ${msg.level.show} ${msg.position.enclosureName}$lineNumber - ${msg.message.value}$ctx"
+        ""
     }
+    p"${msg.timestamp.t.F}T${msg.timestamp.t.T} [${msg.threadName}] ${msg.level.show} ${msg.position.enclosureName}$lineNumber - ${msg.message.value}$ctx${System
+      .lineSeparator()}${throwable.toString}"
+  }
+
+  val colorful: Formatter = (msg: LoggerMessage) => {
+    val ctx = formatCtx(msg.context)
+    val lineNumber = if (msg.position.line >= 0) p":${msg.position.line}" else ""
+    val throwable = msg.exception match {
+      case Some(t) =>
+        p"${System.lineSeparator()}${formatThrowable(t).toString}"
+      case None =>
+        ""
+    }
+    p"${msg.timestamp.t.F}T${msg.timestamp.t.T} $GREEN[${msg.threadName}]$RESET $BRIGHT_BLACK${msg.level.show}$RESET $BLUE${msg.position.enclosureName}$lineNumber$RESET - ${msg.message.value}$MAGENTA$ctx$RESET$RED$throwable$RESET"
   }
 
   def formatCtx(context: Map[String, String]): String =
