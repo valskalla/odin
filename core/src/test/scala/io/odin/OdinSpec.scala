@@ -74,6 +74,6 @@ trait OdinSpec extends AnyFlatSpec with Matchers with Checkers with ScalaCheckDr
   implicit val cogenLoggerMessage: Cogen[LoggerMessage] =
     Cogen[LoggerMessage]((msg: LoggerMessage) => msg.level.hashCode().toLong + msg.message.value.hashCode().toLong)
 
-  val formatterGen: Gen[Formatter] = Gen.const(Formatter.default)
+  val formatterGen: Gen[Formatter] = Gen.oneOf(Formatter.default, Formatter.colorful)
   implicit val formatterArbitrary: Arbitrary[Formatter] = Arbitrary(formatterGen)
 }
