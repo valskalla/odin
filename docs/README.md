@@ -461,7 +461,7 @@ consoleLogger[IO]()
 
 ## Extras
 
-The `odin-extras` module provides additional loggers: ConditionalLogger, etc.
+The `odin-extras` module provides additional functionality: ConditionalLogger, Render derivation, etc.
 
 - Add following dependency to your build:
 
@@ -515,6 +515,60 @@ val service = new UserService[IO](consoleLogger[IO](minLevel = Level.Info))
 
 service.findAndVerify("good-user").attempt.unsafeRunSync()
 service.findAndVerify("bad-user").attempt.unsafeRunSync()
+```
+
+## Extras. Derivation
+
+`io.oden.extras.derivation.render` provides a Magnolia-based derivation of the `Render` type class.
+
+The derivation can be configured via annotations: 
+* @rendered(includeMemberName = false)
+
+The member names will be omitted:
+
+```scala
+@rendered(includeMemberName = false)
+case class ApiConfig(uri: String, apiKey: String)
+```
+
+* @hidden
+
+Excludes an annotated member from the output:
+```scala
+case class ApiConfig(uri: String, @hidden apiKey: String)
+```
+
+* @secret
+
+Replaces the value of an annotated member with `<secret>` :
+```scala
+case class ApiConfig(uri: String, @secret apiKey: String)
+```
+
+* @length
+
+Shows only first N elements of the iterable. Works exclusively with subtypes of `Iterable`:
+```scala
+case class ApiConfig(uri: String, @hidden apiKey: String, @length(2) environments: List[String])
+```
+
+Example:
+
+```scala mdoc
+import io.odin.syntax._
+import io.odin.extras.derivation._
+import io.odin.extras.derivation.render._
+
+case class ApiConfig(
+  uri: String,
+  @hidden apiKey: String,
+  @secret apiSecret: String,
+  @length(2) environments: List[String]
+)
+
+val config = ApiConfig("https://localhost:8080", "api-key", "api-secret", List("test", "dev", "pre-prod", "prod"))
+
+println(render"API config $config")
 ```
 
 ## SLF4J bridge
