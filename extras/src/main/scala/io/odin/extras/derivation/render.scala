@@ -34,8 +34,35 @@ object render {
     ctx.dispatch(value)(sub => sub.typeclass.render(sub.cast(value)))
   }
 
+  /**
+    * Creates an instance for a concrete type. Does not generate instances for underlying types.
+    *
+    * Example:
+    * {{{
+    *   import io.odin.extras.derivation.render
+    *
+    *   case class A(field: String)
+    *   case class B(field: A)
+    *
+    *   val instanceA: Render[A] = render.instance[A] // compiles
+    *   val instanceB: Render[B] = render.instance[B] // does not compile
+    * }}}
+    */
   def instance[A]: Typeclass[A] = macro Magnolia.gen[A]
 
+  /**
+    * Creates an instance for a concrete type. Recursively generate instances for underlying types.
+    *
+    * Example:
+    * {{{
+    *   import io.odin.extras.derivation.render
+    *
+    *   case class A(field: String)
+    *   case class B(field: A)
+    *
+    *   val instanceB: Render[B] = render.render[B]
+    * }}}
+    */
   implicit def derive[A]: Typeclass[A] = macro Magnolia.gen[A]
 
 }

@@ -555,8 +555,6 @@ case class ApiConfig(uri: String, @hidden apiKey: String, @length(2) environment
 Example:
 
 ```scala mdoc
-import cats.instances.list.catsStdShowForList
-import cats.instances.string.catsStdShowForString
 import io.odin.syntax._
 import io.odin.extras.derivation._
 import io.odin.extras.derivation.render._

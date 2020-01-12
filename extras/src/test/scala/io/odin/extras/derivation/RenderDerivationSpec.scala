@@ -1,9 +1,5 @@
 package io.odin.extras.derivation
 
-import cats.instances.list.catsStdShowForList
-import cats.instances.long.catsStdShowForLong
-import cats.instances.string.catsStdShowForString
-import cats.instances.int.catsStdShowForInt
 import io.odin.OdinSpec
 import io.odin.extras.derivation.RenderDerivationSpec._
 import io.odin.extras.derivation.render._
@@ -47,7 +43,8 @@ class RenderDerivationSpec extends OdinSpec {
     val diff = bar.genericClass.lengthLimited.length - LengthLimit
     val suffix = if (diff > 0) s"($diff more)" else ""
 
-    val lengthLimited = Render[List[String]].render(bar.genericClass.lengthLimited.map(renderFoo).take(LengthLimit))
+    val lengthLimited =
+      Render.renderList[String].render(bar.genericClass.lengthLimited.map(renderFoo).take(LengthLimit))
 
     val generic =
       s"GenericClass(field = ${bar.genericClass.field}, secret = <secret>, lengthLimited = $lengthLimited$suffix)"
@@ -55,6 +52,26 @@ class RenderDerivationSpec extends OdinSpec {
     val expected = s"Bar(genericClass = $generic)"
 
     Render[Bar].render(bar) shouldBe expected
+  }
+
+  it should "not recursively generate instances by `instance` method" in {
+    assertDoesNotCompile {
+      """
+        case class A(field: String)
+        case class B(field: A)
+        io.odin.extras.derivation.render.instance[B]
+      """
+    }
+  }
+
+  it should "recursively generate instances by `derive` method" in {
+    assertCompiles {
+      """
+        case class A(field: String)
+        case class B(field: A)
+        io.odin.extras.derivation.render.derive[B]
+      """
+    }
   }
 
   val valueClassGen: Gen[ValueClass] =

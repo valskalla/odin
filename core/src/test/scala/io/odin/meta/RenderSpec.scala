@@ -1,9 +1,15 @@
 package io.odin.meta
 
+import java.util.UUID
+
 import cats.Show
+import cats.data.NonEmptyList
+import cats.laws.discipline.arbitrary._
+import cats.syntax.all._
 import io.odin.OdinSpec
 import org.scalacheck.{Arbitrary, Gen}
-import cats.syntax.all._
+
+import scala.reflect.ClassTag
 
 class RenderSpec extends OdinSpec {
   it should "derive Render instance from cats.Show" in {
@@ -29,6 +35,41 @@ class RenderSpec extends OdinSpec {
       render"The interpolated $foo + $int = $string" shouldBe s"The interpolated ${foo.x} + $int = $string"
     }
   }
+
+  behave like renderBehavior[Byte](_.toString)
+
+  behave like renderBehavior[Short](_.toString)
+
+  behave like renderBehavior[Int](_.toString)
+
+  behave like renderBehavior[Long](_.toString)
+
+  behave like renderBehavior[Double](_.toString)
+
+  behave like renderBehavior[Float](_.toString)
+
+  behave like renderBehavior[Boolean](_.toString)
+
+  behave like renderBehavior[UUID](_.toString)
+
+  behave like renderBehavior[Option[Int]](m => m.fold("None")(v => s"Some($v)"))
+
+  behave like renderBehavior[Seq[Int]](m => m.mkString("Seq(", ", ", ")"))
+
+  behave like renderBehavior[List[Int]](m => m.mkString("List(", ", ", ")"))
+
+  behave like renderBehavior[Vector[Int]](m => m.mkString("Vector(", ", ", ")"))
+
+  behave like renderBehavior[NonEmptyList[Int]](m => m.toList.mkString("NonEmptyList(", ", ", ")"))
+
+  behave like renderBehavior[Iterable[Int]](m => m.mkString("IterableLike(", ", ", ")"))
+
+  def renderBehavior[A: Render: ClassTag: Arbitrary](expected: A => String): Unit =
+    it should s"render ${implicitly[ClassTag[A]].runtimeClass.getSimpleName}" in {
+      forAll { a: A =>
+        Render[A].render(a) shouldBe expected(a)
+      }
+    }
 
 }
 
