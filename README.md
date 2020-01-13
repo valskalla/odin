@@ -33,8 +33,9 @@ Odin is published to Maven Central and cross-built for Scala 2.12 and 2.13. Add 
 ```scala
 libraryDependencies ++= Seq(
   "com.github.valskalla" %% "odin-core",
-  "com.github.valskalla" %% "odin-json" //to enable JSON formatter if needed
-).map(_ % "0.4.1")
+  "com.github.valskalla" %% "odin-json", //to enable JSON formatter if needed
+  "com.github.valskalla" %% "odin-extras" //to enable additional features if needed (see docs)
+).map(_ % "0.5.0")
 ```
 
 Example
@@ -70,9 +71,9 @@ Some time could be saved by using the effect-predefined variants of Odin. There 
 
 ```scala
 //ZIO
-libraryDependencies += "com.github.valskalla" %% "odin-zio" % "0.4.1"
+libraryDependencies += "com.github.valskalla" %% "odin-zio" % "0.5.0"
 //or Monix
-libraryDependencies += "com.github.valskalla" %% "odin-monix" % "0.4.1"
+libraryDependencies += "com.github.valskalla" %% "odin-monix" % "0.5.0"
 ```
 
 Use corresponding import to get an access to the loggers:
@@ -99,6 +100,10 @@ Documentation
 - [Constant context](#constant-context)
 - [Contextual effects](#contextual-effects)
 - [Contramap and filter](#contramap-and-filter)
+- [Testing logger](#testing-logger)
+- [Extras](#extras)
+  - [Conditional Logging](#extras-conditional-logging)
+  - [Derivation](#extras-derivation)
 - [SL4FJ bridge](#slf4j-bridge)
 - [Benchmarks](#benchmarks)
 
@@ -175,17 +180,18 @@ Now to the call:
 logger.info("Hello?")
 // res0: IO[Unit] = Map(
 //   Bind(
-//     Delay(cats.effect.Clock$$anon$1$$Lambda$7490/0x0000000801fe6440@5672a594),
-//     io.odin.loggers.DefaultLogger$$Lambda$7491/0x0000000801fe5040@368204bd
+//     Delay(cats.effect.Clock$$anon$1$$Lambda$15314/0x0000000803106c40@4add10af),
+//     io.odin.loggers.DefaultLogger$$Lambda$15315/0x0000000803105840@2668dc94
 //   ),
-//   scala.Function1$$Lambda$7498/0x000000080200c040@e9d8fa6,
+//   scala.Function1$$Lambda$15322/0x0000000803100840@ae01a05,
 //   1
 // )
 
 //prints "Hello world" to the STDOUT.
 //Although, don't use `unsafeRunSync` in production unless you know what you're doing
 logger.info("Hello world").unsafeRunSync()
-// 2020-01-03T13:36:21 [run-main-0] INFO repl.Session.App#res1:68 - Hello world
+// 2020-01-13T23:30:20 [run-main-0] INFO repl.Session.App#res1:68 - Hello world
+//
 ```
 
 All messages of level `WARN` and higher are routed to the _STDERR_ while messages with level `INFO` and below go to the _STDOUT_.
@@ -220,14 +226,20 @@ trait Formatter {
 }
 ```
 
-_odin-core_ provides the `Formatter.default` that prints information in a nicely structured manner:
+_odin-core_ provides the `Formatter.default` and `Formatter.colorful` that prints information in a nicely structured manner:
 
 ```scala
 import cats.syntax.all._
 (logger.info("No context") *> logger.info("Some context", Map("key" -> "value"))).unsafeRunSync()
-// 2020-01-03T13:36:21 [run-main-0] INFO repl.Session.App#res2:77 - No context
-// 2020-01-03T13:36:21 [run-main-0] INFO repl.Session.App#res2:77 - Some context - key: value
+// 2020-01-13T23:30:20 [run-main-0] INFO repl.Session.App#res2:77 - No context
+// 
+// 2020-01-13T23:30:20 [run-main-0] INFO repl.Session.App#res2:77 - Some context - key: value
+//
 ```
+
+The latter adds a bit of colors to the default formatter:
+
+<img src="https://user-images.githubusercontent.com/2317121/72221238-5c02ab00-3561-11ea-8413-155dc309ecd2.png">
 
 ### JSON Formatter
 
@@ -243,7 +255,7 @@ Now messages printed with this logger will be encoded as JSON string using circe
 
 ```scala
 jsonLogger.info("This is JSON").unsafeRunSync()
-// {"level":"INFO","message":"This is JSON","context":{},"exception":null,"position":"repl.Session.App#res3:92","thread_name":"run-main-0","timestamp":"2020-01-03T13:36:21"}
+// {"level":"INFO","message":"This is JSON","context":{},"exception":null,"position":"repl.Session.App#res3:92","thread_name":"run-main-0","timestamp":"2020-01-13T23:30:20"}
 ```
 
 ## Minimal level
@@ -318,7 +330,8 @@ async logger shall be done inside of `Resource.use` block:
 ```scala
 //queue will be flushed on release even if flushing timer didn't hit the mark yet
 asyncLoggerResource.use(logger => logger.info("Async info")).unsafeRunSync()
-// 2020-01-03T13:36:21 [run-main-0] INFO repl.Session.App#res6:142 - Async info
+// 2020-01-13T23:30:20 [run-main-0] INFO repl.Session.App#res6:142 - Async info
+//
 ```
 
 Package `io.odin.syntax._` also pimps the `Resource[F, Logger[F]]` type with the same `.withAsync` method to use
@@ -409,7 +422,8 @@ import io.odin.syntax._
 consoleLogger[IO]()
     .withConstContext(Map("predefined" -> "context"))
     .info("Hello world").unsafeRunSync()
-// 2020-01-03T13:36:21 [run-main-0] INFO repl.Session.App#res7:206 - Hello world - predefined: context
+// 2020-01-13T23:30:21 [run-main-0] INFO repl.Session.App#res7:206 - Hello world - predefined: context
+//
 ```
 
 ## Contextual effects
@@ -440,7 +454,8 @@ consoleLogger[M]()
     .info("Hello world")
     .run(Env(Map("env" -> "ctx")))
     .unsafeRunSync()
-// 2020-01-03T13:36:21 [run-main-0] INFO repl.Session.App#res8:237 - Hello world - env: ctx
+// 2020-01-13T23:30:21 [run-main-0] INFO repl.Session.App#res8:237 - Hello world - env: ctx
+//
 ```
 
 Odin automatically derives required type classes for each type `F[_]` that has `ApplicativeAsk[F, E]` defined, or in other words
@@ -467,12 +482,151 @@ consoleLogger[IO]()
     .contramap(msg => msg.copy(message = msg.message.map(_ + " World")))
     .info("Hello")
     .unsafeRunSync()
-// 2020-01-03T13:36:21 [run-main-0] INFO repl.Session.App#res9:250 - Hello World
+// 2020-01-13T23:30:21 [run-main-0] INFO repl.Session.App#res9:250 - Hello World
+// 
 
 consoleLogger[IO]()
     .filter(msg => msg.message.value.size < 10)
     .info("Very long messages are discarded")
     .unsafeRunSync()
+```
+
+## Testing logger
+
+One of the main benefits of a polymorphic `Logger[F]` interface that exposes `F[Unit]` methods is a simple way to
+test that the application correctly writes logs.
+
+Since every operation represents a value instead of no-op side effect, it's possible to check those values in specs. 
+
+Odin provides a class `WriterTLogger[F]` out of the box to test logging using `WriterT` monad.
+Check out [examples](https://github.com/valskalla/odin/tree/master/examples/src/main/scala/io/odin/examples/SimpleApp.scala) for more information.
+
+## Extras
+
+The `odin-extras` module provides additional functionality: ConditionalLogger, Render derivation, etc.
+
+- Add following dependency to your build:
+
+```scala
+libraryDependencies += "com.github.valskalla" %% "odin-extras" % "0.5.0"
+```
+
+### Extras. Conditional logging
+
+In some scenarios, it is necessary to have different logging levels depending on the result of the execution.
+For example, the default log level can be `Info`, but once an error is raised, previous messages with log level `Debug` will be logged as well.
+
+Example:
+
+```scala
+import cats.effect.Concurrent
+import io.odin.Logger
+import io.odin.extras.syntax._
+
+case class User(id: String)
+
+class UserService[F[_]: Timer: ContextShift](logger: Logger[F])(implicit F: Concurrent[F]) {
+
+  import cats.syntax.functor._
+  import cats.syntax.flatMap._
+
+  private val BadSuffix = "bad-user" 
+  
+  def findAndVerify(userId: String): F[Unit] = 
+    logger.withErrorLevel(Level.Debug) { log => 
+      for {
+        _ <- log.debug(s"Looking for user by id [$userId]")
+        user <- findUser(userId)
+        _ <- log.debug(s"Found user $user")
+        _ <- verify(user)
+        _ <- log.info(s"User found and verified $user")
+      } yield ()
+    }
+
+  private def findUser(userId: String): F[User] = 
+    F.delay(User(s"my-user-$userId"))
+  
+  private def verify(user: User): F[Unit] = 
+    F.whenA(user.id.endsWith(BadSuffix)) {
+      F.raiseError(new RuntimeException("Bad User"))
+    }
+
+}
+
+val service = new UserService[IO](consoleLogger[IO](minLevel = Level.Info))
+// service: UserService[IO] = repl.Session$App$UserService@2c570eb9
+
+service.findAndVerify("good-user").attempt.unsafeRunSync()
+// 2020-01-13T23:30:21 [run-main-0] INFO repl.Session.App#UserService#findAndVerify:289 - User found and verified User(my-user-good-user)
+// 
+// res11: Either[Throwable, Unit] = Right(())
+service.findAndVerify("bad-user").attempt.unsafeRunSync()
+// 2020-01-13T23:30:21 [run-main-0] DEBUG repl.Session.App#UserService#findAndVerify:285 - Looking for user by id [bad-user]
+// 
+// 2020-01-13T23:30:21 [run-main-0] DEBUG repl.Session.App#UserService#findAndVerify:287 - Found user User(my-user-bad-user)
+// 
+// res12: Either[Throwable, Unit] = Left(java.lang.RuntimeException: Bad User)
+```
+
+### Extras. Derivation
+
+`io.odin.extras.derivation.render` provides a Magnolia-based derivation of the `Render` type class.
+
+The derivation can be configured via annotations: 
+* @rendered(includeMemberName = false)
+
+The member names will be omitted:
+
+```scala
+@rendered(includeMemberName = false)
+case class ApiConfig(uri: String, apiKey: String)
+```
+
+* @hidden
+
+Excludes an annotated member from the output:
+```scala
+case class ApiConfig(uri: String, @hidden apiKey: String)
+```
+
+* @secret
+
+Replaces the value of an annotated member with `<secret>` :
+```scala
+case class ApiConfig(uri: String, @secret apiKey: String)
+```
+
+* @length
+
+Shows only first N elements of the iterable. Works exclusively with subtypes of `Iterable`:
+```scala
+case class ApiConfig(uri: String, @hidden apiKey: String, @length(2) environments: List[String])
+```
+
+Example:
+
+```scala
+import io.odin.syntax._
+import io.odin.extras.derivation._
+import io.odin.extras.derivation.render._
+
+case class ApiConfig(
+  uri: String,
+  @hidden apiKey: String,
+  @secret apiSecret: String,
+  @length(2) environments: List[String]
+)
+
+val config = ApiConfig("https://localhost:8080", "api-key", "api-secret", List("test", "dev", "pre-prod", "prod"))
+// config: ApiConfig = ApiConfig(
+//   "https://localhost:8080",
+//   "api-key",
+//   "api-secret",
+//   List("test", "dev", "pre-prod", "prod")
+// )
+
+println(render"API config $config")
+// API config ApiConfig(uri = https://localhost:8080, apiSecret = <secret>, environments = List(test, dev)(2 more))
 ```
 
 ## SLF4J bridge
@@ -482,7 +636,7 @@ It requires a two-step setup:
 
 - Add following dependency to your build:
 ```scala
-libraryDependencies += "com.github.valskalla" %% "odin-slf4j" % "0.4.1"
+libraryDependencies += "com.github.valskalla" %% "odin-slf4j" % "0.5.0"
 ```
 - Create `StaticLoggerBuilder` class/object in the package `org.slf4j.impl` with a similar content:
 ```scala
