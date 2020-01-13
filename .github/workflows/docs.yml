@@ -12,8 +12,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: olafurpg/setup-scala@v5
-      - name: Checkout
-        run: git checkout master
       - name: Generate documentation
         run: sbt docs/mdoc
       - name: Commit to repository
