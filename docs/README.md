@@ -33,7 +33,8 @@ Odin is published to Maven Central and cross-built for Scala 2.12 and 2.13. Add 
 ```scala
 libraryDependencies ++= Seq(
   "com.github.valskalla" %% "odin-core",
-  "com.github.valskalla" %% "odin-json" //to enable JSON formatter if needed
+  "com.github.valskalla" %% "odin-json", //to enable JSON formatter if needed
+  "com.github.valskalla" %% "odin-extras" //to enable additional features if needed (see docs)
 ).map(_ % "@VERSION@")
 ```
 
@@ -99,6 +100,10 @@ Documentation
 - [Constant context](#constant-context)
 - [Contextual effects](#contextual-effects)
 - [Contramap and filter](#contramap-and-filter)
+- [Testing logger](#testing-logger)
+- [Extras](#extras)
+  - [Conditional Logging](#extras-conditional-logging)
+  - [Derivation](#extras-derivation)
 - [SL4FJ bridge](#slf4j-bridge)
 - [Benchmarks](#benchmarks)
 
@@ -463,6 +468,16 @@ consoleLogger[IO]()
     .unsafeRunSync()
 ```
 
+## Testing logger
+
+One of the main benefits of a polymorphic `Logger[F]` interface that exposes `F[Unit]` methods is a simple way to
+test that the application correctly writes logs.
+
+Since every operation represents a value instead of no-op side effect, it's possible to check those values in specs. 
+
+Odin provides a class `WriterTLogger[F]` out of the box to test logging using `WriterT` monad.
+Check out [examples](https://github.com/valskalla/odin/tree/master/examples/src/main/scala/io/odin/examples/SimpleApp.scala) for more information.
+
 ## Extras
 
 The `odin-extras` module provides additional functionality: ConditionalLogger, Render derivation, etc.
@@ -473,7 +488,7 @@ The `odin-extras` module provides additional functionality: ConditionalLogger, R
 libraryDependencies += "com.github.valskalla" %% "odin-extras" % "@VERSION@"
 ```
 
-## Extras. Conditional logging
+### Extras. Conditional logging
 
 In some scenarios, it is necessary to have different logging levels depending on the result of the execution.
 For example, the default log level can be `Info`, but once an error is raised, previous messages with log level `Debug` will be logged as well.
@@ -521,9 +536,9 @@ service.findAndVerify("good-user").attempt.unsafeRunSync()
 service.findAndVerify("bad-user").attempt.unsafeRunSync()
 ```
 
-## Extras. Derivation
+### Extras. Derivation
 
-`io.oden.extras.derivation.render` provides a Magnolia-based derivation of the `Render` type class.
+`io.odin.extras.derivation.render` provides a Magnolia-based derivation of the `Render` type class.
 
 The derivation can be configured via annotations: 
 * @rendered(includeMemberName = false)
