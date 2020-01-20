@@ -8,8 +8,6 @@ lazy val versions = new {
   val monix = "3.1.0"
   val magnolia = "0.12.6"
   val scalaCheck = "1.14.3"
-  val catsRetry = "0.3.2"
-  val catsScalacheck = "0.2.0"
   val zio = "1.0.0-RC17"
   val zioCats = "2.0.0.0-RC10"
   val slf4j = "1.7.30"
@@ -47,13 +45,6 @@ lazy val perfolation = "com.outr" %% "perfolation" % "1.1.5"
 lazy val circeCore = "io.circe" %% "circe-core" % "0.12.3"
 
 lazy val slf4j = "org.slf4j" % "slf4j-api" % versions.slf4j
-
-lazy val catsScalacheck = "io.chrisdavenport" %% "cats-scalacheck" % versions.catsScalacheck % Test
-
-lazy val catsRetry = List(
-  "com.github.cb372" %% "cats-retry-core",
-  "com.github.cb372" %% "cats-retry-cats-effect"
-).map(_ % versions.catsRetry % Test)
 
 lazy val log4j = ("com.lmax" % "disruptor" % versions.disruptor) :: List(
   "org.apache.logging.log4j" % "log4j-api",
@@ -103,8 +94,7 @@ lazy val sharedSettings = Seq(
 lazy val `odin-core` = (project in file("core"))
   .settings(sharedSettings)
   .settings(
-    libraryDependencies ++=
-      catsScalacheck :: (monix % Test) :: catsMtl :: sourcecode :: monixCatnap :: perfolation :: catsRetry ::: cats
+    libraryDependencies ++= (monix % Test) :: catsMtl :: sourcecode :: monixCatnap :: perfolation :: cats
   )
 
 lazy val `odin-json` = (project in file("json"))
