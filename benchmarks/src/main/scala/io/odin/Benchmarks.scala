@@ -67,7 +67,7 @@ class DefaultLoggerBenchmarks extends OdinBenchmarks {
   def msgAndCtx(): Unit = defaultLogger.info(message, context).unsafeRunSync()
 
   @Benchmark
-  def msgCtxThrowable(): Unit = defaultLogger.info(message, context, throwable).unsafeRunSync()
+  def msgCtxThrowable(): Unit = defaultLogger.info[String, Throwable](message, context, throwable).unsafeRunSync()
 }
 
 @State(Scope.Benchmark)
@@ -89,7 +89,7 @@ class FileLoggerBenchmarks extends OdinBenchmarks {
   @Benchmark
   @OperationsPerInvocation(1000)
   def msgCtxThrowable(): Unit =
-    for (_ <- 1 to 1000) logger.info(message, context, throwable).unsafeRunSync()
+    for (_ <- 1 to 1000) logger.info[String, Throwable](message, context, throwable).unsafeRunSync()
 
   @TearDown
   def tearDown(): Unit = {
@@ -191,7 +191,7 @@ class AsyncLoggerBenchmark extends OdinBenchmarks {
   @Benchmark
   @OperationsPerInvocation(1000)
   def msgCtxThrowable(): Unit =
-    for (_ <- 1 to 1000) asyncLogger.info(message, context, throwable).unsafeRunSync()
+    for (_ <- 1 to 1000) asyncLogger.info[String, Throwable](message, context, throwable).unsafeRunSync()
 
   @TearDown
   def tearDown(): Unit = {

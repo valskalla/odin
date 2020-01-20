@@ -17,29 +17,29 @@ class DefaultLoggerSpec extends OdinSpec {
       implicit val clk: Timer[Id] = clock(timestamp)
       val log = logger.withMinimalLevel(Level.Trace)
       check(log.trace(msg))(Level.Trace, msg, timestamp)
-      check(log.trace(msg, throwable))(Level.Trace, msg, timestamp, throwable = Some(throwable))
+      check(log.trace[String, Throwable](msg, throwable))(Level.Trace, msg, timestamp, throwable = Some(throwable))
       check(log.trace(msg, ctx))(Level.Trace, msg, timestamp, ctx)
-      check(log.trace(msg, ctx, throwable))(Level.Trace, msg, timestamp, ctx, Some(throwable))
+      check(log.trace[String, Throwable](msg, ctx, throwable))(Level.Trace, msg, timestamp, ctx, Some(throwable))
 
       check(log.debug(msg))(Level.Debug, msg, timestamp)
-      check(log.debug(msg, throwable))(Level.Debug, msg, timestamp, throwable = Some(throwable))
+      check(log.debug[String, Throwable](msg, throwable))(Level.Debug, msg, timestamp, throwable = Some(throwable))
       check(log.debug(msg, ctx))(Level.Debug, msg, timestamp, ctx)
-      check(log.debug(msg, ctx, throwable))(Level.Debug, msg, timestamp, ctx, Some(throwable))
+      check(log.debug[String, Throwable](msg, ctx, throwable))(Level.Debug, msg, timestamp, ctx, Some(throwable))
 
       check(log.info(msg))(Level.Info, msg, timestamp)
-      check(log.info(msg, throwable))(Level.Info, msg, timestamp, throwable = Some(throwable))
+      check(log.info[String, Throwable](msg, throwable))(Level.Info, msg, timestamp, throwable = Some(throwable))
       check(log.info(msg, ctx))(Level.Info, msg, timestamp, ctx)
-      check(log.info(msg, ctx, throwable))(Level.Info, msg, timestamp, ctx, Some(throwable))
+      check(log.info[String, Throwable](msg, ctx, throwable))(Level.Info, msg, timestamp, ctx, Some(throwable))
 
       check(log.warn(msg))(Level.Warn, msg, timestamp)
-      check(log.warn(msg, throwable))(Level.Warn, msg, timestamp, throwable = Some(throwable))
+      check(log.warn[String, Throwable](msg, throwable))(Level.Warn, msg, timestamp, throwable = Some(throwable))
       check(log.warn(msg, ctx))(Level.Warn, msg, timestamp, ctx)
-      check(log.warn(msg, ctx, throwable))(Level.Warn, msg, timestamp, ctx, Some(throwable))
+      check(log.warn[String, Throwable](msg, ctx, throwable))(Level.Warn, msg, timestamp, ctx, Some(throwable))
 
       check(log.error(msg))(Level.Error, msg, timestamp)
-      check(log.error(msg, throwable))(Level.Error, msg, timestamp, throwable = Some(throwable))
+      check(log.error[String, Throwable](msg, throwable))(Level.Error, msg, timestamp, throwable = Some(throwable))
       check(log.error(msg, ctx))(Level.Error, msg, timestamp, ctx)
-      check(log.error(msg, ctx, throwable))(Level.Error, msg, timestamp, ctx, Some(throwable))
+      check(log.error[String, Throwable](msg, ctx, throwable))(Level.Error, msg, timestamp, ctx, Some(throwable))
     }
   }
 
