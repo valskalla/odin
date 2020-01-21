@@ -9,6 +9,7 @@ import cats.effect.{ContextShift, IO, Timer}
 import io.odin.loggers.DefaultLogger
 import io.odin.syntax._
 import io.odin.formatter.Formatter
+import io.odin.formatter.options.ThrowableFormat
 import io.odin.json.{Formatter => JsonFormatter}
 import io.odin.meta.Position
 import org.openjdk.jmh.annotations._
@@ -205,8 +206,21 @@ class FormatterBenchmarks extends OdinBenchmarks {
   private val noCtx: LoggerMessage = loggerMessage.copy(context = Map.empty)
   private val noThrowable: LoggerMessage = noCtx.copy(exception = None)
 
+  private val formatterDepth = Formatter.create(
+    ThrowableFormat(ThrowableFormat.Depth.Fixed(2), ThrowableFormat.Indent.NoIndent),
+    colorful = false
+  )
+
+  private val formatterDepthIndent = Formatter.create(
+    ThrowableFormat(ThrowableFormat.Depth.Fixed(2), ThrowableFormat.Indent.Fixed(4)),
+    colorful = false
+  )
+
   @Benchmark
   def defaultFormatter(): Unit = Formatter.default.format(loggerMessage)
+
+  @Benchmark
+  def defaultColorful(): Unit = Formatter.colorful.format(loggerMessage)
 
   @Benchmark
   def defaultFormatterNoCtx(): Unit = Formatter.default.format(noCtx)
@@ -216,6 +230,13 @@ class FormatterBenchmarks extends OdinBenchmarks {
 
   @Benchmark
   def jsonFormatter(): Unit = JsonFormatter.json.format(loggerMessage)
+
+  @Benchmark
+  def depthFormatter(): Unit = formatterDepth.format(loggerMessage)
+
+  @Benchmark
+  def depthIndentFormatter(): Unit = formatterDepthIndent.format(loggerMessage)
+
 }
 
 @State(Scope.Benchmark)
