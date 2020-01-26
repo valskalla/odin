@@ -17,27 +17,32 @@ trait LoggerLaws[F[_]] {
   ): IsEq[List[LoggerMessage]] = {
     def trace(l: Logger[F]): F[Unit] =
       l.trace(msg.message.value) >> l.trace(msg.message.value, msg.context) >> F.whenA(msg.exception.isDefined) {
-        l.trace(msg.message.value, msg.exception.get) >> l.trace(msg.message.value, msg.context, msg.exception.get)
+        l.trace[String, Throwable](msg.message.value, msg.exception.get) >>
+          l.trace[String, Throwable](msg.message.value, msg.context, msg.exception.get)
       }
 
     def debug(l: Logger[F]): F[Unit] =
       l.debug(msg.message.value) >> l.debug(msg.message.value, msg.context) >> F.whenA(msg.exception.isDefined) {
-        l.debug(msg.message.value, msg.exception.get) >> l.debug(msg.message.value, msg.context, msg.exception.get)
+        l.debug[String, Throwable](msg.message.value, msg.exception.get) >>
+          l.debug[String, Throwable](msg.message.value, msg.context, msg.exception.get)
       }
 
     def info(l: Logger[F]): F[Unit] =
       l.info(msg.message.value) >> l.info(msg.message.value, msg.context) >> F.whenA(msg.exception.isDefined) {
-        l.info(msg.message.value, msg.exception.get) >> l.info(msg.message.value, msg.context, msg.exception.get)
+        l.info[String, Throwable](msg.message.value, msg.exception.get) >>
+          l.info[String, Throwable](msg.message.value, msg.context, msg.exception.get)
       }
 
     def warn(l: Logger[F]): F[Unit] =
       l.warn(msg.message.value) >> l.warn(msg.message.value, msg.context) >> F.whenA(msg.exception.isDefined) {
-        l.warn(msg.message.value, msg.exception.get) >> l.warn(msg.message.value, msg.context, msg.exception.get)
+        l.warn[String, Throwable](msg.message.value, msg.exception.get) >>
+          l.warn[String, Throwable](msg.message.value, msg.context, msg.exception.get)
       }
 
     def error(l: Logger[F]): F[Unit] =
       l.error(msg.message.value) >> l.error(msg.message.value, msg.context) >> F.whenA(msg.exception.isDefined) {
-        l.error(msg.message.value, msg.exception.get) >> l.error(msg.message.value, msg.context, msg.exception.get)
+        l.error[String, Throwable](msg.message.value, msg.exception.get) >>
+          l.error[String, Throwable](msg.message.value, msg.context, msg.exception.get)
       }
 
     def all(l: Logger[F]): F[Unit] =
