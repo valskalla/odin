@@ -51,9 +51,6 @@ abstract class DefaultLogger[F[_]](val minLevel: Level = Level.Trace)(implicit t
       log(Level.Trace, msg)
     }
 
-  def trace[M](msg: => M, t: Throwable)(implicit render: Render[M], position: Position): F[Unit] =
-    trace[M, Throwable](msg, t)
-
   def trace[M, E](msg: => M, e: E)(implicit render: Render[M], tt: ToThrowable[E], position: Position): F[Unit] =
     F.whenA(minLevel <= Level.Trace) {
       log(Level.Trace, msg, t = Some(tt.throwable(e)))
@@ -63,12 +60,6 @@ abstract class DefaultLogger[F[_]](val minLevel: Level = Level.Trace)(implicit t
     F.whenA(minLevel <= Level.Trace) {
       log(Level.Trace, msg, ctx)
     }
-
-  def trace[M](msg: => M, ctx: Map[String, String], t: Throwable)(
-      implicit render: Render[M],
-      position: Position
-  ): F[Unit] =
-    trace[M, Throwable](msg, ctx, t)
 
   def trace[M, E](msg: => M, ctx: Map[String, String], e: E)(
       implicit render: Render[M],
@@ -84,9 +75,6 @@ abstract class DefaultLogger[F[_]](val minLevel: Level = Level.Trace)(implicit t
       log(Level.Debug, msg)
     }
 
-  def debug[M](msg: => M, t: Throwable)(implicit render: Render[M], position: Position): F[Unit] =
-    debug[M, Throwable](msg, t)
-
   def debug[M, E](msg: => M, e: E)(implicit render: Render[M], tt: ToThrowable[E], position: Position): F[Unit] =
     F.whenA(minLevel <= Level.Debug) {
       log(Level.Debug, msg, t = Some(tt.throwable(e)))
@@ -96,12 +84,6 @@ abstract class DefaultLogger[F[_]](val minLevel: Level = Level.Trace)(implicit t
     F.whenA(minLevel <= Level.Debug) {
       log(Level.Debug, msg, ctx)
     }
-
-  def debug[M](msg: => M, ctx: Map[String, String], t: Throwable)(
-      implicit render: Render[M],
-      position: Position
-  ): F[Unit] =
-    debug[M, Throwable](msg, ctx, t)
 
   def debug[M, E](msg: => M, ctx: Map[String, String], e: E)(
       implicit render: Render[M],
@@ -117,9 +99,6 @@ abstract class DefaultLogger[F[_]](val minLevel: Level = Level.Trace)(implicit t
       log(Level.Info, msg)
     }
 
-  def info[M](msg: => M, t: Throwable)(implicit render: Render[M], position: Position): F[Unit] =
-    info[M, Throwable](msg, t)
-
   def info[M, E](msg: => M, e: E)(implicit render: Render[M], tt: ToThrowable[E], position: Position): F[Unit] =
     F.whenA(minLevel <= Level.Info) {
       log(Level.Info, msg, t = Some(tt.throwable(e)))
@@ -129,12 +108,6 @@ abstract class DefaultLogger[F[_]](val minLevel: Level = Level.Trace)(implicit t
     F.whenA(minLevel <= Level.Info) {
       log(Level.Info, msg, ctx)
     }
-
-  def info[M](msg: => M, ctx: Map[String, String], t: Throwable)(
-      implicit render: Render[M],
-      position: Position
-  ): F[Unit] =
-    info[M, Throwable](msg, ctx, t)
 
   def info[M, E](msg: => M, ctx: Map[String, String], e: E)(
       implicit render: Render[M],
@@ -150,9 +123,6 @@ abstract class DefaultLogger[F[_]](val minLevel: Level = Level.Trace)(implicit t
       log(Level.Warn, msg)
     }
 
-  def warn[M](msg: => M, t: Throwable)(implicit render: Render[M], position: Position): F[Unit] =
-    warn[M, Throwable](msg, t)
-
   def warn[M, E](msg: => M, e: E)(implicit render: Render[M], tt: ToThrowable[E], position: Position): F[Unit] =
     F.whenA(minLevel <= Level.Warn) {
       log(Level.Warn, msg, t = Some(tt.throwable(e)))
@@ -162,12 +132,6 @@ abstract class DefaultLogger[F[_]](val minLevel: Level = Level.Trace)(implicit t
     F.whenA(minLevel <= Level.Warn) {
       log(Level.Warn, msg, ctx)
     }
-
-  def warn[M](msg: => M, ctx: Map[String, String], t: Throwable)(
-      implicit render: Render[M],
-      position: Position
-  ): F[Unit] =
-    warn[M, Throwable](msg, ctx, t)
 
   def warn[M, E](msg: => M, ctx: Map[String, String], e: E)(
       implicit render: Render[M],
@@ -183,9 +147,6 @@ abstract class DefaultLogger[F[_]](val minLevel: Level = Level.Trace)(implicit t
       log(Level.Error, msg)
     }
 
-  def error[M](msg: => M, t: Throwable)(implicit render: Render[M], position: Position): F[Unit] =
-    error[M, Throwable](msg, t)
-
   def error[M, E](msg: => M, e: E)(implicit render: Render[M], tt: ToThrowable[E], position: Position): F[Unit] =
     F.whenA(minLevel <= Level.Error) {
       log(Level.Error, msg, t = Some(tt.throwable(e)))
@@ -195,12 +156,6 @@ abstract class DefaultLogger[F[_]](val minLevel: Level = Level.Trace)(implicit t
     F.whenA(minLevel <= Level.Error) {
       log(Level.Error, msg, ctx)
     }
-
-  def error[M](msg: => M, ctx: Map[String, String], t: Throwable)(
-      implicit render: Render[M],
-      position: Position
-  ): F[Unit] =
-    error[M, Throwable](msg, ctx, t)
 
   def error[M, E](msg: => M, ctx: Map[String, String], e: E)(
       implicit render: Render[M],

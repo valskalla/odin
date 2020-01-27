@@ -17,29 +17,29 @@ class LoggerNatTransformSpec extends OdinSpec {
       val logF = logger.withMinimalLevel(Level.Trace)
       val logFF = logF.mapK(nat).withMinimalLevel(Level.Trace)
       check(logF.trace(msg), logFF.trace(msg))
-      check(logF.trace[String, Throwable](msg, throwable), logFF.trace[String, Throwable](msg, throwable))
+      check(logF.trace(msg, throwable), logFF.trace(msg, throwable))
       check(logF.trace(msg, ctx), logFF.trace(msg, ctx))
-      check(logF.trace[String, Throwable](msg, ctx, throwable), logFF.trace[String, Throwable](msg, ctx, throwable))
+      check(logF.trace(msg, ctx, throwable), logFF.trace(msg, ctx, throwable))
 
       check(logF.debug(msg), logFF.debug(msg))
-      check(logF.debug[String, Throwable](msg, throwable), logFF.debug[String, Throwable](msg, throwable))
+      check(logF.debug(msg, throwable), logFF.debug(msg, throwable))
       check(logF.debug(msg, ctx), logFF.debug(msg, ctx))
-      check(logF.debug[String, Throwable](msg, ctx, throwable), logFF.debug[String, Throwable](msg, ctx, throwable))
+      check(logF.debug(msg, ctx, throwable), logFF.debug(msg, ctx, throwable))
 
       check(logF.info(msg), logFF.info(msg))
-      check(logF.info[String, Throwable](msg, throwable), logFF.info[String, Throwable](msg, throwable))
+      check(logF.info(msg, throwable), logFF.info(msg, throwable))
       check(logF.info(msg, ctx), logFF.info(msg, ctx))
-      check(logF.info[String, Throwable](msg, ctx, throwable), logFF.info[String, Throwable](msg, ctx, throwable))
+      check(logF.info(msg, ctx, throwable), logFF.info(msg, ctx, throwable))
 
       check(logF.warn(msg), logFF.warn(msg))
-      check(logF.warn[String, Throwable](msg, throwable), logFF.warn[String, Throwable](msg, throwable))
+      check(logF.warn(msg, throwable), logFF.warn(msg, throwable))
       check(logF.warn(msg, ctx), logFF.warn(msg, ctx))
-      check(logF.warn[String, Throwable](msg, ctx, throwable), logFF.warn[String, Throwable](msg, ctx, throwable))
+      check(logF.warn(msg, ctx, throwable), logFF.warn(msg, ctx, throwable))
 
       check(logF.error(msg), logFF.error(msg))
-      check(logF.error[String, Throwable](msg, throwable), logFF.error[String, Throwable](msg, throwable))
+      check(logF.error(msg, throwable), logFF.error(msg, throwable))
       check(logF.error(msg, ctx), logFF.error(msg, ctx))
-      check(logF.error[String, Throwable](msg, ctx, throwable), logFF.error[String, Throwable](msg, ctx, throwable))
+      check(logF.error(msg, ctx, throwable), logFF.error(msg, ctx, throwable))
     }
   }
 

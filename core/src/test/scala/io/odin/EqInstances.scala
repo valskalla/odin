@@ -25,25 +25,25 @@ trait EqInstances {
       val ctx = retrySample[Map[String, String]]
       val throwable = retrySample[Throwable]
       eqF.eqv(x.trace(msg), y.trace(msg)) &&
-      eqF.eqv(x.trace[String, Throwable](msg, throwable), y.trace[String, Throwable](msg, throwable)) &&
+      eqF.eqv(x.trace(msg, throwable), y.trace(msg, throwable)) &&
       eqF.eqv(x.trace(msg, ctx), y.trace(msg, ctx)) &&
-      eqF.eqv(x.trace[String, Throwable](msg, ctx, throwable), y.trace[String, Throwable](msg, ctx, throwable)) &&
+      eqF.eqv(x.trace(msg, ctx, throwable), y.trace(msg, ctx, throwable)) &&
       eqF.eqv(x.debug(msg), y.debug(msg)) &&
-      eqF.eqv(x.debug[String, Throwable](msg, throwable), y.debug[String, Throwable](msg, throwable)) &&
+      eqF.eqv(x.debug(msg, throwable), y.debug(msg, throwable)) &&
       eqF.eqv(x.debug(msg, ctx), y.debug(msg, ctx)) &&
-      eqF.eqv(x.debug[String, Throwable](msg, ctx, throwable), y.debug[String, Throwable](msg, ctx, throwable)) &&
+      eqF.eqv(x.debug(msg, ctx, throwable), y.debug(msg, ctx, throwable)) &&
       eqF.eqv(x.info(msg), y.info(msg)) &&
-      eqF.eqv(x.info[String, Throwable](msg, throwable), y.info[String, Throwable](msg, throwable)) &&
+      eqF.eqv(x.info(msg, throwable), y.info(msg, throwable)) &&
       eqF.eqv(x.info(msg, ctx), y.info(msg, ctx)) &&
-      eqF.eqv(x.info[String, Throwable](msg, ctx, throwable), y.info[String, Throwable](msg, ctx, throwable)) &&
+      eqF.eqv(x.info(msg, ctx, throwable), y.info(msg, ctx, throwable)) &&
       eqF.eqv(x.warn(msg), y.warn(msg)) &&
-      eqF.eqv(x.warn[String, Throwable](msg, throwable), y.warn[String, Throwable](msg, throwable)) &&
+      eqF.eqv(x.warn(msg, throwable), y.warn(msg, throwable)) &&
       eqF.eqv(x.warn(msg, ctx), y.warn(msg, ctx)) &&
-      eqF.eqv(x.warn[String, Throwable](msg, ctx, throwable), y.warn[String, Throwable](msg, ctx, throwable)) &&
+      eqF.eqv(x.warn(msg, ctx, throwable), y.warn(msg, ctx, throwable)) &&
       eqF.eqv(x.error(msg), y.error(msg)) &&
-      eqF.eqv(x.error[String, Throwable](msg, throwable), y.error[String, Throwable](msg, throwable)) &&
+      eqF.eqv(x.error(msg, throwable), y.error(msg, throwable)) &&
       eqF.eqv(x.error(msg, ctx), y.error(msg, ctx)) &&
-      eqF.eqv(x.error[String, Throwable](msg, ctx, throwable), y.error[String, Throwable](msg, ctx, throwable))
+      eqF.eqv(x.error(msg, ctx, throwable), y.error(msg, ctx, throwable))
     }
 
   implicit def eqIO[A](implicit eqA: Eq[A]): Eq[IO[A]] = Eq.instance { (ioA, ioB) =>
