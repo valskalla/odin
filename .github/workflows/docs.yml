@@ -1,12 +1,8 @@
 name: Update documentation
 
 on:
-  push:
-    branches:
-      - master
-  pull_request:
-    branches:
-      - master
+  release:
+    types: [published]
 
 jobs:
   update:
@@ -25,8 +21,8 @@ jobs:
             skip-checks: true
         run: |
           git fetch --no-tags --prune --depth=1 origin +refs/heads/*:refs/remotes/origin/*
-          git checkout test-docs
-          git show-ref
-          git status
+          git checkout master
+          git config user.email "whoisliar@gmail.com"
+          git config user.name "sergeykolbasov"
           git add .
-          git diff --quiet && git diff --staged --quiet || (git commit -m "${COMMIT_MSG}"; git push -u origin test-docs)
+          git diff --quiet && git diff --staged --quiet || (git commit -m "${COMMIT_MSG}"; git push -u origin master)
