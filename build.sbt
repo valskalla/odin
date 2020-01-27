@@ -149,7 +149,7 @@ lazy val docs = (project in file("odin-docs"))
   .settings(noPublish)
   .settings(
     mdocVariables := Map(
-      "VERSION" -> version.value
+      "VERSION" -> "0.5.0"
     ),
     mdocOut := file(".")
   )
