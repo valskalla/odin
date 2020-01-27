@@ -35,7 +35,7 @@ libraryDependencies ++= Seq(
   "com.github.valskalla" %% "odin-core",
   "com.github.valskalla" %% "odin-json", //to enable JSON formatter if needed
   "com.github.valskalla" %% "odin-extras" //to enable additional features if needed (see docs)
-).map(_ % "0.5.0")
+).map(_ % "0.6.0")
 ```
 
 Example
@@ -71,9 +71,9 @@ Some time could be saved by using the effect-predefined variants of Odin. There 
 
 ```scala
 //ZIO
-libraryDependencies += "com.github.valskalla" %% "odin-zio" % "0.5.0"
+libraryDependencies += "com.github.valskalla" %% "odin-zio" % "0.6.0"
 //or Monix
-libraryDependencies += "com.github.valskalla" %% "odin-monix" % "0.5.0"
+libraryDependencies += "com.github.valskalla" %% "odin-monix" % "0.6.0"
 ```
 
 Use corresponding import to get an access to the loggers:
@@ -92,6 +92,7 @@ Documentation
 - [Console logger](#console-logger)
 - [Formatter](#formatter)
   - [JSON formatter](#json-formatter)
+  - [Customized formatter](#customized-formatter)
 - [Minimal level](#minimal-level)
 - [File logger](#file-logger)
 - [Async logger](#async-logger)
@@ -100,6 +101,7 @@ Documentation
 - [Constant context](#constant-context)
 - [Contextual effects](#contextual-effects)
 - [Contramap and filter](#contramap-and-filter)
+- [ToThrowable](#tothrowable)
 - [Testing logger](#testing-logger)
 - [Extras](#extras)
   - [Conditional Logging](#extras-conditional-logging)
@@ -116,9 +118,11 @@ trait Logger[F[_]] {
   
   def trace[M](msg: => M)(implicit render: Render[M], position: Position): F[Unit]
 
-  def trace[M](msg: => M, t: Throwable)(implicit render: Render[M], position: Position): F[Unit]
+  def trace[M, E](msg: => M, t: E)(implicit render: Render[M], tt: ToThrowable[E], position: Position): F[Unit]
 
   def trace[M](msg: => M, ctx: Map[String, String])(implicit render: Render[M], position: Position): F[Unit]
+
+  def trace[M, E](msg: => M, ctx: Map[String, String], t: E)(implicit render: Render[M], tt: ToThrowable[E], position: Position): F[Unit]
 
   //continues for each different log level
 }
@@ -130,7 +134,7 @@ Each method returns `F[Unit]`, so most of the time effects are suspended in the 
 the logger methods isn't enough to emit the actual log. User has to to combine log operations with the rest of code
 using plead of options: `for ... yield` comprehension, `flatMap/map` or `>>/*>` operators from cats library. 
 
-Particularly interesting are the implicit arguments: `Position` and `Render[M]`.
+Particularly interesting are the implicit arguments: `Position`, [`Render[M]`](#render), and [`ToThrowable[E]`](#tothrowable).
 
 `Position` class carries the information about invocation site: owning enclosure, package name, current line.
 It's generated in compile-time using Scala macro, so cost of position tracing in runtime is close to zero.
@@ -180,18 +184,17 @@ Now to the call:
 logger.info("Hello?")
 // res0: IO[Unit] = Map(
 //   Bind(
-//     Delay(cats.effect.Clock$$anon$1$$Lambda$15314/0x0000000803106c40@4add10af),
-//     io.odin.loggers.DefaultLogger$$Lambda$15315/0x0000000803105840@2668dc94
+//     Delay(cats.effect.Clock$$anon$1$$Lambda$8646/596453421@762eb74f),
+//     io.odin.loggers.DefaultLogger$$Lambda$8647/578405314@69bc2016
 //   ),
-//   scala.Function1$$Lambda$15322/0x0000000803100840@ae01a05,
+//   scala.Function1$$Lambda$8654/535085945@17e06be5,
 //   1
 // )
 
 //prints "Hello world" to the STDOUT.
 //Although, don't use `unsafeRunSync` in production unless you know what you're doing
 logger.info("Hello world").unsafeRunSync()
-// 2020-01-13T23:30:20 [run-main-0] INFO repl.Session.App#res1:68 - Hello world
-//
+// 2020-01-27T15:27:32,833 [run-main-0] INFO repl.Session.App#res1:68 - Hello world
 ```
 
 All messages of level `WARN` and higher are routed to the _STDERR_ while messages with level `INFO` and below go to the _STDOUT_.
@@ -231,10 +234,8 @@ _odin-core_ provides the `Formatter.default` and `Formatter.colorful` that print
 ```scala
 import cats.syntax.all._
 (logger.info("No context") *> logger.info("Some context", Map("key" -> "value"))).unsafeRunSync()
-// 2020-01-13T23:30:20 [run-main-0] INFO repl.Session.App#res2:77 - No context
-// 
-// 2020-01-13T23:30:20 [run-main-0] INFO repl.Session.App#res2:77 - Some context - key: value
-//
+// 2020-01-27T15:27:32,881 [run-main-0] INFO repl.Session.App#res2:77 - No context
+// 2020-01-27T15:27:32,881 [run-main-0] INFO repl.Session.App#res2:77 - Some context - key: value
 ```
 
 The latter adds a bit of colors to the default formatter:
@@ -255,8 +256,22 @@ Now messages printed with this logger will be encoded as JSON string using circe
 
 ```scala
 jsonLogger.info("This is JSON").unsafeRunSync()
-// {"level":"INFO","message":"This is JSON","context":{},"exception":null,"position":"repl.Session.App#res3:92","thread_name":"run-main-0","timestamp":"2020-01-13T23:30:20"}
+// {"level":"INFO","message":"This is JSON","context":{},"exception":null,"position":"repl.Session.App#res3:92","thread_name":"run-main-0","timestamp":"2020-01-27T15:27:32"}
 ```
+
+### Customized formatter
+
+Beside copy-pasting the existing formatter to adjust it for one's needs, it's possible to do the basic customization by relying on `Formatter.create`:
+
+```scala
+object Formatter {
+  def create(throwableFormat: ThrowableFormat, colorful: Boolean): Formatter
+}
+```
+
+- [`ThrowableFormat`](https://github.com/valskalla/odin/blob/master/core/src/main/scala/io/odin/formatter/options/ThrowableFormat.scala)
+allows to tweak the rendering of exceptions, specifically indentation and stack depth.
+- `colorful` flag enables logs highlighting.
 
 ## Minimal level
 
@@ -330,8 +345,7 @@ async logger shall be done inside of `Resource.use` block:
 ```scala
 //queue will be flushed on release even if flushing timer didn't hit the mark yet
 asyncLoggerResource.use(logger => logger.info("Async info")).unsafeRunSync()
-// 2020-01-13T23:30:20 [run-main-0] INFO repl.Session.App#res6:142 - Async info
-//
+// 2020-01-27T15:27:33,352 [run-main-0] INFO repl.Session.App#res6:142 - Async info
 ```
 
 Package `io.odin.syntax._` also pimps the `Resource[F, Logger[F]]` type with the same `.withAsync` method to use
@@ -422,8 +436,7 @@ import io.odin.syntax._
 consoleLogger[IO]()
     .withConstContext(Map("predefined" -> "context"))
     .info("Hello world").unsafeRunSync()
-// 2020-01-13T23:30:21 [run-main-0] INFO repl.Session.App#res7:206 - Hello world - predefined: context
-//
+// 2020-01-27T15:27:33,387 [run-main-0] INFO repl.Session.App#res7:206 - Hello world - predefined: context
 ```
 
 ## Contextual effects
@@ -454,8 +467,7 @@ consoleLogger[M]()
     .info("Hello world")
     .run(Env(Map("env" -> "ctx")))
     .unsafeRunSync()
-// 2020-01-13T23:30:21 [run-main-0] INFO repl.Session.App#res8:237 - Hello world - env: ctx
-//
+// 2020-01-27T15:27:33,482 [run-main-0] INFO repl.Session.App#res8:237 - Hello world - env: ctx
 ```
 
 Odin automatically derives required type classes for each type `F[_]` that has `ApplicativeAsk[F, E]` defined, or in other words
@@ -482,14 +494,40 @@ consoleLogger[IO]()
     .contramap(msg => msg.copy(message = msg.message.map(_ + " World")))
     .info("Hello")
     .unsafeRunSync()
-// 2020-01-13T23:30:21 [run-main-0] INFO repl.Session.App#res9:250 - Hello World
-// 
+// 2020-01-27T15:27:33,495 [run-main-0] INFO repl.Session.App#res9:250 - Hello World
 
 consoleLogger[IO]()
     .filter(msg => msg.message.value.size < 10)
     .info("Very long messages are discarded")
     .unsafeRunSync()
 ```
+
+## ToThrowable
+
+The closer look on the exception logging reveals that there is no requirement for an error to be an instance of `Throwable`:
+
+```scala
+def trace[M, E](msg: => M, t: E)(implicit render: Render[M], tt: ToThrowable[E], position: Position): F[Unit]
+
+def trace[M](msg: => M, ctx: Map[String, String])(implicit render: Render[M], position: Position): F[Unit]
+
+def trace[M, E](msg: => M, ctx: Map[String, String], t: E)(implicit render: Render[M], tt: ToThrowable[E], position: Position): F[Unit]
+```
+
+Given the implicit constraint `ToThrowable` it's possible to log any error of type `E` as far as it satisfies this constraint by providing
+an implicit instance of the following interface: 
+
+```scala
+/**
+  * Type class that converts a value of type `E` into Throwable
+  */
+trait ToThrowable[E] {
+  def throwable(e: E): Throwable
+}
+```
+
+Odin provides an instance of `ToThrowable` for each `E <: Throwable` out of the box. A good practice is to keep such implicits in the companion object
+of a corresponding type error type `E`.
 
 ## Testing logger
 
@@ -508,7 +546,7 @@ The `odin-extras` module provides additional functionality: ConditionalLogger, R
 - Add following dependency to your build:
 
 ```scala
-libraryDependencies += "com.github.valskalla" %% "odin-extras" % "0.5.0"
+libraryDependencies += "com.github.valskalla" %% "odin-extras" % "0.6.0"
 ```
 
 ### Extras. Conditional logging
@@ -554,17 +592,14 @@ class UserService[F[_]: Timer: ContextShift](logger: Logger[F])(implicit F: Conc
 }
 
 val service = new UserService[IO](consoleLogger[IO](minLevel = Level.Info))
-// service: UserService[IO] = repl.Session$App$UserService@2c570eb9
+// service: UserService[IO] = repl.Session$App$UserService@29455394
 
 service.findAndVerify("good-user").attempt.unsafeRunSync()
-// 2020-01-13T23:30:21 [run-main-0] INFO repl.Session.App#UserService#findAndVerify:289 - User found and verified User(my-user-good-user)
-// 
+// 2020-01-27T15:27:33,556 [run-main-0] INFO repl.Session.App#UserService#findAndVerify:289 - User found and verified User(my-user-good-user)
 // res11: Either[Throwable, Unit] = Right(())
 service.findAndVerify("bad-user").attempt.unsafeRunSync()
-// 2020-01-13T23:30:21 [run-main-0] DEBUG repl.Session.App#UserService#findAndVerify:285 - Looking for user by id [bad-user]
-// 
-// 2020-01-13T23:30:21 [run-main-0] DEBUG repl.Session.App#UserService#findAndVerify:287 - Found user User(my-user-bad-user)
-// 
+// 2020-01-27T15:27:33,566 [run-main-0] DEBUG repl.Session.App#UserService#findAndVerify:285 - Looking for user by id [bad-user]
+// 2020-01-27T15:27:33,567 [run-main-0] DEBUG repl.Session.App#UserService#findAndVerify:287 - Found user User(my-user-bad-user)
 // res12: Either[Throwable, Unit] = Left(java.lang.RuntimeException: Bad User)
 ```
 
@@ -636,7 +671,7 @@ It requires a two-step setup:
 
 - Add following dependency to your build:
 ```scala
-libraryDependencies += "com.github.valskalla" %% "odin-slf4j" % "0.5.0"
+libraryDependencies += "com.github.valskalla" %% "odin-slf4j" % "0.6.0"
 ```
 - Create `StaticLoggerBuilder` class/object in the package `org.slf4j.impl` with a similar content:
 ```scala
