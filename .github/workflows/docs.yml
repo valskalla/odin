@@ -28,7 +28,5 @@ jobs:
           git checkout test-docs
           git show-ref
           git status
-          git config user.email "whoisliar@gmail.com"
-          git config user.name "sergeykolbasov"
           git add .
           git diff --quiet && git diff --staged --quiet || (git commit -m "${COMMIT_MSG}"; git push -u origin test-docs)
