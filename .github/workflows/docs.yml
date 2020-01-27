@@ -20,7 +20,9 @@ jobs:
             Update documentation
             skip-checks: true
         run: |
+          git fetch --no-tags --prune --depth=1 origin +refs/heads/*:refs/remotes/origin/*
+          git checkout master
           git config user.email "whoisliar@gmail.com"
           git config user.name "sergeykolbasov"
           git add .
-          git diff --quiet && git diff --staged --quiet || (git commit -m "${COMMIT_MSG}"; git push origin master)
+          git diff --quiet && git diff --staged --quiet || (git commit -m "${COMMIT_MSG}"; git push -u origin master)
