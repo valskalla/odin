@@ -25,6 +25,7 @@ jobs:
             skip-checks: true
         run: |
           git fetch --no-tags --prune --depth=1 origin +refs/heads/*:refs/remotes/origin/*
+          git checkout test-docs
           git show-ref
           git status
           git config user.email "whoisliar@gmail.com"
