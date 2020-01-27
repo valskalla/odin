@@ -92,6 +92,7 @@ Documentation
 - [Console logger](#console-logger)
 - [Formatter](#formatter)
   - [JSON formatter](#json-formatter)
+  - [Customized formatter](#customized-formatter)
 - [Minimal level](#minimal-level)
 - [File logger](#file-logger)
 - [Async logger](#async-logger)
@@ -100,6 +101,7 @@ Documentation
 - [Constant context](#constant-context)
 - [Contextual effects](#contextual-effects)
 - [Contramap and filter](#contramap-and-filter)
+- [ToThrowable](#tothrowable)
 - [Testing logger](#testing-logger)
 - [Extras](#extras)
   - [Conditional Logging](#extras-conditional-logging)
@@ -116,9 +118,11 @@ trait Logger[F[_]] {
   
   def trace[M](msg: => M)(implicit render: Render[M], position: Position): F[Unit]
 
-  def trace[M](msg: => M, t: Throwable)(implicit render: Render[M], position: Position): F[Unit]
+  def trace[M, E](msg: => M, t: E)(implicit render: Render[M], tt: ToThrowable[E], position: Position): F[Unit]
 
   def trace[M](msg: => M, ctx: Map[String, String])(implicit render: Render[M], position: Position): F[Unit]
+
+  def trace[M, E](msg: => M, ctx: Map[String, String], t: E)(implicit render: Render[M], tt: ToThrowable[E], position: Position): F[Unit]
 
   //continues for each different log level
 }
@@ -130,7 +134,7 @@ Each method returns `F[Unit]`, so most of the time effects are suspended in the 
 the logger methods isn't enough to emit the actual log. User has to to combine log operations with the rest of code
 using plead of options: `for ... yield` comprehension, `flatMap/map` or `>>/*>` operators from cats library. 
 
-Particularly interesting are the implicit arguments: `Position` and `Render[M]`.
+Particularly interesting are the implicit arguments: `Position`, [`Render[M]`](#render), and [`ToThrowable[E]`](#tothrowable).
 
 `Position` class carries the information about invocation site: owning enclosure, package name, current line.
 It's generated in compile-time using Scala macro, so cost of position tracing in runtime is close to zero.
@@ -242,6 +246,20 @@ Now messages printed with this logger will be encoded as JSON string using circe
 ```scala mdoc
 jsonLogger.info("This is JSON").unsafeRunSync()
 ```
+
+### Customized formatter
+
+Beside copy-pasting the existing formatter to adjust it for one's needs, it's possible to do the basic customization by relying on `Formatter.create`:
+
+```scala
+object Formatter {
+  def create(throwableFormat: ThrowableFormat, colorful: Boolean): Formatter
+}
+```
+
+- [`ThrowableFormat`](https://github.com/valskalla/odin/blob/master/core/src/main/scala/io/odin/formatter/options/ThrowableFormat.scala)
+allows to tweak the rendering of exceptions, specifically indentation and stack depth.
+- `colorful` flag enables logs highlighting.
 
 ## Minimal level
 
@@ -467,6 +485,33 @@ consoleLogger[IO]()
     .info("Very long messages are discarded")
     .unsafeRunSync()
 ```
+
+## ToThrowable
+
+The closer look on the exception logging reveals that there is no requirement for an error to be an instance of `Throwable`:
+
+```scala
+def trace[M, E](msg: => M, t: E)(implicit render: Render[M], tt: ToThrowable[E], position: Position): F[Unit]
+
+def trace[M](msg: => M, ctx: Map[String, String])(implicit render: Render[M], position: Position): F[Unit]
+
+def trace[M, E](msg: => M, ctx: Map[String, String], t: E)(implicit render: Render[M], tt: ToThrowable[E], position: Position): F[Unit]
+```
+
+Given the implicit constraint `ToThrowable` it's possible to log any error of type `E` as far as it satisfies this constraint by providing
+an implicit instance of the following interface: 
+
+```scala
+/**
+  * Type class that converts a value of type `E` into Throwable
+  */
+trait ToThrowable[E] {
+  def throwable(e: E): Throwable
+}
+```
+
+Odin provides an instance of `ToThrowable` for each `E <: Throwable` out of the box. A good practice is to keep such implicits in the companion object
+of a corresponding type error type `E`.
 
 ## Testing logger
 
