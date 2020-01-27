@@ -71,10 +71,10 @@ object Formatter {
     * Default Throwable printer is twice as slow. This method was borrowed from scribe library.
     *
     * The result differs depending on the format:
-    * [[ThrowableFormat.Depth.Full]] - prints all elements of a stack trace
-    * [[ThrowableFormat.Depth.Fixed]] - prints N elements of a stack trace
-    * [[ThrowableFormat.Indent.NoIndent]] - prints a stack trace without indentation
-    * [[ThrowableFormat.Indent.Fixed]] - prints a stack trace prepending every line with N spaces
+    * `ThrowableFormat.Depth.Full` - prints all elements of a stack trace
+    * `ThrowableFormat.Depth.Fixed` - prints N elements of a stack trace
+    * `ThrowableFormat.Indent.NoIndent` - prints a stack trace without indentation
+    * `ThrowableFormat.Indent.Fixed` - prints a stack trace prepending every line with N spaces
     */
   def formatThrowable(t: Throwable, format: ThrowableFormat): String = {
     val indent = format.indent match {
