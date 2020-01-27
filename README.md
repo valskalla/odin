@@ -184,17 +184,17 @@ Now to the call:
 logger.info("Hello?")
 // res0: IO[Unit] = Map(
 //   Bind(
-//     Delay(cats.effect.Clock$$anon$1$$Lambda$8646/596453421@762eb74f),
-//     io.odin.loggers.DefaultLogger$$Lambda$8647/578405314@69bc2016
+//     Delay(cats.effect.Clock$$anon$1$$Lambda$8673/465380266@f2b6e9d),
+//     io.odin.loggers.DefaultLogger$$Lambda$8674/933368109@2ed828d5
 //   ),
-//   scala.Function1$$Lambda$8654/535085945@17e06be5,
+//   scala.Function1$$Lambda$8681/2063299506@4444cf0b,
 //   1
 // )
 
 //prints "Hello world" to the STDOUT.
 //Although, don't use `unsafeRunSync` in production unless you know what you're doing
 logger.info("Hello world").unsafeRunSync()
-// 2020-01-27T15:27:32,833 [run-main-0] INFO repl.Session.App#res1:68 - Hello world
+// 2020-01-27T15:38:46,822 [run-main-0] INFO repl.Session.App#res1:68 - Hello world
 ```
 
 All messages of level `WARN` and higher are routed to the _STDERR_ while messages with level `INFO` and below go to the _STDOUT_.
@@ -234,8 +234,8 @@ _odin-core_ provides the `Formatter.default` and `Formatter.colorful` that print
 ```scala
 import cats.syntax.all._
 (logger.info("No context") *> logger.info("Some context", Map("key" -> "value"))).unsafeRunSync()
-// 2020-01-27T15:27:32,881 [run-main-0] INFO repl.Session.App#res2:77 - No context
-// 2020-01-27T15:27:32,881 [run-main-0] INFO repl.Session.App#res2:77 - Some context - key: value
+// 2020-01-27T15:38:46,873 [run-main-0] INFO repl.Session.App#res2:77 - No context
+// 2020-01-27T15:38:46,873 [run-main-0] INFO repl.Session.App#res2:77 - Some context - key: value
 ```
 
 The latter adds a bit of colors to the default formatter:
@@ -256,7 +256,7 @@ Now messages printed with this logger will be encoded as JSON string using circe
 
 ```scala
 jsonLogger.info("This is JSON").unsafeRunSync()
-// {"level":"INFO","message":"This is JSON","context":{},"exception":null,"position":"repl.Session.App#res3:92","thread_name":"run-main-0","timestamp":"2020-01-27T15:27:32"}
+// {"level":"INFO","message":"This is JSON","context":{},"exception":null,"position":"repl.Session.App#res3:92","thread_name":"run-main-0","timestamp":"2020-01-27T15:38:46"}
 ```
 
 ### Customized formatter
@@ -345,7 +345,7 @@ async logger shall be done inside of `Resource.use` block:
 ```scala
 //queue will be flushed on release even if flushing timer didn't hit the mark yet
 asyncLoggerResource.use(logger => logger.info("Async info")).unsafeRunSync()
-// 2020-01-27T15:27:33,352 [run-main-0] INFO repl.Session.App#res6:142 - Async info
+// 2020-01-27T15:38:47,282 [run-main-0] INFO repl.Session.App#res6:142 - Async info
 ```
 
 Package `io.odin.syntax._` also pimps the `Resource[F, Logger[F]]` type with the same `.withAsync` method to use
@@ -436,7 +436,7 @@ import io.odin.syntax._
 consoleLogger[IO]()
     .withConstContext(Map("predefined" -> "context"))
     .info("Hello world").unsafeRunSync()
-// 2020-01-27T15:27:33,387 [run-main-0] INFO repl.Session.App#res7:206 - Hello world - predefined: context
+// 2020-01-27T15:38:47,340 [run-main-0] INFO repl.Session.App#res7:206 - Hello world - predefined: context
 ```
 
 ## Contextual effects
@@ -467,7 +467,7 @@ consoleLogger[M]()
     .info("Hello world")
     .run(Env(Map("env" -> "ctx")))
     .unsafeRunSync()
-// 2020-01-27T15:27:33,482 [run-main-0] INFO repl.Session.App#res8:237 - Hello world - env: ctx
+// 2020-01-27T15:38:47,424 [run-main-0] INFO repl.Session.App#res8:237 - Hello world - env: ctx
 ```
 
 Odin automatically derives required type classes for each type `F[_]` that has `ApplicativeAsk[F, E]` defined, or in other words
@@ -494,7 +494,7 @@ consoleLogger[IO]()
     .contramap(msg => msg.copy(message = msg.message.map(_ + " World")))
     .info("Hello")
     .unsafeRunSync()
-// 2020-01-27T15:27:33,495 [run-main-0] INFO repl.Session.App#res9:250 - Hello World
+// 2020-01-27T15:38:47,431 [run-main-0] INFO repl.Session.App#res9:250 - Hello World
 
 consoleLogger[IO]()
     .filter(msg => msg.message.value.size < 10)
@@ -592,14 +592,14 @@ class UserService[F[_]: Timer: ContextShift](logger: Logger[F])(implicit F: Conc
 }
 
 val service = new UserService[IO](consoleLogger[IO](minLevel = Level.Info))
-// service: UserService[IO] = repl.Session$App$UserService@29455394
+// service: UserService[IO] = repl.Session$App$UserService@3437f39
 
 service.findAndVerify("good-user").attempt.unsafeRunSync()
-// 2020-01-27T15:27:33,556 [run-main-0] INFO repl.Session.App#UserService#findAndVerify:289 - User found and verified User(my-user-good-user)
+// 2020-01-27T15:38:47,467 [run-main-0] INFO repl.Session.App#UserService#findAndVerify:289 - User found and verified User(my-user-good-user)
 // res11: Either[Throwable, Unit] = Right(())
 service.findAndVerify("bad-user").attempt.unsafeRunSync()
-// 2020-01-27T15:27:33,566 [run-main-0] DEBUG repl.Session.App#UserService#findAndVerify:285 - Looking for user by id [bad-user]
-// 2020-01-27T15:27:33,567 [run-main-0] DEBUG repl.Session.App#UserService#findAndVerify:287 - Found user User(my-user-bad-user)
+// 2020-01-27T15:38:47,471 [run-main-0] DEBUG repl.Session.App#UserService#findAndVerify:285 - Looking for user by id [bad-user]
+// 2020-01-27T15:38:47,471 [run-main-0] DEBUG repl.Session.App#UserService#findAndVerify:287 - Found user User(my-user-bad-user)
 // res12: Either[Throwable, Unit] = Left(java.lang.RuntimeException: Bad User)
 ```
 
