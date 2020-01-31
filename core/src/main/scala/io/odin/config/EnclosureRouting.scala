@@ -10,8 +10,9 @@ import io.odin.{Logger, LoggerMessage}
 
 import scala.annotation.tailrec
 
-private[config] class EnclosureRouting[F[_]: Monad: Timer](fallback: Logger[F], router: List[(String, Logger[F])])
-    extends DefaultLogger {
+private[config] class EnclosureRouting[F[_]: Timer](fallback: Logger[F], router: List[(String, Logger[F])])(
+    implicit F: Monad[F]
+) extends DefaultLogger {
   private val indexedRouter = router.mapWithIndex {
     case ((packageName, logger), idx) => (packageName, (idx, logger))
   }
@@ -32,14 +33,17 @@ private[config] class EnclosureRouting[F[_]: Monad: Timer](fallback: Logger[F], 
       }
       .toList
       .traverse_ {
-        case ((_, logger), ms) => logger.log(ms)
+        case ((_, logger), ms) => logger.log(ms.filter(_.level >= logger.minLevel))
       }
   }
 
   @tailrec
   private def recLog(router: List[(String, (Int, Logger[F]))], msg: LoggerMessage): F[Unit] = router match {
-    case Nil                                                                   => fallback.log(msg)
-    case (key, (_, logger)) :: _ if msg.position.enclosureName.startsWith(key) => logger.log(msg)
-    case _ :: tail                                                             => recLog(tail, msg)
+    case Nil =>
+      if (msg.level >= fallback.minLevel) fallback.log(msg)
+      else F.unit
+    case (key, (_, logger)) :: _ if msg.position.enclosureName.startsWith(key) && msg.level >= logger.minLevel =>
+      logger.log(msg)
+    case _ :: tail => recLog(tail, msg)
   }
 }

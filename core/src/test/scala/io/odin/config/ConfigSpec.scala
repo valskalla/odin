@@ -80,6 +80,32 @@ class ConfigSpec extends OdinSpec {
       batchWritten should contain theSameElementsAs written
     }
   }
+
+  it should "check underlying min level" in {
+    forAll { (minLevel: Level, ls: List[LoggerMessage]) =>
+      val underlying = TestLogger("underlying").withMinimalLevel(minLevel)
+      val logger = enclosureRouting("" -> underlying).withNoopFallback
+
+      val written = ls.traverse(logger.log).written.unsafeRunSync().map(_._2)
+      val batchWritten = logger.log(ls).written.unsafeRunSync().map(_._2)
+
+      written shouldBe ls.filter(_.level >= minLevel)
+      batchWritten should contain theSameElementsAs written
+    }
+  }
+
+  it should "check fallback min level" in {
+    forAll { (minLevel: Level, ls: List[LoggerMessage]) =>
+      val fallback = TestLogger("fallback").withMinimalLevel(minLevel)
+      val logger = enclosureRouting[F]().withFallback(fallback)
+
+      val written = ls.traverse(logger.log).written.unsafeRunSync().map(_._2)
+      val batchWritten = logger.log(ls).written.unsafeRunSync().map(_._2)
+
+      written shouldBe ls.filter(_.level >= minLevel)
+      batchWritten should contain theSameElementsAs written
+    }
+  }
 }
 
 class TestClass[F[_]](logger: Logger[F]) {
