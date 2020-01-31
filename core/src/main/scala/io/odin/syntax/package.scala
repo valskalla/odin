@@ -3,6 +3,7 @@ package io.odin
 import cats.Monad
 import cats.effect.{Clock, Concurrent, ConcurrentEffect, ContextShift, Resource, Timer}
 import io.odin.loggers.{AsyncLogger, ConstContextLogger, ContextualLogger, ContramapLogger, FilterLogger, WithContext}
+import io.odin.loggers._
 import io.odin.meta.Render
 
 import scala.concurrent.duration._
@@ -60,6 +61,15 @@ package object syntax {
       */
     def filter(f: LoggerMessage => Boolean)(implicit clock: Clock[F], F: Monad[F]): Logger[F] =
       FilterLogger(f, logger)
+
+    /**
+      * Create logger that hashes context value given that context key matches one of the arguments
+      */
+    def withSecretContext(
+        key: String,
+        keys: String*
+    )(implicit timer: Timer[F], monad: Monad[F]): Logger[F] =
+      SecretLogger(Set(key) ++ keys, logger)
   }
 
   /**
@@ -105,6 +115,15 @@ package object syntax {
       */
     def filter(f: LoggerMessage => Boolean)(implicit clock: Clock[F], F: Monad[F]): Resource[F, Logger[F]] =
       resource.map(FilterLogger(f, _))
+
+    /**
+      * Create logger that hashes context value given that context key matches one of the arguments
+      */
+    def withSecretContext(
+        key: String,
+        keys: String*
+    )(implicit timer: Timer[F], monad: Monad[F]): Resource[F, Logger[F]] =
+      resource.map(logger => SecretLogger(Set(key) ++ keys, logger))
   }
 
   implicit class RenderInterpolator(private val sc: StringContext) extends AnyVal {
