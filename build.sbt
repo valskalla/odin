@@ -42,7 +42,7 @@ lazy val magnolia = "com.propensive" %% "magnolia" % versions.magnolia
 
 lazy val perfolation = "com.outr" %% "perfolation" % "1.1.5"
 
-lazy val circeCore = "io.circe" %% "circe-core" % "0.12.3"
+lazy val circeCore = "io.circe" %% "circe-core" % "0.13.0"
 
 lazy val slf4j = "org.slf4j" % "slf4j-api" % versions.slf4j
 
