@@ -9,7 +9,7 @@ import cats.effect.{ContextShift, IO, Timer}
 import io.odin.loggers.DefaultLogger
 import io.odin.syntax._
 import io.odin.formatter.Formatter
-import io.odin.formatter.options.ThrowableFormat
+import io.odin.formatter.options.{PositionFormat, ThrowableFormat}
 import io.odin.json.{Formatter => JsonFormatter}
 import io.odin.meta.Position
 import org.openjdk.jmh.annotations._
@@ -208,11 +208,19 @@ class FormatterBenchmarks extends OdinBenchmarks {
 
   private val formatterDepth = Formatter.create(
     ThrowableFormat(ThrowableFormat.Depth.Fixed(2), ThrowableFormat.Indent.NoIndent),
+    PositionFormat.Full,
     colorful = false
   )
 
   private val formatterDepthIndent = Formatter.create(
     ThrowableFormat(ThrowableFormat.Depth.Fixed(2), ThrowableFormat.Indent.Fixed(4)),
+    PositionFormat.Full,
+    colorful = false
+  )
+
+  private val abbreviated = Formatter.create(
+    ThrowableFormat.Default,
+    PositionFormat.AbbreviatePackage,
     colorful = false
   )
 
@@ -236,6 +244,9 @@ class FormatterBenchmarks extends OdinBenchmarks {
 
   @Benchmark
   def depthIndentFormatter(): Unit = formatterDepthIndent.format(loggerMessage)
+
+  @Benchmark
+  def abbreviatedPositionFormatter(): Unit = abbreviated.format(loggerMessage)
 
 }
 

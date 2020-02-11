@@ -2,7 +2,8 @@ package io.odin.formatter
 
 import cats.syntax.show._
 import io.odin.LoggerMessage
-import io.odin.formatter.options.ThrowableFormat
+import io.odin.formatter.options.{PositionFormat, ThrowableFormat}
+import io.odin.meta.Position
 import perfolation._
 
 import scala.annotation.tailrec
@@ -16,31 +17,28 @@ object Formatter {
 
   val BRIGHT_BLACK = "\u001b[30;1m"
 
-  val default: Formatter = Formatter.create(ThrowableFormat.Default, colorful = false)
+  val default: Formatter = Formatter.create(ThrowableFormat.Default, PositionFormat.Full, colorful = false)
 
-  val colorful: Formatter = Formatter.create(ThrowableFormat.Default, colorful = true)
+  val colorful: Formatter = Formatter.create(ThrowableFormat.Default, PositionFormat.Full, colorful = true)
 
   /**
     * Creates new formatter with provided options
     *
     * @param throwableFormat @see [[formatThrowable]]
+    * @param positionFormat @see [[formatPosition]]
     * @param colorful use different color for thread name, level, position and throwable
     */
-  def create(throwableFormat: ThrowableFormat, colorful: Boolean): Formatter = {
+  def create(throwableFormat: ThrowableFormat, positionFormat: PositionFormat, colorful: Boolean): Formatter = {
 
     @inline def withColor(color: String, message: String): String =
       if (colorful) p"$color$message$RESET" else message
 
     (msg: LoggerMessage) => {
       val ctx = withColor(MAGENTA, formatCtx(msg.context))
-      val timestamp = p"${msg.timestamp.t.F}T${msg.timestamp.t.T},${msg.timestamp.t.milliOfSecond}"
+      val timestamp = formatTimestamp(msg.timestamp)
       val threadName = withColor(GREEN, msg.threadName)
       val level = withColor(BRIGHT_BLACK, msg.level.show)
-
-      val position = {
-        val lineNumber = if (msg.position.line >= 0) p":${msg.position.line}" else ""
-        withColor(BLUE, p"${msg.position.enclosureName}$lineNumber")
-      }
+      val position = withColor(BLUE, formatPosition(msg.position, positionFormat))
 
       val throwable = msg.exception match {
         case Some(t) =>
@@ -68,13 +66,42 @@ object Formatter {
     }
 
   /**
+    * Formats timestamp using the following format: yyyy-MM-ddTHH:mm:ss,SSS
+    */
+  def formatTimestamp(timestamp: Long): String = {
+    val date = timestamp.t
+    p"${date.F}T${date.T},${date.milliOfSecond}"
+  }
+
+  /**
+    * The result differs depending on the format:
+    *
+    * [[PositionFormat.Full]] - prints full position
+    * 'io.odin.formatter.Formatter formatPosition:75' formatted as 'io.odin.formatter.Formatter formatPosition:75'
+    *
+    * [[PositionFormat.AbbreviatePackage]] - prints abbreviated package and full enclosing
+    * 'io.odin.formatter.Formatter formatPosition:75' formatted as 'i.o.f.Formatter formatPosition:75'
+    */
+  def formatPosition(position: Position, format: PositionFormat): String = {
+    val lineNumber = if (position.line >= 0) p":${position.line}" else ""
+
+    val enclosure = format match {
+      case PositionFormat.Full              => position.enclosureName
+      case PositionFormat.AbbreviatePackage => abbreviate(position.enclosureName)
+
+    }
+
+    p"$enclosure$lineNumber"
+  }
+
+  /**
     * Default Throwable printer is twice as slow. This method was borrowed from scribe library.
     *
     * The result differs depending on the format:
-    * `ThrowableFormat.Depth.Full` - prints all elements of a stack trace
-    * `ThrowableFormat.Depth.Fixed` - prints N elements of a stack trace
-    * `ThrowableFormat.Indent.NoIndent` - prints a stack trace without indentation
-    * `ThrowableFormat.Indent.Fixed` - prints a stack trace prepending every line with N spaces
+    * [[ThrowableFormat.Depth.Full]] - prints all elements of a stack trace
+    * [[ThrowableFormat.Depth.Fixed]] - prints N elements of a stack trace
+    * [[ThrowableFormat.Indent.NoIndent]] - prints a stack trace without indentation
+    * [[ThrowableFormat.Indent.Fixed]] - prints a stack trace prepending every line with N spaces
     */
   def formatThrowable(t: Throwable, format: ThrowableFormat): String = {
     val indent = format.indent match {
@@ -127,4 +154,18 @@ object Formatter {
         writeStackTrace(b, elements.tail, indent)
     }
   }
+
+  private def abbreviate(enclosure: String): String = {
+    @tailrec
+    def loop(input: List[String], builder: StringBuilder): StringBuilder = {
+      input match {
+        case Nil          => builder
+        case head :: Nil  => builder.append(head)
+        case head :: tail => loop(tail, builder.append(head.headOption.getOrElse('?')).append('.'))
+      }
+    }
+
+    loop(enclosure.split('.').toList, new StringBuilder).toString()
+  }
+
 }
