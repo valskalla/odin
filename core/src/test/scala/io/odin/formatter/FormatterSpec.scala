@@ -1,9 +1,10 @@
 package io.odin.formatter
 
 import io.odin.OdinSpec
-import io.odin.formatter.options.ThrowableFormat
+import io.odin.formatter.options.{PositionFormat, ThrowableFormat}
 import io.odin.formatter.options.ThrowableFormat.{Depth, Indent}
 import io.odin.formatter.FormatterSpec.TestException
+import io.odin.meta.Position
 import org.scalacheck.Gen
 
 import scala.util.control.NoStackTrace
@@ -67,6 +68,31 @@ class FormatterSpec extends OdinSpec {
     trace.length shouldBe expectedLength
   }
 
+  behavior of "Formatter.formatPosition with PositionFormat"
+
+  it should "support PositionFormat" in forAll(positionFormatGen, Gen.posNum[Int]) { (format, line) =>
+    val position = Position("file.scala", "io.odin.formatter.Formatter enclosingMethod", "", line)
+
+    val expected = format match {
+      case PositionFormat.Full              => s"${position.enclosureName}:$line"
+      case PositionFormat.AbbreviatePackage => s"i.o.f.Formatter enclosingMethod:$line"
+    }
+
+    val result = Formatter.formatPosition(position, format)
+
+    result shouldBe expected
+  }
+
+  it should "not abbreviate empty package" in {
+    val position = Position("file.scala", "enclosingMethod", "", -1)
+
+    val full = Formatter.formatPosition(position, PositionFormat.Full)
+    val abbreviated = Formatter.formatPosition(position, PositionFormat.AbbreviatePackage)
+
+    full shouldBe "enclosingMethod"
+    abbreviated shouldBe "enclosingMethod"
+  }
+
   private lazy val indentGen: Gen[Indent] =
     Gen.oneOf(
       Gen.const(Indent.NoIndent),
@@ -77,6 +103,12 @@ class FormatterSpec extends OdinSpec {
     Gen.oneOf(
       Gen.const(Depth.Full),
       Gen.posNum[Int].map(size => Depth.Fixed(size))
+    )
+
+  private lazy val positionFormatGen: Gen[PositionFormat] =
+    Gen.oneOf(
+      Gen.const(PositionFormat.Full),
+      Gen.const(PositionFormat.AbbreviatePackage)
     )
 
 }

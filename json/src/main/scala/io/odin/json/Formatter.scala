@@ -6,28 +6,30 @@ import io.circe.Encoder
 import io.odin.LoggerMessage
 import io.odin.formatter.{Formatter => OFormatter}
 import io.odin.formatter.Formatter._
-import io.odin.formatter.options.ThrowableFormat
-import perfolation._
+import io.odin.formatter.options.{PositionFormat, ThrowableFormat}
 
 object Formatter {
 
-  val json: OFormatter = create(ThrowableFormat.Default)
+  val json: OFormatter = create(ThrowableFormat.Default, PositionFormat.Full)
 
-  def create(throwableFormat: ThrowableFormat): OFormatter = {
-    implicit val encoder: Encoder[LoggerMessage] = loggerMessageEncoder(throwableFormat)
+  def create(throwableFormat: ThrowableFormat): OFormatter =
+    create(throwableFormat, PositionFormat.Full)
+
+  def create(throwableFormat: ThrowableFormat, positionFormat: PositionFormat): OFormatter = {
+    implicit val encoder: Encoder[LoggerMessage] = loggerMessageEncoder(throwableFormat, positionFormat)
     (msg: LoggerMessage) => msg.asJson.noSpaces
   }
 
-  def loggerMessageEncoder(throwableFormat: ThrowableFormat): Encoder[LoggerMessage] =
+  def loggerMessageEncoder(throwableFormat: ThrowableFormat, positionFormat: PositionFormat): Encoder[LoggerMessage] =
     Encoder.forProduct7("level", "message", "context", "exception", "position", "thread_name", "timestamp")(m =>
       (
         m.level.show,
         m.message.value,
         m.context,
         m.exception.map(t => formatThrowable(t, throwableFormat)),
-        p"${m.position.enclosureName}:${m.position.line}",
+        formatPosition(m.position, positionFormat),
         m.threadName,
-        p"${m.timestamp.t.F}T${m.timestamp.t.T}"
+        formatTimestamp(m.timestamp)
       )
     )
 
