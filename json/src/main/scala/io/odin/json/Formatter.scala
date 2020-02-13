@@ -12,6 +12,9 @@ object Formatter {
 
   val json: OFormatter = create(ThrowableFormat.Default, PositionFormat.Full)
 
+  def create(throwableFormat: ThrowableFormat): OFormatter =
+    create(throwableFormat, PositionFormat.Full)
+
   def create(throwableFormat: ThrowableFormat, positionFormat: PositionFormat): OFormatter = {
     implicit val encoder: Encoder[LoggerMessage] = loggerMessageEncoder(throwableFormat, positionFormat)
     (msg: LoggerMessage) => msg.asJson.noSpaces

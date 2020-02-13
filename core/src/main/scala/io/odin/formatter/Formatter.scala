@@ -21,6 +21,9 @@ object Formatter {
 
   val colorful: Formatter = Formatter.create(ThrowableFormat.Default, PositionFormat.Full, colorful = true)
 
+  def create(throwableFormat: ThrowableFormat, colorful: Boolean): Formatter =
+    create(throwableFormat, PositionFormat.Full, colorful)
+
   /**
     * Creates new formatter with provided options
     *
@@ -76,10 +79,10 @@ object Formatter {
   /**
     * The result differs depending on the format:
     *
-    * [[PositionFormat.Full]] - prints full position
+    * `PositionFormat.Full` - prints full position
     * 'io.odin.formatter.Formatter formatPosition:75' formatted as 'io.odin.formatter.Formatter formatPosition:75'
     *
-    * [[PositionFormat.AbbreviatePackage]] - prints abbreviated package and full enclosing
+    * `PositionFormat.AbbreviatePackage` - prints abbreviated package and full enclosing
     * 'io.odin.formatter.Formatter formatPosition:75' formatted as 'i.o.f.Formatter formatPosition:75'
     */
   def formatPosition(position: Position, format: PositionFormat): String = {
@@ -98,10 +101,10 @@ object Formatter {
     * Default Throwable printer is twice as slow. This method was borrowed from scribe library.
     *
     * The result differs depending on the format:
-    * [[ThrowableFormat.Depth.Full]] - prints all elements of a stack trace
-    * [[ThrowableFormat.Depth.Fixed]] - prints N elements of a stack trace
-    * [[ThrowableFormat.Indent.NoIndent]] - prints a stack trace without indentation
-    * [[ThrowableFormat.Indent.Fixed]] - prints a stack trace prepending every line with N spaces
+    * `ThrowableFormat.Depth.Full` - prints all elements of a stack trace
+    * `ThrowableFormat.Depth.Fixed` - prints N elements of a stack trace
+    * `ThrowableFormat.Indent.NoIndent` - prints a stack trace without indentation
+    * `ThrowableFormat.Indent.Fixed` - prints a stack trace prepending every line with N spaces
     */
   def formatThrowable(t: Throwable, format: ThrowableFormat): String = {
     val indent = format.indent match {
@@ -157,15 +160,21 @@ object Formatter {
 
   private def abbreviate(enclosure: String): String = {
     @tailrec
-    def loop(input: List[String], builder: StringBuilder): StringBuilder = {
-      input match {
-        case Nil          => builder
-        case head :: Nil  => builder.append(head)
-        case head :: tail => loop(tail, builder.append(head.headOption.getOrElse('?')).append('.'))
+    def loop(input: Array[String], builder: StringBuilder): StringBuilder = {
+      input.length match {
+        case 0 => builder
+        case 1 => builder.append(input.head)
+        case _ =>
+          val head = input.head
+          val b = if (head.isEmpty) builder.append(questionMark) else builder.append(head.head)
+          loop(input.tail, b.append(dot))
       }
     }
 
-    loop(enclosure.split('.').toList, new StringBuilder).toString()
+    loop(enclosure.split('.'), new StringBuilder).toString()
   }
+
+  private val questionMark = "?"
+  private val dot = "."
 
 }
