@@ -3,10 +3,10 @@ package io.odin.loggers
 import java.io.BufferedWriter
 import java.nio.file.{Files, Paths}
 
-import cats.syntax.all._
 import cats.effect.syntax.all._
-import cats.instances.list._
 import cats.effect.{Resource, Sync, Timer}
+import cats.instances.list._
+import cats.syntax.all._
 import io.odin.formatter.Formatter
 import io.odin.{Level, Logger, LoggerMessage}
 
