@@ -15,33 +15,40 @@ import io.odin.{Level, Logger, LoggerMessage}
 
 import scala.concurrent.duration.{FiniteDuration, _}
 
-class RollingFileLogger[F[_]: Timer: Monad](
-    current: Ref[F, Logger[F]],
-    override val minLevel: Level
-) extends DefaultLogger[F](minLevel) {
-
-  def log(msg: LoggerMessage): F[Unit] = current.get.flatMap(_.log(msg))
-
-  override def log(msgs: List[LoggerMessage]): F[Unit] = current.get.flatMap(_.log(msgs))
-
-}
-
 object RollingFileLogger {
 
   def apply[F[_]](
-      fileNamePattern: String,
-      maxSizeBytes: Option[Long],
-      maxDuration: Option[FiniteDuration],
+      fileNamePrefix: String,
+      maxFileSizeInBytes: Option[Long],
+      rolloverInterval: Option[FiniteDuration],
       formatter: Formatter,
       minLevel: Level
   )(implicit F: Concurrent[F], timer: Timer[F], cs: ContextShift[F]): Resource[F, Logger[F]] = {
-    new RollingFileLoggerFactory(fileNamePattern, maxSizeBytes, maxDuration, formatter, minLevel, FileLogger.apply[F]).mk
+    new RollingFileLoggerFactory(
+      fileNamePrefix,
+      maxFileSizeInBytes,
+      rolloverInterval,
+      formatter,
+      minLevel,
+      FileLogger.apply[F]
+    ).mk
+  }
+
+  private[odin] class RefLogger[F[_]: Timer: Monad](
+      current: Ref[F, Logger[F]],
+      override val minLevel: Level
+  ) extends DefaultLogger[F](minLevel) {
+
+    def log(msg: LoggerMessage): F[Unit] = current.get.flatMap(_.log(msg))
+
+    override def log(msgs: List[LoggerMessage]): F[Unit] = current.get.flatMap(_.log(msgs))
+
   }
 
   private[odin] class RollingFileLoggerFactory[F[_]](
-      fileNamePattern: String,
-      maxSizeBytes: Option[Long],
-      maxDuration: Option[FiniteDuration],
+      fileNamePrefix: String,
+      maxFileSizeInBytes: Option[Long],
+      rolloverInterval: Option[FiniteDuration],
       formatter: Formatter,
       minLevel: Level,
       underlyingLogger: (String, Formatter, Level) => Resource[F, Logger[F]],
@@ -58,7 +65,7 @@ object RollingFileLogger {
         refRelease <- Ref.of(release)
         _ <- F.start(rollingLoop(fiber, refLogger, refRelease))
       } yield {
-        (new RollingFileLogger(refLogger, minLevel), refRelease)
+        (new RefLogger(refLogger, minLevel), refRelease)
       }
       Resource.make(logger)(_._2.get.flatten).map {
         case (logger, _) => logger
@@ -74,22 +81,22 @@ object RollingFileLogger {
       Resource.suspend(now.map { time =>
         val localTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(time), TimeZone.getDefault.toZoneId)
         val fileName =
-          s"$fileNamePattern-${df.format(localTime)}"
+          s"$fileNamePrefix-${df.format(localTime)}"
         underlyingLogger(fileName, formatter, minLevel).product(fileWatcher(fileName))
       })
 
     /**
       * Create resource with fiber that's cancelled on resource release.
       *
-      * Fiber itself is a file watcher that checks if file TTL or size are not exceeded and finishes it work
+      * Fiber itself is a file watcher that checks if rollover interval or size are not exceeded and finishes it work
       * the moment at least one of those conditions is met.
       */
     def fileWatcher(fileName: String): Resource[F, Fiber[F, Unit]] = {
       def checkConditions(start: Long, now: Long, fileSize: Long): Boolean = {
-        (maxSizeBytes match {
+        (maxFileSizeInBytes match {
           case Some(max) => fileSize >= max
           case _         => false
-        }) || (maxDuration match {
+        }) || (rolloverInterval match {
           case Some(finite: FiniteDuration) =>
             start + finite.toMillis <= now
           case _ => false
