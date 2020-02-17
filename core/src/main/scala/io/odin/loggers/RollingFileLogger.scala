@@ -60,10 +60,10 @@ object RollingFileLogger {
     def mk: Resource[F, Logger[F]] = {
       val logger = for {
         loggerAndFiber <- allocate.allocated
-        ((logger, fiber), release) = loggerAndFiber
+        ((logger, watcherFiber), release) = loggerAndFiber
         refLogger <- Ref.of(logger)
         refRelease <- Ref.of(release)
-        _ <- F.start(rollingLoop(fiber, refLogger, refRelease))
+        _ <- F.start(rollingLoop(watcherFiber, refLogger, refRelease))
       } yield {
         (new RefLogger(refLogger, minLevel), refRelease)
       }
@@ -72,7 +72,7 @@ object RollingFileLogger {
       }
     }
 
-    def now: F[Long] = timer.clock.monotonic(TimeUnit.MILLISECONDS)
+    def now: F[Long] = timer.clock.realTime(TimeUnit.MILLISECONDS)
 
     /**
       * Create file logger along with the file watcher
@@ -105,12 +105,16 @@ object RollingFileLogger {
 
       def loop(start: Long): F[Unit] = {
         for {
-          size <- F.delay(fileSizeCheck(Paths.get(fileName)))
+          size <- if (maxFileSizeInBytes.isDefined) {
+            F.delay(fileSizeCheck(Paths.get(fileName)))
+          } else {
+            F.pure(0L)
+          }
           time <- now
           _ <- F.unlessA(checkConditions(start, time, size)) {
             for {
-              _ <- cs.shift
               _ <- timer.sleep(100.millis)
+              _ <- cs.shift
               _ <- loop(start)
             } yield ()
           }
