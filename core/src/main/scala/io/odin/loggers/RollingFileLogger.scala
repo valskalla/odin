@@ -59,8 +59,7 @@ object RollingFileLogger {
 
     def mk: Resource[F, Logger[F]] = {
       val logger = for {
-        loggerAndFiber <- allocate.allocated
-        ((logger, watcherFiber), release) = loggerAndFiber
+        ((logger, watcherFiber), release) <- allocate.allocated
         refLogger <- Ref.of(logger)
         refRelease <- Ref.of(release)
         _ <- F.start(rollingLoop(watcherFiber, refLogger, refRelease))
@@ -135,8 +134,7 @@ object RollingFileLogger {
       for {
         _ <- watcher.join
         oldRelease <- release.get
-        newLoggerAndWatcher <- allocate.allocated
-        ((newLogger, newWatcher), newRelease) = newLoggerAndWatcher
+        ((newLogger, newWatcher), newRelease) <- allocate.allocated
         _ <- logger.set(newLogger)
         _ <- release.set(newRelease)
         _ <- oldRelease
