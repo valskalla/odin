@@ -85,7 +85,7 @@ class RollingFileLoggerSpec extends OdinSpec {
             minLevel = Level.Trace
           )
           _ <- Resource.liftF(logger.withMinimalLevel(Level.Trace).log(loggerMessage))
-          _ = scheduler.tick(2.seconds)
+          _ <- Resource.liftF(Task(scheduler.tick(2.seconds)))
         } yield {
           val logFile = ListDirectory(path).filter(_.isFile).head.toPath
           new String(Files.readAllBytes(logFile)) shouldBe loggerMessage
