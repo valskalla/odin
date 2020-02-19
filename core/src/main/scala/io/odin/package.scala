@@ -1,5 +1,7 @@
 package io
 
+import java.time.LocalDateTime
+
 import cats.effect.{Concurrent, ContextShift, Resource, Sync, Timer}
 import io.odin.formatter.Formatter
 import io.odin.loggers.{ConsoleLogger, FileLogger, RollingFileLogger}
@@ -45,7 +47,7 @@ package object odin {
     *
     * In case if none of the options are set, rotation never happens and a single file is used.
     *
-    * @param fileNamePrefix prefix of the file name that will be appended with the current datetime
+    * @param fileNamePattern function that provides a path to a log file given a current local datetime
     * @param rolloverInterval interval for rollover.
     *                         When set, new log file is created each time interval is over
     * @param maxFileSizeInBytes max size of log file.
@@ -54,13 +56,13 @@ package object odin {
     * @param minLevel minimal level of logs to be printed
     */
   def rollingFileLogger[F[_]: Concurrent: Timer: ContextShift](
-      fileNamePrefix: String,
+      fileNamePattern: LocalDateTime => String,
       rolloverInterval: Option[FiniteDuration],
       maxFileSizeInBytes: Option[Long],
       formatter: Formatter = Formatter.default,
       minLevel: Level = Level.Trace
   ): Resource[F, Logger[F]] = {
-    RollingFileLogger(fileNamePrefix, maxFileSizeInBytes, rolloverInterval, formatter, minLevel)
+    RollingFileLogger(fileNamePattern, maxFileSizeInBytes, rolloverInterval, formatter, minLevel)
   }
 
   /**
@@ -82,7 +84,7 @@ package object odin {
 
   /**
     * Same as [[rollingFileLogger]] but with intermediate async buffer
-    * @param fileNamePrefix prefix of the file name that will be appended with the current datetime
+    * @param fileNamePattern function that provides a path to a log file given a current local datetime
     * @param rolloverInterval interval for rollover.
     *                         When set, new log file is created each time interval is over
     * @param maxFileSizeInBytes max size of log file.
@@ -93,7 +95,7 @@ package object odin {
     * @param minLevel minimal level of logs to be printed
     */
   def asyncRollingFileLogger[F[_]: Concurrent: Timer: ContextShift](
-      fileNamePrefix: String,
+      fileNamePattern: LocalDateTime => String,
       rolloverInterval: Option[FiniteDuration],
       maxFileSizeInBytes: Option[Long],
       timeWindow: FiniteDuration = 1.second,
@@ -101,6 +103,6 @@ package object odin {
       formatter: Formatter = Formatter.default,
       minLevel: Level = Level.Trace
   ): Resource[F, Logger[F]] =
-    rollingFileLogger(fileNamePrefix, rolloverInterval, maxFileSizeInBytes, formatter, minLevel)
+    rollingFileLogger(fileNamePattern, rolloverInterval, maxFileSizeInBytes, formatter, minLevel)
       .withAsync(timeWindow, maxBufferSize)
 }

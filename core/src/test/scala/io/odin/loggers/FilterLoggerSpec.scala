@@ -18,12 +18,14 @@ class FilterLoggerSpec extends OdinSpec {
 
   it should "logger.filter(p).log(msg) <-> F.whenA(p)(log(msg))" in {
     forAll { (msgs: List[LoggerMessage], p: LoggerMessage => Boolean) =>
-      val logger = new WriterTLogger[IO].filter(p)
-      val written = msgs.traverse(logger.log).written.unsafeRunSync()
-      val batchWritten = logger.log(msgs).written.unsafeRunSync()
+      {
+        val logger = new WriterTLogger[IO].filter(p)
+        val written = msgs.traverse(logger.log).written.unsafeRunSync()
+        val batchWritten = logger.log(msgs).written.unsafeRunSync()
 
-      written shouldBe msgs.filter(p)
-      batchWritten shouldBe written
+        written shouldBe msgs.filter(p)
+        batchWritten shouldBe written
+      }
     }
   }
 }

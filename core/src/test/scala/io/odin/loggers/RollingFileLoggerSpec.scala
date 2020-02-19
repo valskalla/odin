@@ -7,6 +7,7 @@ import java.util.{TimeZone, UUID}
 import java.util.concurrent.TimeUnit
 
 import cats.effect.{Resource, Timer}
+import io.odin.config._
 import io.odin.formatter.Formatter
 import io.odin.util.ListDirectory
 import io.odin.{asyncRollingFileLogger, Level, LoggerMessage, OdinSpec}
@@ -32,9 +33,9 @@ class RollingFileLoggerSpec extends OdinSpec {
       forAll { (loggerMessage: LoggerMessage, formatter: Formatter) =>
         (for {
           path <- fileResource
-          filePrefix = path.toString + "/log"
+          filePrefix = path.toString
           logger <- RollingFileLogger[Task](
-            filePrefix,
+            file"$filePrefix/log-$year-$month-$day-$hour-$minute-$second.log",
             maxFileSizeInBytes = None,
             rolloverInterval = None,
             formatter = formatter,
@@ -53,9 +54,9 @@ class RollingFileLoggerSpec extends OdinSpec {
       forAll { (loggerMessage: List[LoggerMessage], formatter: Formatter) =>
         (for {
           path <- fileResource
-          filePrefix = path.toString + "/log"
+          filePrefix = path.toString
           logger <- RollingFileLogger[Task](
-            filePrefix,
+            file"$filePrefix/log-$year-$month-$day-$hour-$minute-$second.log",
             maxFileSizeInBytes = None,
             rolloverInterval = None,
             formatter = formatter,
@@ -76,9 +77,9 @@ class RollingFileLoggerSpec extends OdinSpec {
       forAll { (loggerMessage: List[LoggerMessage], formatter: Formatter) =>
         (for {
           path <- fileResource
-          filePrefix = path.toString + "/log"
+          filePrefix = path.toString
           logger <- asyncRollingFileLogger[Task](
-            filePrefix,
+            file"$filePrefix/log-$year-$month-$day-$hour-$minute-$second.log",
             rolloverInterval = None,
             maxFileSizeInBytes = None,
             formatter = formatter,
@@ -96,13 +97,13 @@ class RollingFileLoggerSpec extends OdinSpec {
       }
     }
 
-    it should "append file prefix with date time" in {
+    it should "log file name should match the pattern" in {
       (for {
         path <- fileResource
         time <- Resource.liftF(implicitly[Timer[Task]].clock.realTime(TimeUnit.MILLISECONDS))
-        filePrefix = path.toString + "/log"
+        filePrefix = path.toString
         _ <- RollingFileLogger[Task](
-          filePrefix,
+          file"$filePrefix/log-$year-$month-$day-$hour-$minute-$second.log",
           maxFileSizeInBytes = None,
           rolloverInterval = None,
           formatter = Formatter.default,
@@ -113,7 +114,7 @@ class RollingFileLoggerSpec extends OdinSpec {
         val localDt = LocalDateTime.ofInstant(Instant.ofEpochMilli(time), TimeZone.getDefault.toZoneId)
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss")
         val formatted = formatter.format(localDt)
-        logFile.toString shouldBe s"$filePrefix-$formatted"
+        logFile.toString shouldBe s"$filePrefix/log-$formatted.log"
       }).use(Task(_))
         .runSyncUnsafe()
     }
@@ -126,9 +127,9 @@ class RollingFileLoggerSpec extends OdinSpec {
       forAll { (lm1: LoggerMessage, lm2: LoggerMessage, formatter: Formatter) =>
         (for {
           path <- fileResource
-          filePrefix = path.toString + "/log"
+          filePrefix = path.toString
           logger <- RollingFileLogger[Task](
-            filePrefix,
+            file"$filePrefix/log-$year-$month-$day-$hour-$minute-$second.log",
             maxFileSizeInBytes = None,
             rolloverInterval = Some(1.second),
             formatter = formatter,
@@ -150,9 +151,9 @@ class RollingFileLoggerSpec extends OdinSpec {
       forAll { (lm1: LoggerMessage, lm2: LoggerMessage, formatter: Formatter) =>
         (for {
           path <- fileResource
-          filePrefix = path.toString + "/log"
+          filePrefix = path.toString
           logger <- RollingFileLogger[Task](
-            filePrefix,
+            file"$filePrefix/log-$year-$month-$day-$hour-$minute-$second.log",
             maxFileSizeInBytes = Some(1),
             rolloverInterval = None,
             formatter = formatter,

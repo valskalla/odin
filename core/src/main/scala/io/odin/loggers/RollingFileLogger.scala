@@ -18,14 +18,14 @@ import scala.concurrent.duration.{FiniteDuration, _}
 object RollingFileLogger {
 
   def apply[F[_]](
-      fileNamePrefix: String,
+      fileNamePattern: LocalDateTime => String,
       maxFileSizeInBytes: Option[Long],
       rolloverInterval: Option[FiniteDuration],
       formatter: Formatter,
       minLevel: Level
   )(implicit F: Concurrent[F], timer: Timer[F], cs: ContextShift[F]): Resource[F, Logger[F]] = {
     new RollingFileLoggerFactory(
-      fileNamePrefix,
+      fileNamePattern,
       maxFileSizeInBytes,
       rolloverInterval,
       formatter,
@@ -46,7 +46,7 @@ object RollingFileLogger {
   }
 
   private[odin] class RollingFileLoggerFactory[F[_]](
-      fileNamePrefix: String,
+      fileNamePattern: LocalDateTime => String,
       maxFileSizeInBytes: Option[Long],
       rolloverInterval: Option[FiniteDuration],
       formatter: Formatter,
@@ -79,8 +79,7 @@ object RollingFileLogger {
     def allocate: Resource[F, (Logger[F], Fiber[F, Unit])] =
       Resource.suspend(now.map { time =>
         val localTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(time), TimeZone.getDefault.toZoneId)
-        val fileName =
-          s"$fileNamePrefix-${df.format(localTime)}"
+        val fileName = fileNamePattern(localTime)
         underlyingLogger(fileName, formatter, minLevel).product(fileWatcher(fileName))
       })
 

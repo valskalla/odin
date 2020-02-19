@@ -1,5 +1,7 @@
 package io.odin
 
+import java.time.LocalDateTime
+
 import cats.effect.{Clock, Timer}
 import cats.{Applicative, Eval}
 import io.odin.formatter.Formatter
@@ -76,4 +78,16 @@ trait OdinSpec extends AnyFlatSpec with Matchers with Checkers with ScalaCheckDr
 
   val formatterGen: Gen[Formatter] = Gen.oneOf(Formatter.default, Formatter.colorful)
   implicit val formatterArbitrary: Arbitrary[Formatter] = Arbitrary(formatterGen)
+
+  val localDateTimeGen: Gen[LocalDateTime] = for {
+    year <- Gen.choose(0, LocalDateTime.now().getYear)
+    month <- Gen.choose(1, 12)
+    day <- Gen.choose(1, 28)
+    hour <- Gen.choose(0, 23)
+    minute <- Gen.choose(0, 59)
+    second <- Gen.choose(0, 59)
+  } yield {
+    LocalDateTime.of(year, month, day, hour, minute, second)
+  }
+  implicit val localDateTimeArbitrary: Arbitrary[LocalDateTime] = Arbitrary(localDateTimeGen)
 }
