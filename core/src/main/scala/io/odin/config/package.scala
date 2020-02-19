@@ -6,6 +6,7 @@ import cats.Monad
 import cats.effect.Timer
 import cats.instances.list._
 import cats.syntax.all._
+import io.odin.internal.StringContextLength
 import io.odin.loggers.DefaultLogger
 
 import scala.annotation.tailrec
@@ -52,7 +53,7 @@ package object config extends FileNamePatternSyntax {
   implicit class FileNamePatternInterpolator(private val sc: StringContext) extends AnyVal {
 
     def file(ps: FileNamePattern*): LocalDateTime => String = {
-      StringContext.checkLengths(ps, sc.parts)
+      StringContextLength.checkLength(sc, ps)
       dt => {
         @tailrec
         def rec(args: List[FileNamePattern], parts: List[String], acc: StringBuilder): String = {
