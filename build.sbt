@@ -88,7 +88,8 @@ lazy val sharedSettings = Seq(
       "doikor@gmail.com",
       url("https://github.com/Doikor")
     )
-  )
+  ),
+  addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
 )
 
 lazy val `odin-core` = (project in file("core"))

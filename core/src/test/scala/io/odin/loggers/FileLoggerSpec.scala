@@ -57,7 +57,7 @@ class FileLoggerSpec extends OdinSpec {
         fileName = path.toString
         logger <- asyncFileLogger[Task](fileName, formatter)
         _ <- Resource.liftF(logger.withMinimalLevel(Level.Trace).log(loggerMessage))
-        _ = scheduler.tick(2.seconds)
+        _ <- Resource.liftF(Task(scheduler.tick(2.seconds)))
       } yield {
         new String(Files.readAllBytes(Paths.get(fileName))) shouldBe loggerMessage
           .map(formatter.format)
