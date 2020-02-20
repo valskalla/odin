@@ -95,6 +95,7 @@ Documentation
   - [Customized formatter](#customized-formatter)
 - [Minimal level](#minimal-level)
 - [File logger](#file-logger)
+  - [Rolling file logger](#rolling-file-logger)
 - [Async logger](#async-logger)
 - [Class and enclosure routing](#class-and-enclosure-routing)
 - [Loggers composition](#loggers-composition)
@@ -296,7 +297,7 @@ def fileLogger[F[_]: Sync: Timer](
   ): Resource[F, Logger[F]]
 ```
 
-So far it's capable only of writing to the single file by path `fileName`. One particular detail is worth to mention here:
+It's capable only of writing to the single file by path `fileName`. One particular detail is worth to mention here:
 return type. Odin tries to guarantee safe allocation and release of file resource. Because of that `fileLogger` returns
 `Resource[F, Logger[F]]` instead of `Logger[F]`:
 
@@ -314,6 +315,53 @@ the logic inside of `.use` block.
 **Important notice**: this logger doesn't buffer and tries to flush to the file on each log due to the safety guarantees.
 Consider to use `asyncFileLogger` version with almost the same signature (except the `Concurrent[F]` constraint)
 to achieve the best performance.
+
+### Rolling file logger
+
+Beside the basic file logger, Odin provides a rolling one to rollover log files. Rollover can be triggered by exceeding 
+a configured log file size and/or timer, whichever happens first if set:
+
+```scala
+def rollingFileLogger[F[_]: Concurrent: Timer: ContextShift](
+      fileNamePattern: LocalDateTime => String,
+      rolloverInterval: Option[FiniteDuration],
+      maxFileSizeInBytes: Option[Long],
+      formatter: Formatter = Formatter.default,
+      minLevel: Level = Level.Trace
+  ): Resource[F, Logger[F]]
+```
+
+Similar to the original file logger, rolling logger is also a `Resource`, but this time it also acquires a fiber
+that checks for rolling conditions each 100 milliseconds.
+
+The `fileNamePattern` parameter is used each time new log file is created to generate a file name given current datetime.
+The easiest way to construct it is to use `file` interpolator from `io.odin.config`:
+
+```scala mdoc
+import io.odin.config._
+import java.time.LocalDateTime
+import scala.concurrent.duration._
+
+val fileNamePattern = file"/var/log/$year-$month-$day-$hour-$minute-$second.log"
+val fileName = fileNamePattern(LocalDateTime.now)
+```
+
+Interpolator placeholders used above are provided with `io.odin.config` package as well:
+```scala mdoc
+
+year.extract(LocalDateTime.now)
+month.extract(LocalDateTime.now)
+hour.extract(LocalDateTime.now)
+minute.extract(LocalDateTime.now)
+second.extract(LocalDateTime.now)
+```
+
+All the placeholders are padded with `0` to contain at least two digits. It's also possible to include any string
+variable.
+
+**Important notice**: just like the basic file logger, this logger doesn't buffer and tries to flush to the current file on
+each log due to the safety guarantees. Consider to use `asyncRollingFileLogger` version with almost the same signature to
+achieve the best performance.
 
 ## Async logger
 

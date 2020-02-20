@@ -2,11 +2,11 @@ package io.odin.config
 
 import java.time.LocalDateTime
 
-trait FileNamePatternSyntax {
+trait FileNamePattern {
+  def extract(dateTime: LocalDateTime): String
+}
 
-  sealed trait FileNamePattern {
-    def extract(dateTime: LocalDateTime): String
-  }
+trait FileNamePatternSyntax {
 
   case class Value(value: String) extends FileNamePattern {
     def extract(dateTime: LocalDateTime): String = value
