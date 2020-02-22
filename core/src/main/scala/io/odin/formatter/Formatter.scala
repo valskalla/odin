@@ -17,12 +17,14 @@ object Formatter {
 
   val BRIGHT_BLACK = "\u001b[30;1m"
 
-  val default: Formatter = Formatter.create(ThrowableFormat.Default, PositionFormat.Full, colorful = false)
+  val default: Formatter =
+    Formatter.create(ThrowableFormat.Default, PositionFormat.Full, colorful = false, printCtx = true)
 
-  val colorful: Formatter = Formatter.create(ThrowableFormat.Default, PositionFormat.Full, colorful = true)
+  val colorful: Formatter =
+    Formatter.create(ThrowableFormat.Default, PositionFormat.Full, colorful = true, printCtx = true)
 
   def create(throwableFormat: ThrowableFormat, colorful: Boolean): Formatter =
-    create(throwableFormat, PositionFormat.Full, colorful)
+    create(throwableFormat, PositionFormat.Full, colorful, printCtx = true)
 
   /**
     * Creates new formatter with provided options
@@ -30,14 +32,20 @@ object Formatter {
     * @param throwableFormat @see [[formatThrowable]]
     * @param positionFormat @see [[formatPosition]]
     * @param colorful use different color for thread name, level, position and throwable
+    * @param printCtx whether the context is printed in the log
     */
-  def create(throwableFormat: ThrowableFormat, positionFormat: PositionFormat, colorful: Boolean): Formatter = {
+  def create(
+      throwableFormat: ThrowableFormat,
+      positionFormat: PositionFormat,
+      colorful: Boolean,
+      printCtx: Boolean
+  ): Formatter = {
 
     @inline def withColor(color: String, message: String): String =
       if (colorful) p"$color$message$RESET" else message
 
     (msg: LoggerMessage) => {
-      val ctx = withColor(MAGENTA, formatCtx(msg.context))
+      val ctx = if (printCtx) withColor(MAGENTA, formatCtx(msg.context)) else ""
       val timestamp = formatTimestamp(msg.timestamp)
       val threadName = withColor(GREEN, msg.threadName)
       val level = withColor(BRIGHT_BLACK, msg.level.show)

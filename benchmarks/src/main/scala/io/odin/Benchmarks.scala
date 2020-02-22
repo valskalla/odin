@@ -209,19 +209,22 @@ class FormatterBenchmarks extends OdinBenchmarks {
   private val formatterDepth = Formatter.create(
     ThrowableFormat(ThrowableFormat.Depth.Fixed(2), ThrowableFormat.Indent.NoIndent),
     PositionFormat.Full,
-    colorful = false
+    colorful = false,
+    printCtx = true
   )
 
   private val formatterDepthIndent = Formatter.create(
     ThrowableFormat(ThrowableFormat.Depth.Fixed(2), ThrowableFormat.Indent.Fixed(4)),
     PositionFormat.Full,
-    colorful = false
+    colorful = false,
+    printCtx = true
   )
 
   private val abbreviated = Formatter.create(
     ThrowableFormat.Default,
     PositionFormat.AbbreviatePackage,
-    colorful = false
+    colorful = false,
+    printCtx = true
   )
 
   @Benchmark
