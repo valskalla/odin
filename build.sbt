@@ -1,5 +1,5 @@
 lazy val versions = new {
-  val scalaTest = "3.1.0"
+  val scalaTest = "3.1.1"
   val scalaTestScalaCheck = "3.2.0.1-M2"
   val cats = "2.1.0"
   val catsEffect = "2.0.0"
