@@ -54,7 +54,7 @@ trait OdinSpec extends AnyFlatSpec with Matchers with Checkers with ScalaCheckDr
     for {
       level <- levelGen
       msg <- Gen.alphaNumStr
-      context <- Gen.listOfN(20, Gen.alphaNumStr.flatMap(key => Gen.alphaNumStr.map(key -> _)))
+      context <- Gen.mapOfN(20, nonEmptyStringGen.flatMap(key => nonEmptyStringGen.map(key -> _)))
       exception <- Gen.option(Arbitrary.arbitrary[Throwable])
       position <- positionGen
       threadName <- nonEmptyStringGen
@@ -63,7 +63,7 @@ trait OdinSpec extends AnyFlatSpec with Matchers with Checkers with ScalaCheckDr
       LoggerMessage(
         level = level,
         message = Eval.now(msg),
-        context = context.toMap,
+        context = context,
         exception = exception,
         position = position,
         threadName = threadName,

@@ -254,7 +254,7 @@ Beside copy-pasting the existing formatter to adjust it for one's needs, it's po
 
 ```scala
 object Formatter {
-  def create(throwableFormat: ThrowableFormat, positionFormat: PositionFormat, colorful: Boolean): Formatter
+  def create(throwableFormat: ThrowableFormat, positionFormat: PositionFormat, colorful: Boolean, printCtx: Boolean): Formatter
 }
 ```
 
@@ -263,6 +263,7 @@ allows to tweak the rendering of exceptions, specifically indentation and stack 
 - [`PositionFormat`](https://github.com/valskalla/odin/blob/master/core/src/main/scala/io/odin/formatter/options/PositionFormat.scala)
 allows to tweak the rendering of position.
 - `colorful` flag enables logs highlighting.
+- `printCtx` flag enables log context printer
 
 ## Minimal level
 
