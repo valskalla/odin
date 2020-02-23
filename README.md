@@ -35,7 +35,7 @@ libraryDependencies ++= Seq(
   "com.github.valskalla" %% "odin-core",
   "com.github.valskalla" %% "odin-json", //to enable JSON formatter if needed
   "com.github.valskalla" %% "odin-extras" //to enable additional features if needed (see docs)
-).map(_ % "0.6.1")
+).map(_ % "0.7.0")
 ```
 
 Example
@@ -71,9 +71,9 @@ Some time could be saved by using the effect-predefined variants of Odin. There 
 
 ```scala
 //ZIO
-libraryDependencies += "com.github.valskalla" %% "odin-zio" % "0.6.1"
+libraryDependencies += "com.github.valskalla" %% "odin-zio" % "0.7.0"
 //or Monix
-libraryDependencies += "com.github.valskalla" %% "odin-monix" % "0.6.1"
+libraryDependencies += "com.github.valskalla" %% "odin-monix" % "0.7.0"
 ```
 
 Use corresponding import to get an access to the loggers:
@@ -95,6 +95,7 @@ Documentation
   - [Customized formatter](#customized-formatter)
 - [Minimal level](#minimal-level)
 - [File logger](#file-logger)
+  - [Rolling file logger](#rolling-file-logger)
 - [Async logger](#async-logger)
 - [Class and enclosure routing](#class-and-enclosure-routing)
 - [Loggers composition](#loggers-composition)
@@ -184,17 +185,17 @@ Now to the call:
 logger.info("Hello?")
 // res0: IO[Unit] = Map(
 //   Bind(
-//     Delay(cats.effect.Clock$$anon$1$$Lambda$8659/543820644@45b6ea65),
-//     io.odin.loggers.DefaultLogger$$Lambda$8660/857717423@5bf0948
+//     Delay(cats.effect.Clock$$anon$1$$Lambda$8733/1558222348@63e1cef1),
+//     io.odin.loggers.DefaultLogger$$Lambda$8734/522840761@1d21c6b1
 //   ),
-//   scala.Function1$$Lambda$8667/1552101334@99c6692,
+//   scala.Function1$$Lambda$8741/1936128019@686764d4,
 //   1
 // )
 
 //prints "Hello world" to the STDOUT.
 //Although, don't use `unsafeRunSync` in production unless you know what you're doing
 logger.info("Hello world").unsafeRunSync()
-// 2020-01-31T21:04:39,365 [run-main-0] INFO repl.Session.App#res1:68 - Hello world
+// 2020-02-23T11:12:48,218 [run-main-0] INFO repl.Session.App#res1:68 - Hello world
 ```
 
 All messages of level `WARN` and higher are routed to the _STDERR_ while messages with level `INFO` and below go to the _STDOUT_.
@@ -234,8 +235,8 @@ _odin-core_ provides the `Formatter.default` and `Formatter.colorful` that print
 ```scala
 import cats.syntax.all._
 (logger.info("No context") *> logger.info("Some context", Map("key" -> "value"))).unsafeRunSync()
-// 2020-01-31T21:04:39,404 [run-main-0] INFO repl.Session.App#res2:77 - No context
-// 2020-01-31T21:04:39,404 [run-main-0] INFO repl.Session.App#res2:77 - Some context - key: value
+// 2020-02-23T11:12:48,256 [run-main-0] INFO repl.Session.App#res2:77 - No context
+// 2020-02-23T11:12:48,256 [run-main-0] INFO repl.Session.App#res2:77 - Some context - key: value
 ```
 
 The latter adds a bit of colors to the default formatter:
@@ -256,7 +257,7 @@ Now messages printed with this logger will be encoded as JSON string using circe
 
 ```scala
 jsonLogger.info("This is JSON").unsafeRunSync()
-// {"level":"INFO","message":"This is JSON","context":{},"exception":null,"position":"repl.Session.App#res3:92","thread_name":"run-main-0","timestamp":"2020-01-31T21:04:39"}
+// {"level":"INFO","message":"This is JSON","context":{},"exception":null,"position":"repl.Session.App#res3:92","thread_name":"run-main-0","timestamp":"2020-02-23T11:12:48,279"}
 ```
 
 ### Customized formatter
@@ -265,13 +266,16 @@ Beside copy-pasting the existing formatter to adjust it for one's needs, it's po
 
 ```scala
 object Formatter {
-  def create(throwableFormat: ThrowableFormat, colorful: Boolean): Formatter
+  def create(throwableFormat: ThrowableFormat, positionFormat: PositionFormat, colorful: Boolean, printCtx: Boolean): Formatter
 }
 ```
 
 - [`ThrowableFormat`](https://github.com/valskalla/odin/blob/master/core/src/main/scala/io/odin/formatter/options/ThrowableFormat.scala)
 allows to tweak the rendering of exceptions, specifically indentation and stack depth.
+- [`PositionFormat`](https://github.com/valskalla/odin/blob/master/core/src/main/scala/io/odin/formatter/options/PositionFormat.scala)
+allows to tweak the rendering of position.
 - `colorful` flag enables logs highlighting.
+- `printCtx` flag enables log context printer
 
 ## Minimal level
 
@@ -306,7 +310,7 @@ def fileLogger[F[_]: Sync: Timer](
   ): Resource[F, Logger[F]]
 ```
 
-So far it's capable only of writing to the single file by path `fileName`. One particular detail is worth to mention here:
+It's capable only of writing to the single file by path `fileName`. One particular detail is worth to mention here:
 return type. Odin tries to guarantee safe allocation and release of file resource. Because of that `fileLogger` returns
 `Resource[F, Logger[F]]` instead of `Logger[F]`:
 
@@ -324,6 +328,59 @@ the logic inside of `.use` block.
 **Important notice**: this logger doesn't buffer and tries to flush to the file on each log due to the safety guarantees.
 Consider to use `asyncFileLogger` version with almost the same signature (except the `Concurrent[F]` constraint)
 to achieve the best performance.
+
+### Rolling file logger
+
+Beside the basic file logger, Odin provides a rolling one to rollover log files. Rollover can be triggered by exceeding 
+a configured log file size and/or timer, whichever happens first if set:
+
+```scala
+def rollingFileLogger[F[_]: Concurrent: Timer: ContextShift](
+      fileNamePattern: LocalDateTime => String,
+      rolloverInterval: Option[FiniteDuration],
+      maxFileSizeInBytes: Option[Long],
+      formatter: Formatter = Formatter.default,
+      minLevel: Level = Level.Trace
+  ): Resource[F, Logger[F]]
+```
+
+Similar to the original file logger, rolling logger is also a `Resource`, but this time it also acquires a fiber
+that checks for rolling conditions each 100 milliseconds.
+
+The `fileNamePattern` parameter is used each time new log file is created to generate a file name given current datetime.
+The easiest way to construct it is to use `file` interpolator from `io.odin.config`:
+
+```scala
+import io.odin.config._
+import java.time.LocalDateTime
+import scala.concurrent.duration._
+
+val fileNamePattern = file"/var/log/$year-$month-$day-$hour-$minute-$second.log"
+// fileNamePattern: LocalDateTime => String = io.odin.config.package$FileNamePatternInterpolator$$$Lambda$8756/317586079@4ecd2c4f
+val fileName = fileNamePattern(LocalDateTime.now)
+// fileName: String = "/var/log/2020-02-23-11-12-48.log"
+```
+
+Interpolator placeholders used above are provided with `io.odin.config` package as well:
+```scala
+year.extract(LocalDateTime.now)
+// res6: String = "2020"
+month.extract(LocalDateTime.now)
+// res7: String = "02"
+hour.extract(LocalDateTime.now)
+// res8: String = "11"
+minute.extract(LocalDateTime.now)
+// res9: String = "12"
+second.extract(LocalDateTime.now)
+// res10: String = "48"
+```
+
+All the placeholders are padded with `0` to contain at least two digits. It's also possible to include any string
+variable.
+
+**Important notice**: just like the basic file logger, this logger doesn't buffer and tries to flush to the current file on
+each log due to the safety guarantees. Consider to use `asyncRollingFileLogger` version with almost the same signature to
+achieve the best performance.
 
 ## Async logger
 
@@ -345,6 +402,7 @@ async logger shall be done inside of `Resource.use` block:
 ```scala
 //queue will be flushed on release even if flushing timer didn't hit the mark yet
 asyncLoggerResource.use(logger => logger.info("Async info")).unsafeRunSync()
+// 2020-02-23T11:12:48,784 [run-main-0] INFO repl.Session.App#res11:178 - Async info
 ```
 
 Package `io.odin.syntax._` also pimps the `Resource[F, Logger[F]]` type with the same `.withAsync` method to use
@@ -435,7 +493,7 @@ import io.odin.syntax._
 consoleLogger[IO]()
     .withConstContext(Map("predefined" -> "context"))
     .info("Hello world").unsafeRunSync()
-// 2020-01-31T21:04:39,860 [run-main-0] INFO repl.Session.App#res7:206 - Hello world - predefined: context
+// 2020-02-23T11:12:48,827 [run-main-0] INFO repl.Session.App#res12:242 - Hello world - predefined: context
 ```
 
 ## Contextual effects
@@ -466,7 +524,7 @@ consoleLogger[M]()
     .info("Hello world")
     .run(Env(Map("env" -> "ctx")))
     .unsafeRunSync()
-// 2020-01-31T21:04:39,940 [run-main-0] INFO repl.Session.App#res8:237 - Hello world - env: ctx
+// 2020-02-23T11:12:48,903 [run-main-0] INFO repl.Session.App#res13:273 - Hello world - env: ctx
 ```
 
 Odin automatically derives required type classes for each type `F[_]` that has `ApplicativeAsk[F, E]` defined, or in other words
@@ -493,7 +551,7 @@ consoleLogger[IO]()
     .contramap(msg => msg.copy(message = msg.message.map(_ + " World")))
     .info("Hello")
     .unsafeRunSync()
-// 2020-01-31T21:04:39,947 [run-main-0] INFO repl.Session.App#res9:250 - Hello World
+// 2020-02-23T11:12:48,909 [run-main-0] INFO repl.Session.App#res14:286 - Hello World
 
 consoleLogger[IO]()
     .filter(msg => msg.message.value.size < 10)
@@ -545,7 +603,7 @@ The `odin-extras` module provides additional functionality: ConditionalLogger, R
 - Add following dependency to your build:
 
 ```scala
-libraryDependencies += "com.github.valskalla" %% "odin-extras" % "0.6.1"
+libraryDependencies += "com.github.valskalla" %% "odin-extras" % "0.7.0"
 ```
 
 ### Extras. Conditional logging
@@ -591,15 +649,15 @@ class UserService[F[_]: Timer: ContextShift](logger: Logger[F])(implicit F: Conc
 }
 
 val service = new UserService[IO](consoleLogger[IO](minLevel = Level.Info))
-// service: UserService[IO] = repl.Session$App$UserService@3565070d
+// service: UserService[IO] = repl.Session$App$UserService@3e181807
 
 service.findAndVerify("good-user").attempt.unsafeRunSync()
-// 2020-01-31T21:04:39,982 [run-main-0] INFO repl.Session.App#UserService#findAndVerify:289 - User found and verified User(my-user-good-user)
-// res11: Either[Throwable, Unit] = Right(())
+// 2020-02-23T11:12:48,941 [run-main-0] INFO repl.Session.App#UserService#findAndVerify:325 - User found and verified User(my-user-good-user)
+// res16: Either[Throwable, Unit] = Right(())
 service.findAndVerify("bad-user").attempt.unsafeRunSync()
-// 2020-01-31T21:04:39,986 [run-main-0] DEBUG repl.Session.App#UserService#findAndVerify:285 - Looking for user by id [bad-user]
-// 2020-01-31T21:04:39,986 [run-main-0] DEBUG repl.Session.App#UserService#findAndVerify:287 - Found user User(my-user-bad-user)
-// res12: Either[Throwable, Unit] = Left(java.lang.RuntimeException: Bad User)
+// 2020-02-23T11:12:48,943 [run-main-0] DEBUG repl.Session.App#UserService#findAndVerify:321 - Looking for user by id [bad-user]
+// 2020-02-23T11:12:48,944 [run-main-0] DEBUG repl.Session.App#UserService#findAndVerify:323 - Found user User(my-user-bad-user)
+// res17: Either[Throwable, Unit] = Left(java.lang.RuntimeException: Bad User)
 ```
 
 ### Extras. Derivation
@@ -670,7 +728,7 @@ It requires a two-step setup:
 
 - Add following dependency to your build:
 ```scala
-libraryDependencies += "com.github.valskalla" %% "odin-slf4j" % "0.6.1"
+libraryDependencies += "com.github.valskalla" %% "odin-slf4j" % "0.7.0"
 ```
 - Create `StaticLoggerBuilder` class/object in the package `org.slf4j.impl` with a similar content:
 ```scala
