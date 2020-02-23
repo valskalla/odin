@@ -1,6 +1,6 @@
 package io.odin.formatter
 
-import io.odin.OdinSpec
+import io.odin.{LoggerMessage, OdinSpec}
 import io.odin.formatter.options.{PositionFormat, ThrowableFormat}
 import io.odin.formatter.options.ThrowableFormat.{Depth, Indent}
 import io.odin.formatter.FormatterSpec.TestException
@@ -91,6 +91,34 @@ class FormatterSpec extends OdinSpec {
 
     full shouldBe "enclosingMethod"
     abbreviated shouldBe "enclosingMethod"
+  }
+
+  it should "print context by default" in {
+    forAll { (msg: LoggerMessage) =>
+      whenever(msg.context.nonEmpty) {
+        val formatted = Formatter.default.format(msg)
+        val lookup = msg.context
+          .map {
+            case (key, value) => s"$key: $value"
+          }
+          .mkString(", ")
+        formatted should include(lookup)
+      }
+    }
+  }
+
+  it should "disable context print if `printCtx=false`" in {
+    forAll { (msg: LoggerMessage) =>
+      val formatted = Formatter
+        .create(ThrowableFormat.Default, PositionFormat.Full, colorful = false, printCtx = false)
+        .format(msg)
+      val lookup = msg.context
+        .map {
+          case (key, value) => s"$key: $value"
+        }
+        .mkString(", ")
+      formatted should not include lookup
+    }
   }
 
   private lazy val indentGen: Gen[Indent] =
