@@ -1,6 +1,6 @@
 package io.odin
 
-import cats.kernel.LowerBounded
+import cats.kernel.UpperBounded
 import cats.syntax.all._
 import cats.{~>, Applicative, Monoid}
 import io.odin.meta.{Position, Render, ToThrowable}
@@ -181,7 +181,7 @@ trait LoggerInstances {
 }
 
 private[odin] class NoopLogger[F[_]](implicit F: Applicative[F]) extends Logger[F] { self =>
-  val minLevel: Level = LowerBounded[Level].minBound
+  val minLevel: Level = UpperBounded[Level].maxBound
 
   def withMinimalLevel(level: Level): Logger[F] = self
 
