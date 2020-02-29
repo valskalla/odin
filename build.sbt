@@ -11,7 +11,7 @@ lazy val versions = new {
   val zio = "1.0.0-RC17"
   val zioCats = "2.0.0.0-RC10"
   val slf4j = "1.7.30"
-  val log4j = "2.13.0"
+  val log4j = "2.13.1"
   val disruptor = "3.4.2"
   val scribe = "2.7.11"
 }
