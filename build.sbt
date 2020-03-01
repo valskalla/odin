@@ -13,7 +13,7 @@ lazy val versions = new {
   val slf4j = "1.7.30"
   val log4j = "2.13.0"
   val disruptor = "3.4.2"
-  val scribe = "2.7.11"
+  val scribe = "2.7.12"
 }
 
 lazy val scalaVersions = List("2.13.1", "2.12.10")
