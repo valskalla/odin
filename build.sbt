@@ -40,7 +40,7 @@ lazy val monix = "io.monix" %% "monix" % versions.monix
 
 lazy val magnolia = "com.propensive" %% "magnolia" % versions.magnolia
 
-lazy val perfolation = "com.outr" %% "perfolation" % "1.1.6"
+lazy val perfolation = "com.outr" %% "perfolation" % "1.1.7"
 
 lazy val circeCore = "io.circe" %% "circe-core" % "0.13.0"
 
