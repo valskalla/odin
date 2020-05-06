@@ -35,7 +35,7 @@ libraryDependencies ++= Seq(
   "com.github.valskalla" %% "odin-core",
   "com.github.valskalla" %% "odin-json", //to enable JSON formatter if needed
   "com.github.valskalla" %% "odin-extras" //to enable additional features if needed (see docs)
-).map(_ % "0.7.0")
+).map(_ % "0.7.0+27-dbcc9e1c+20200506-2134-SNAPSHOT")
 ```
 
 Example
@@ -43,9 +43,8 @@ Example
 
 Using `IOApp`:
 ```scala
-import cats.effect.{ExitCode, IO, IOApp}
-import cats.syntax.all._
-import io.odin._
+import cats.effect.{ExitCode, IO, IOApp}
+import io.odin._
 
 object Simple extends IOApp {
 
@@ -71,9 +70,9 @@ Some time could be saved by using the effect-predefined variants of Odin. There 
 
 ```scala
 //ZIO
-libraryDependencies += "com.github.valskalla" %% "odin-zio" % "0.7.0"
+libraryDependencies += "com.github.valskalla" %% "odin-zio" % "0.7.0+27-dbcc9e1c+20200506-2134-SNAPSHOT"
 //or Monix
-libraryDependencies += "com.github.valskalla" %% "odin-monix" % "0.7.0"
+libraryDependencies += "com.github.valskalla" %% "odin-monix" % "0.7.0+27-dbcc9e1c+20200506-2134-SNAPSHOT"
 ```
 
 Use corresponding import to get an access to the loggers:
@@ -151,9 +150,9 @@ By default, Odin provides `Render[String]` instance out of the box as well as `R
 instances by calling the standard method `.toString` on type `M`:
 
 ```scala
-import io.odin.meta.Render
+import io.odin.meta.Render
 
-case class Log(s: String, i: Int)
+case class Log(s: String, i: Int)
 
 object Log {
   implicit val render: Render[Log] = Render.fromToString
@@ -185,17 +184,17 @@ Now to the call:
 logger.info("Hello?")
 // res0: IO[Unit] = Map(
 //   Bind(
-//     Delay(cats.effect.Clock$$anon$1$$Lambda$8733/1558222348@63e1cef1),
-//     io.odin.loggers.DefaultLogger$$Lambda$8734/522840761@1d21c6b1
+//     Delay(cats.effect.Clock$$anon$1$$Lambda$7059/0x000000080292b040@6769b27b),
+//     io.odin.loggers.DefaultLogger$$Lambda$7060/0x000000080292a840@fa1264
 //   ),
-//   scala.Function1$$Lambda$8741/1936128019@686764d4,
+//   scala.Function1$$Lambda$7067/0x0000000802952840@455f6eeb,
 //   1
 // )
 
 //prints "Hello world" to the STDOUT.
 //Although, don't use `unsafeRunSync` in production unless you know what you're doing
 logger.info("Hello world").unsafeRunSync()
-// 2020-02-23T11:12:48,218 [run-main-0] INFO repl.Session.App#res1:68 - Hello world
+// 2020-05-06T21:34:52,773 [run-main-0] INFO repl.Session.App#res1:65 - Hello world
 ```
 
 All messages of level `WARN` and higher are routed to the _STDERR_ while messages with level `INFO` and below go to the _STDOUT_.
@@ -233,10 +232,9 @@ trait Formatter {
 _odin-core_ provides the `Formatter.default` and `Formatter.colorful` that prints information in a nicely structured manner:
 
 ```scala
-import cats.syntax.all._
 (logger.info("No context") *> logger.info("Some context", Map("key" -> "value"))).unsafeRunSync()
-// 2020-02-23T11:12:48,256 [run-main-0] INFO repl.Session.App#res2:77 - No context
-// 2020-02-23T11:12:48,256 [run-main-0] INFO repl.Session.App#res2:77 - Some context - key: value
+// 2020-05-06T21:34:52,805 [run-main-0] INFO repl.Session.App#res2:71 - No context
+// 2020-05-06T21:34:52,805 [run-main-0] INFO repl.Session.App#res2:71 - Some context - key: value
 ```
 
 The latter adds a bit of colors to the default formatter:
@@ -257,7 +255,7 @@ Now messages printed with this logger will be encoded as JSON string using circe
 
 ```scala
 jsonLogger.info("This is JSON").unsafeRunSync()
-// {"level":"INFO","message":"This is JSON","context":{},"exception":null,"position":"repl.Session.App#res3:92","thread_name":"run-main-0","timestamp":"2020-02-23T11:12:48,279"}
+// {"level":"INFO","message":"This is JSON","context":{},"exception":null,"position":"repl.Session.App#res3:86","thread_name":"run-main-0","timestamp":"2020-05-06T21:34:52,825"}
 ```
 
 ### Customized formatter
@@ -315,7 +313,7 @@ return type. Odin tries to guarantee safe allocation and release of file resourc
 `Resource[F, Logger[F]]` instead of `Logger[F]`:
 
 ```scala
-val file = fileLogger[IO]("log.log")
+val file = fileLogger[IO]("log.log")
 
 file.use { logger =>
   logger.info("Hello file")
@@ -351,14 +349,13 @@ The `fileNamePattern` parameter is used each time new log file is created to gen
 The easiest way to construct it is to use `file` interpolator from `io.odin.config`:
 
 ```scala
-import io.odin.config._
-import java.time.LocalDateTime
-import scala.concurrent.duration._
+import io.odin.config._
+import java.time.LocalDateTime
 
 val fileNamePattern = file"/var/log/$year-$month-$day-$hour-$minute-$second.log"
-// fileNamePattern: LocalDateTime => String = io.odin.config.package$FileNamePatternInterpolator$$$Lambda$8756/317586079@4ecd2c4f
+// fileNamePattern: LocalDateTime => String = io.odin.config.package$FileNamePatternInterpolator$$$Lambda$7083/0x000000080297d840@2d1e3fce
 val fileName = fileNamePattern(LocalDateTime.now)
-// fileName: String = "/var/log/2020-02-23-11-12-48.log"
+// fileName: String = "/var/log/2020-05-06-21-34-52.log"
 ```
 
 Interpolator placeholders used above are provided with `io.odin.config` package as well:
@@ -366,13 +363,13 @@ Interpolator placeholders used above are provided with `io.odin.config` package 
 year.extract(LocalDateTime.now)
 // res6: String = "2020"
 month.extract(LocalDateTime.now)
-// res7: String = "02"
+// res7: String = "05"
 hour.extract(LocalDateTime.now)
-// res8: String = "11"
+// res8: String = "21"
 minute.extract(LocalDateTime.now)
-// res9: String = "12"
+// res9: String = "34"
 second.extract(LocalDateTime.now)
-// res10: String = "48"
+// res10: String = "52"
 ```
 
 All the placeholders are padded with `0` to contain at least two digits. It's also possible to include any string
@@ -402,7 +399,7 @@ async logger shall be done inside of `Resource.use` block:
 ```scala
 //queue will be flushed on release even if flushing timer didn't hit the mark yet
 asyncLoggerResource.use(logger => logger.info("Async info")).unsafeRunSync()
-// 2020-02-23T11:12:48,784 [run-main-0] INFO repl.Session.App#res11:178 - Async info
+// 2020-05-06T21:34:53,110 [run-main-0] INFO repl.Session.App#res11:170 - Async info
 ```
 
 Package `io.odin.syntax._` also pimps the `Resource[F, Logger[F]]` type with the same `.withAsync` method to use
@@ -488,12 +485,12 @@ to console and to _log.log_ file.
 To append some predefined context to all the messages of the logger, use `withConstContext` syntax to construct such logger:
 
 ```scala
-import io.odin.syntax._
+import io.odin.syntax._
 
 consoleLogger[IO]()
     .withConstContext(Map("predefined" -> "context"))
     .info("Hello world").unsafeRunSync()
-// 2020-02-23T11:12:48,827 [run-main-0] INFO repl.Session.App#res12:242 - Hello world - predefined: context
+// 2020-05-06T21:34:53,158 [run-main-0] INFO repl.Session.App#res12:234 - Hello world - predefined: context
 ```
 
 ## Contextual effects
@@ -504,27 +501,27 @@ An example is `ReaderT[F[_], Env, A]` monad, where value of type `Env` contains 
 Odin allows to build a logger that extracts this information from effect and put it as the context:
 
 ```scala
-import io.odin.loggers._
-import cats.data.ReaderT
-import cats.mtl.instances.all._ //provides ApplicativeAsk instance for ReaderT //provides ApplicativeAsk instance for ReaderT
+import io.odin.loggers._
+import cats.data.ReaderT
+import cats.mtl.instances.all._ //provides ApplicativeAsk instance for ReaderT //provides ApplicativeAsk instance for ReaderT
 
-case class Env(ctx: Map[String, String])
+case class Env(ctx: Map[String, String])
 
 object Env {
   //it's neccessary to describe how to extract context from env
   implicit val hasContext: HasContext[Env] = new HasContext[Env] {
     def getContext(env: Env): Map[String, String] = env.ctx
   }
-}
+}
 
-type M[A] = ReaderT[IO, Env, A]
+type M[A] = ReaderT[IO, Env, A]
 
 consoleLogger[M]()
     .withContext
     .info("Hello world")
     .run(Env(Map("env" -> "ctx")))
     .unsafeRunSync()
-// 2020-02-23T11:12:48,903 [run-main-0] INFO repl.Session.App#res13:273 - Hello world - env: ctx
+// 2020-05-06T21:34:53,223 [run-main-0] INFO repl.Session.App#res13:265 - Hello world - env: ctx
 ```
 
 Odin automatically derives required type classes for each type `F[_]` that has `ApplicativeAsk[F, E]` defined, or in other words
@@ -545,13 +542,13 @@ trait WithContext[F[_]] {
 To modify or filter log messages before they're written, use corresponding combinators `contramap` and `filter`:
 
 ```scala
-import io.odin.syntax._
+import io.odin.syntax._
 
 consoleLogger[IO]()
     .contramap(msg => msg.copy(message = msg.message.map(_ + " World")))
     .info("Hello")
     .unsafeRunSync()
-// 2020-02-23T11:12:48,909 [run-main-0] INFO repl.Session.App#res14:286 - Hello World
+// 2020-05-06T21:34:53,230 [run-main-0] INFO repl.Session.App#res14:278 - Hello World
 
 consoleLogger[IO]()
     .filter(msg => msg.message.value.size < 10)
@@ -603,7 +600,7 @@ The `odin-extras` module provides additional functionality: ConditionalLogger, R
 - Add following dependency to your build:
 
 ```scala
-libraryDependencies += "com.github.valskalla" %% "odin-extras" % "0.7.0"
+libraryDependencies += "com.github.valskalla" %% "odin-extras" % "0.7.0+27-dbcc9e1c+20200506-2134-SNAPSHOT"
 ```
 
 ### Extras. Conditional logging
@@ -614,11 +611,11 @@ For example, the default log level can be `Info`, but once an error is raised, p
 Example:
 
 ```scala
-import cats.effect.Concurrent
-import io.odin.Logger
-import io.odin.extras.syntax._
+import cats.effect.Concurrent
+import io.odin.Logger
+import io.odin.extras.syntax._
 
-case class User(id: String)
+case class User(id: String)
 
 class UserService[F[_]: Timer: ContextShift](logger: Logger[F])(implicit F: Concurrent[F]) {
 
@@ -646,17 +643,17 @@ class UserService[F[_]: Timer: ContextShift](logger: Logger[F])(implicit F: Conc
       F.raiseError(new RuntimeException("Bad User"))
     }
 
-}
+}
 
 val service = new UserService[IO](consoleLogger[IO](minLevel = Level.Info))
-// service: UserService[IO] = repl.Session$App$UserService@3e181807
+// service: UserService[IO] = repl.Session$App$UserService@3f8a514c
 
 service.findAndVerify("good-user").attempt.unsafeRunSync()
-// 2020-02-23T11:12:48,941 [run-main-0] INFO repl.Session.App#UserService#findAndVerify:325 - User found and verified User(my-user-good-user)
+// 2020-05-06T21:34:53,272 [run-main-0] INFO repl.Session.App#UserService#findAndVerify:317 - User found and verified User(my-user-good-user)
 // res16: Either[Throwable, Unit] = Right(())
 service.findAndVerify("bad-user").attempt.unsafeRunSync()
-// 2020-02-23T11:12:48,943 [run-main-0] DEBUG repl.Session.App#UserService#findAndVerify:321 - Looking for user by id [bad-user]
-// 2020-02-23T11:12:48,944 [run-main-0] DEBUG repl.Session.App#UserService#findAndVerify:323 - Found user User(my-user-bad-user)
+// 2020-05-06T21:34:53,276 [run-main-0] DEBUG repl.Session.App#UserService#findAndVerify:313 - Looking for user by id [bad-user]
+// 2020-05-06T21:34:53,276 [run-main-0] DEBUG repl.Session.App#UserService#findAndVerify:315 - Found user User(my-user-bad-user)
 // res17: Either[Throwable, Unit] = Left(java.lang.RuntimeException: Bad User)
 ```
 
@@ -698,16 +695,16 @@ case class ApiConfig(uri: String, @hidden apiKey: String, @length(2) environment
 Example:
 
 ```scala
-import io.odin.syntax._
-import io.odin.extras.derivation._
-import io.odin.extras.derivation.render._
+import io.odin.syntax._
+import io.odin.extras.derivation._
+import io.odin.extras.derivation.render._
 
 case class ApiConfig(
   uri: String,
   @hidden apiKey: String,
   @secret apiSecret: String,
   @length(2) environments: List[String]
-)
+)
 
 val config = ApiConfig("https://localhost:8080", "api-key", "api-secret", List("test", "dev", "pre-prod", "prod"))
 // config: ApiConfig = ApiConfig(
@@ -728,17 +725,17 @@ It requires a two-step setup:
 
 - Add following dependency to your build:
 ```scala
-libraryDependencies += "com.github.valskalla" %% "odin-slf4j" % "0.7.0"
+libraryDependencies += "com.github.valskalla" %% "odin-slf4j" % "0.7.0+27-dbcc9e1c+20200506-2134-SNAPSHOT"
 ```
 - Create `StaticLoggerBuilder` class/object in the package `org.slf4j.impl` with a similar content:
 ```scala
 //package org.slf4j.impl
 
-import cats.effect.{ConcurrentEffect, ContextShift, IO, Timer}
-import io.odin._
-import io.odin.slf4j.OdinLoggerBinder
+import cats.effect.{ConcurrentEffect, ContextShift, IO, Timer}
+import io.odin._
+import io.odin.slf4j.OdinLoggerBinder
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.ExecutionContext
 
 //effect type should be specified inbefore
 //log line will be recorded right after the call with no suspension
@@ -755,7 +752,7 @@ class StaticLoggerBinder extends OdinLoggerBinder[IO] {
     case _ => //if wildcard case isn't provided, default logger is no-op
       consoleLogger[IO]()
   }
-}
+}
 
 object StaticLoggerBinder extends StaticLoggerBinder {
 

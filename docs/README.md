@@ -44,7 +44,6 @@ Example
 Using `IOApp`:
 ```scala mdoc
 import cats.effect.{ExitCode, IO, IOApp}
-import cats.syntax.all._
 import io.odin._
 
 object Simple extends IOApp {
@@ -224,7 +223,6 @@ trait Formatter {
 _odin-core_ provides the `Formatter.default` and `Formatter.colorful` that prints information in a nicely structured manner:
 
 ```scala mdoc
-import cats.syntax.all._
 (logger.info("No context") *> logger.info("Some context", Map("key" -> "value"))).unsafeRunSync()
 ```
 
@@ -341,7 +339,6 @@ The easiest way to construct it is to use `file` interpolator from `io.odin.conf
 ```scala mdoc
 import io.odin.config._
 import java.time.LocalDateTime
-import scala.concurrent.duration._
 
 val fileNamePattern = file"/var/log/$year-$month-$day-$hour-$minute-$second.log"
 val fileName = fileNamePattern(LocalDateTime.now)
