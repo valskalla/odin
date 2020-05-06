@@ -4,7 +4,6 @@ import cats.data.ReaderT
 import cats.effect.{ExitCode, IO, IOApp}
 import io.odin._
 import cats.mtl.instances.all._
-import cats.syntax.all._
 import io.odin.formatter.Formatter
 import io.odin.loggers.HasContext
 import io.odin.syntax._
