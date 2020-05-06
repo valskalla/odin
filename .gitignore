@@ -4,3 +4,6 @@ target/
 *.iml
 .DS_Store
 .metals
+.bloop
+/project/metals.sbt
+null/
