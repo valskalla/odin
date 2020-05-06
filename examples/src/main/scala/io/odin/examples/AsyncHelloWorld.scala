@@ -3,7 +3,6 @@ package io.odin.examples
 import cats.effect.{ExitCode, IO, IOApp, Resource}
 import io.odin._
 import io.odin.syntax._
-import cats.syntax.all._
 
 /**
   * Async logger runs the internal loop to drain the buffer that accumulates log events.

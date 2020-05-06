@@ -1,7 +1,6 @@
 package io.odin.examples
 
 import cats.effect.{ExitCode, IO, IOApp}
-import cats.syntax.all._
 import io.odin.{Logger, _}
 
 /**

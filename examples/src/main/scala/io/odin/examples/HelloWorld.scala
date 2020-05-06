@@ -2,7 +2,6 @@ package io.odin.examples
 
 import cats.effect.{ExitCode, IO, IOApp}
 import io.odin._
-import cats.syntax.all._
 import io.odin.formatter.Formatter
 
 /**
