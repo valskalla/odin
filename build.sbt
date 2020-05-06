@@ -14,9 +14,11 @@ lazy val versions = new {
   val log4j = "2.13.2"
   val disruptor = "3.4.2"
   val scribe = "2.7.12"
+  val perfolation = "1.1.7"
+  val circe = "0.13.0"
 }
 
-lazy val scalaVersions = List("2.13.1", "2.12.10")
+lazy val scalaVersions = List("2.13.2", "2.12.11")
 
 lazy val scalaTest = "org.scalatest" %% "scalatest" % versions.scalaTest % Test
 lazy val scalaTestScalaCheck = "org.scalatestplus" %% "scalacheck-1-14" % versions.scalaTestScalaCheck % Test
@@ -40,9 +42,9 @@ lazy val monix = "io.monix" %% "monix" % versions.monix
 
 lazy val magnolia = "com.propensive" %% "magnolia" % versions.magnolia
 
-lazy val perfolation = "com.outr" %% "perfolation" % "1.1.7"
+lazy val perfolation = "com.outr" %% "perfolation" % versions.perfolation
 
-lazy val circeCore = "io.circe" %% "circe-core" % "0.13.0"
+lazy val circeCore = "io.circe" %% "circe-core" % versions.circe
 
 lazy val slf4j = "org.slf4j" % "slf4j-api" % versions.slf4j
 
@@ -58,7 +60,7 @@ lazy val noPublish = Seq(
 )
 
 lazy val sharedSettings = Seq(
-  scalaVersion := "2.13.1",
+  scalaVersion := "2.13.2",
   organization := "com.github.valskalla",
   libraryDependencies ++= scalaTestScalaCheck :: scalaCheck :: scalaTest :: Nil,
   addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.11.0" cross CrossVersion.full),
