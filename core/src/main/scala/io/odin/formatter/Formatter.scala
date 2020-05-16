@@ -125,6 +125,11 @@ object Formatter {
       case ThrowableFormat.Depth.Fixed(size) => Some(size)
     }
 
+    val filter: Option[Set[String]] = format.filter match {
+      case ThrowableFormat.Filter.NoFilter            => None
+      case ThrowableFormat.Filter.Excluding(prefixes) => Some(prefixes)
+    }
+
     @tailrec
     def loop(t: Throwable, builder: StringBuilder): StringBuilder = {
       builder.append("Caused by: ")
@@ -134,7 +139,11 @@ object Formatter {
         builder.append(t.getLocalizedMessage)
       }
       builder.append(System.lineSeparator())
-      writeStackTrace(builder, depth.fold(t.getStackTrace)(t.getStackTrace.take), indent)
+
+      val filteredStackTrace = filter.fold(t.getStackTrace)(set =>
+        t.getStackTrace.filterNot(row => set.contains(row.getClassName.replace("$", "")))
+      )
+      writeStackTrace(builder, depth.fold(filteredStackTrace)(filteredStackTrace.take), indent)
       if (Option(t.getCause).isEmpty) {
         builder
       } else {
