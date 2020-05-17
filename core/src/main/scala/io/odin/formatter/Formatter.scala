@@ -141,7 +141,7 @@ object Formatter {
       builder.append(System.lineSeparator())
 
       val filteredStackTrace = filter.fold(t.getStackTrace)(set =>
-        t.getStackTrace.filterNot(row => set.contains(row.getClassName.replace("$", "")))
+        t.getStackTrace.filterNot(row => set.contains(row.getClassName.stripSuffix("$")))
       )
       writeStackTrace(builder, depth.fold(filteredStackTrace)(filteredStackTrace.take), indent)
       if (Option(t.getCause).isEmpty) {
