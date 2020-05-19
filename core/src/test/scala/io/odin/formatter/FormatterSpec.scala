@@ -1,10 +1,10 @@
 package io.odin.formatter
 
-import io.odin.{LoggerMessage, OdinSpec}
-import io.odin.formatter.options.{PositionFormat, ThrowableFormat}
-import io.odin.formatter.options.ThrowableFormat.{Depth, Indent, Filter}
 import io.odin.formatter.FormatterSpec.TestException
+import io.odin.formatter.options.ThrowableFormat.{Depth, Filter, Indent}
+import io.odin.formatter.options.{PositionFormat, ThrowableFormat}
 import io.odin.meta.Position
+import io.odin.{LoggerMessage, OdinSpec}
 import org.scalacheck.Gen
 
 import scala.util.control.NoStackTrace
@@ -172,7 +172,9 @@ class FormatterSpec extends OdinSpec {
   private lazy val filterGen: Gen[Filter] =
     Gen.oneOf(
       Gen.const(Filter.NoFilter),
-      Gen.someOf("class1", "class3", "class2", "notIncludedClass").map(Filter.Excluding.apply)
+      Gen.someOf("class1", "class3", "class2", "notIncludedClass")
+        .map(_.toSet)
+        .map(Filter.Excluding.apply)
     )
 
   private lazy val positionFormatGen: Gen[PositionFormat] =

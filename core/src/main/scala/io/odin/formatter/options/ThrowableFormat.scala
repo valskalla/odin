@@ -1,8 +1,5 @@
 package io.odin.formatter.options
 
-import io.odin.internal.IterableOnceCompat.IterableOnceCompat
-import io.odin.internal.IterableOnceCompat.IterableOnceCompatOps
-
 final case class ThrowableFormat(
     depth: ThrowableFormat.Depth,
     indent: ThrowableFormat.Indent,
@@ -32,7 +29,6 @@ object ThrowableFormat {
 
     object Excluding {
       def apply(prefixes: String*): Excluding = new Excluding(prefixes.toSet)
-      def apply(prefixes: IterableOnceCompat[String]): Excluding = new Excluding(prefixes.toSetCompat)
     }
   }
 
