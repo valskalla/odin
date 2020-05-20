@@ -1,10 +1,10 @@
 package io.odin.formatter
 
-import io.odin.{LoggerMessage, OdinSpec}
-import io.odin.formatter.options.{PositionFormat, ThrowableFormat}
-import io.odin.formatter.options.ThrowableFormat.{Depth, Indent}
 import io.odin.formatter.FormatterSpec.TestException
+import io.odin.formatter.options.ThrowableFormat.{Depth, Filter, Indent}
+import io.odin.formatter.options.{PositionFormat, ThrowableFormat}
 import io.odin.meta.Position
+import io.odin.{LoggerMessage, OdinSpec}
 import org.scalacheck.Gen
 
 import scala.util.control.NoStackTrace
@@ -22,7 +22,7 @@ class FormatterSpec extends OdinSpec {
     val error1 = TestException("Exception 1")
     val error2 = new RuntimeException("Exception 2", error1)
 
-    val format = ThrowableFormat(Depth.Full, indent)
+    val format = ThrowableFormat(Depth.Full, indent, Filter.NoFilter)
     val result = Formatter.formatThrowable(error2, format)
     val lines = result.split(System.lineSeparator()).toList
 
@@ -48,7 +48,7 @@ class FormatterSpec extends OdinSpec {
     val error1 = TestException("Exception 1")
     val error2 = new RuntimeException("Exception 2", error1)
 
-    val format = ThrowableFormat(depth, indent)
+    val format = ThrowableFormat(depth, indent, Filter.NoFilter)
     val result = Formatter.formatThrowable(error2, format)
     val lines = result.split(System.lineSeparator()).toList
 
@@ -63,6 +63,42 @@ class FormatterSpec extends OdinSpec {
       val stackTraceLength = error2.getStackTrace.length
       depthSize.fold(stackTraceLength)(size => stackTraceLength.min(size))
     }
+
+    cause shouldBe expectedCausedBy
+    trace.length shouldBe expectedLength
+  }
+
+  it should "support Filter" in forAll(filterGen) { filter =>
+    val excluding = filter match {
+      case Filter.NoFilter            => Set.empty[String]
+      case Filter.Excluding(prefixes) => prefixes
+    }
+
+    val stackTraceElements = Array(
+      new StackTraceElement("class1", "method1", "fileName1", 1),
+      new StackTraceElement("class2", "method1", "fileName2", 1),
+      new StackTraceElement("class2$", "method2", "fileName2", 2),
+      new StackTraceElement("class3", "method1", "fileName3", 1)
+    )
+    val error1 = TestException("Exception 1")
+    error1.setStackTrace(stackTraceElements)
+    val error2 = new RuntimeException("Exception 2", error1)
+    error2.setStackTrace(stackTraceElements)
+
+    val format = ThrowableFormat(Depth.Full, Indent.Fixed(2), filter)
+    val result = Formatter.formatThrowable(error2, format)
+    val lines = result.split(System.lineSeparator()).toList
+
+    val (cause, trace) = lines.partition(_.startsWith("Caused by"))
+    val expectedCausedBy = List(
+      "Caused by: java.lang.RuntimeException: Exception 2",
+      s"Caused by: io.odin.formatter.FormatterSpec$$TestException: Exception 1"
+    )
+    val expectedLength = error1.getStackTrace
+      .++(error1.getStackTrace)
+      .map(_.getClassName.replace("$", ""))
+      .filterNot(excluding.contains)
+      .length
 
     cause shouldBe expectedCausedBy
     trace.length shouldBe expectedLength
@@ -131,6 +167,14 @@ class FormatterSpec extends OdinSpec {
     Gen.oneOf(
       Gen.const(Depth.Full),
       Gen.posNum[Int].map(size => Depth.Fixed(size))
+    )
+
+  private lazy val filterGen: Gen[Filter] =
+    Gen.oneOf(
+      Gen.const(Filter.NoFilter),
+      Gen.someOf("class1", "class3", "class2", "notIncludedClass")
+        .map(_.toSet)
+        .map(Filter.Excluding.apply)
     )
 
   private lazy val positionFormatGen: Gen[PositionFormat] =

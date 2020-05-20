@@ -207,14 +207,25 @@ class FormatterBenchmarks extends OdinBenchmarks {
   private val noThrowable: LoggerMessage = noCtx.copy(exception = None)
 
   private val formatterDepth = Formatter.create(
-    ThrowableFormat(ThrowableFormat.Depth.Fixed(2), ThrowableFormat.Indent.NoIndent),
+    ThrowableFormat(ThrowableFormat.Depth.Fixed(2), ThrowableFormat.Indent.NoIndent, ThrowableFormat.Filter.NoFilter),
     PositionFormat.Full,
     colorful = false,
     printCtx = true
   )
 
   private val formatterDepthIndent = Formatter.create(
-    ThrowableFormat(ThrowableFormat.Depth.Fixed(2), ThrowableFormat.Indent.Fixed(4)),
+    ThrowableFormat(ThrowableFormat.Depth.Fixed(2), ThrowableFormat.Indent.Fixed(4), ThrowableFormat.Filter.NoFilter),
+    PositionFormat.Full,
+    colorful = false,
+    printCtx = true
+  )
+
+  private val formatterDepthIndentFilter = Formatter.create(
+    ThrowableFormat(
+      ThrowableFormat.Depth.Fixed(2),
+      ThrowableFormat.Indent.Fixed(4),
+      ThrowableFormat.Filter.Excluding("cats.effect.IOApp", "io.odin.OdinBenchmarks", "io.odin.FormatterBenchmarks")
+    ),
     PositionFormat.Full,
     colorful = false,
     printCtx = true
@@ -247,6 +258,9 @@ class FormatterBenchmarks extends OdinBenchmarks {
 
   @Benchmark
   def depthIndentFormatter(): Unit = formatterDepthIndent.format(loggerMessage)
+
+  @Benchmark
+  def depthIndentFilterFormatter(): Unit = formatterDepthIndentFilter.format(loggerMessage)
 
   @Benchmark
   def abbreviatedPositionFormatter(): Unit = abbreviated.format(loggerMessage)
