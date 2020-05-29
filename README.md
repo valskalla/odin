@@ -706,6 +706,13 @@ Replaces the value of an annotated member with `<secret>` :
 case class ApiConfig(uri: String, @secret apiKey: String)
 ```
 
+* @hash
+
+Replaces the value of an annotated member with its SHA-256 hash:
+```scala
+case class ApiConfig(uri: String, @hash apiKey: String)
+```
+
 * @length
 
 Shows only first N elements of the iterable. Works exclusively with subtypes of `Iterable`:
