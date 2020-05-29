@@ -22,6 +22,16 @@ class RenderDerivationSpec extends OdinSpec {
     Render[WithSecret[String, String]].render(instance) shouldBe expected
   }
 
+  it should "hash fields with @hash annotation" in {
+    val instance = WithHashed("my-field", 123.4)
+
+    // The expected hash was generated using:
+    // echo -n '123.4' | shasum -a 256
+    val expected = "WithHashed(field = my-field, hashed (sha256 hash) = 5f466d7afa48b619c7045d54b15d8d48f47e401335078e9267f5e1d942e09ca5)"
+
+    Render[WithHashed[String, Double]].render(instance) shouldBe expected
+  }
+
   it should "show limited number of elements with @length annotation" in {
     val instance = WithLengthLimit("my-field", List(1, 2, 3, 4, 5))
     val expected = "WithLengthLimit(field = my-field, limited = List(1, 2, 3)(2 more))"
@@ -106,6 +116,8 @@ object RenderDerivationSpec {
   final case class WithHidden[A, B](field: A, @hidden hidden: B)
 
   final case class WithSecret[A, B](field: A, @secret secret: B)
+
+  final case class WithHashed[A, B](field: A, @hash hashed: B)
 
   final case class WithLengthLimit[A, B](field: A, @length(LengthLimit) limited: B)
 

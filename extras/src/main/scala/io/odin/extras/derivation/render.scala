@@ -2,6 +2,8 @@ package io.odin.extras.derivation
 
 import io.odin.meta.Render
 import magnolia.{CaseClass, Magnolia, Param, SealedTrait}
+import java.security.MessageDigest
+import java.math.BigInteger
 
 object render {
 
@@ -18,6 +20,11 @@ object render {
         .collect {
           case param if RenderUtils.isSecret(param) =>
             RenderUtils.renderParam(param.label, RenderUtils.SecretPlaceholder, includeMemberNames)
+
+          case param if RenderUtils.shouldBeHashed(param) =>
+            val label = s"${param.label} (sha256 hash)"
+            val plaintext = param.typeclass.render(param.dereference(value))
+            RenderUtils.renderParam(label, RenderUtils.sha256(plaintext), includeMemberNames)
 
           case RenderUtils.hasLengthLimit(param, limit) =>
             RenderUtils.renderWithLimit(param, value, limit, includeMemberNames)
@@ -60,7 +67,7 @@ object render {
     *   case class A(field: String)
     *   case class B(field: A)
     *
-    *   val instanceB: Render[B] = render.render[B]
+    *   val instanceB: Render[B] = render.derive[B]
     * }}}
     */
   implicit def derive[A]: Typeclass[A] = macro Magnolia.gen[A]
@@ -81,6 +88,9 @@ private object RenderUtils {
   @inline def isSecret[A](param: Param[Render, A]): Boolean =
     param.annotations.contains(secret())
 
+  @inline def shouldBeHashed[A](param: Param[Render, A]): Boolean =
+    param.annotations.contains(hash())
+
   @inline def isHidden[A](param: Param[Render, A]): Boolean =
     param.annotations.contains(hidden())
 
@@ -99,6 +109,12 @@ private object RenderUtils {
       case other =>
         renderParam(param.label, param.typeclass.render(other), includeMemberNames)
     }
+
+  def sha256(value: String): String = {
+    val digest = MessageDigest.getInstance("SHA-256")
+    digest.update(value.getBytes(java.nio.charset.StandardCharsets.UTF_8))
+    String.format("%040x", new BigInteger(1, digest.digest()))
+  }
 
   object hasLengthLimit {
     def unapply[A](arg: Param[Render, A]): Option[(Param[Render, A], Int)] =
