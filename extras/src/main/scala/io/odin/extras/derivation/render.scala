@@ -113,7 +113,7 @@ private object RenderUtils {
   def sha256(value: String): String = {
     val digest = MessageDigest.getInstance("SHA-256")
     digest.update(value.getBytes(java.nio.charset.StandardCharsets.UTF_8))
-    String.format("%040x", new BigInteger(1, digest.digest()))
+    String.format("%064x", new BigInteger(1, digest.digest()))
   }
 
   object hasLengthLimit {
