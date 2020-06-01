@@ -23,4 +23,36 @@ object ContextData {
     case ContextBooleanValue(value) => Json.fromBoolean(value)
   })
 
+  /*
+   * Implicit conversion from ContextData to Map[String, String]
+   * so we can avoid an invasive change to the Logger and LoggerMessage APIs.
+   *
+   * Nested keys are flattenned into a single dot-separated key.
+   */
+  implicit def contextData2stringStringMap(data: ContextData): Map[String, String] = {
+    def flattenKeys(parentKey: String, childMap: Map[String, String]): Map[String, String] =
+      childMap.map {
+        case ("", childValue) =>
+          parentKey -> childValue
+        case (childKey, childValue) =>
+          s"$parentKey.$childKey" -> childValue
+      }
+
+    data match {
+      case ContextMap(map) =>
+        map.flatMap {
+          case (key, value) =>
+            flattenKeys(key, contextData2stringStringMap(value))
+        }
+      case ContextList(elems) =>
+        elems.zipWithIndex.flatMap {
+          case (elem, i) => flattenKeys(i.toString, contextData2stringStringMap(elem))
+        }.toMap
+      case ContextStringValue(value) => Map("" -> value)
+      case ContextLongValue(value) => Map("" -> value.toString)
+      case ContextDoubleValue(value) => Map("" -> value.toString)
+      case ContextBooleanValue(value) => Map("" -> value.toString)
+    }
+  }
+
 }
