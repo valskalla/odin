@@ -97,14 +97,11 @@ lazy val sharedSettings = Seq(
 lazy val `odin-core` = (project in file("core"))
   .settings(sharedSettings)
   .settings(
-    libraryDependencies ++= (monix % Test) :: catsMtl :: sourcecode :: monixCatnap :: perfolation :: cats
+    libraryDependencies ++= (monix % Test) :: catsMtl :: sourcecode :: monixCatnap :: perfolation :: circeCore :: cats
   )
 
 lazy val `odin-json` = (project in file("json"))
   .settings(sharedSettings)
-  .settings(
-    libraryDependencies += circeCore
-  )
   .dependsOn(`odin-core`)
 
 lazy val `odin-zio` = (project in file("zio"))
