@@ -105,12 +105,14 @@ lazy val `odin-core` = (crossProject(JSPlatform, JVMPlatform).crossType(CrossTyp
   .settings(
     libraryDependencies ++= (monix.value % Test) :: catsMtl.value :: sourcecode.value :: monixCatnap.value :: perfolation.value :: cats.value
   )
+  .jsSettings(coverageEnabled := false)
 
 lazy val `odin-json` = (crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Pure) in file("json"))
   .settings(sharedSettings)
   .settings(
     libraryDependencies += circeCore.value
   )
+  .jsSettings(coverageEnabled := false)
   .dependsOn(`odin-core`)
 
 lazy val `odin-zio` = (crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Full) in file("zio"))
@@ -121,6 +123,7 @@ lazy val `odin-zio` = (crossProject(JSPlatform, JVMPlatform).crossType(CrossType
       "dev.zio" %%% "zio-interop-cats" % versions.zioCats
     )
   )
+  .jsSettings(coverageEnabled := false)
   .dependsOn(`odin-core` % "compile->compile;test->test")
 
 lazy val `odin-monix` = (crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Full) in file("monix"))
@@ -128,6 +131,7 @@ lazy val `odin-monix` = (crossProject(JSPlatform, JVMPlatform).crossType(CrossTy
   .settings(
     libraryDependencies += monix.value
   )
+  .jsSettings(coverageEnabled := false)
   .dependsOn(`odin-core` % "compile->compile;test->test")
 
 lazy val `odin-slf4j` = (project in file("slf4j"))
@@ -143,7 +147,8 @@ lazy val `odin-extras` = (crossProject(JSPlatform, JVMPlatform).crossType(CrossT
     libraryDependencies += magnolia.value
   )
   .jsSettings(
-    libraryDependencies += sha256.value
+    libraryDependencies += sha256.value,
+    coverageEnabled := false
   )
   .dependsOn(`odin-core` % "compile->compile;test->test")
 
