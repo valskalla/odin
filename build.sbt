@@ -16,7 +16,7 @@ lazy val versions = new {
   val scribe = "2.7.12"
   val perfolation = "1.1.7"
   val circe = "0.13.0"
-  val sha256 = "0.1.0"
+  val scalaCrypto = "1.0.0"
 }
 
 lazy val scalaVersions = List("2.13.2", "2.12.11")
@@ -50,7 +50,7 @@ lazy val perfolation = Def.setting("com.outr" %%% "perfolation" % versions.perfo
 
 lazy val circeCore = Def.setting("io.circe" %%% "circe-core" % versions.circe)
 
-lazy val sha256 = Def.setting("com.dedipresta" %%% "scala-crypto-sha256" % versions.sha256)
+lazy val scalaCrypto = Def.setting("com.dedipresta" %%% "scala-crypto" % versions.scalaCrypto)
 
 lazy val slf4j = "org.slf4j" % "slf4j-api" % versions.slf4j
 
@@ -147,7 +147,7 @@ lazy val `odin-extras` = (crossProject(JSPlatform, JVMPlatform).crossType(CrossT
     libraryDependencies += magnolia.value
   )
   .jsSettings(
-    libraryDependencies += sha256.value,
+    libraryDependencies += scalaCrypto.value,
     coverageEnabled := false
   )
   .dependsOn(`odin-core` % "compile->compile;test->test")
