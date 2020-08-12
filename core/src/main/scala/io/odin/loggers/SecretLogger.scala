@@ -12,17 +12,26 @@ case class SecretLogger[F[_]: Clock](secrets: Set[String], inner: Logger[F], alg
 ) extends DefaultLogger[F](inner.minLevel) {
   def log(msg: LoggerMessage): F[Unit] = {
     val md = MessageDigest.getInstance(algo)
+    inner.log(hash(md, msg))
+  }
+
+  override def log(msgs: List[LoggerMessage]): F[Unit] = {
+    val md = MessageDigest.getInstance(algo)
     inner.log(
-      msg.copy(
-        context = msg.context.map {
-          case (key, value) =>
-            if (secrets.contains(key)) {
-              key -> s"secret:${Hex.encodeHex(md.digest(value.getBytes)).take(6)}"
-            } else {
-              key -> value
-            }
-        }
-      )
+      msgs.map(hash(md, _))
+    )
+  }
+
+  private def hash(md: MessageDigest, msg: LoggerMessage): LoggerMessage = {
+    msg.copy(
+      context = msg.context.map {
+        case (key, value) =>
+          if (secrets.contains(key)) {
+            key -> s"secret:${Hex.encodeHex(md.digest(value.getBytes)).take(6)}"
+          } else {
+            key -> value
+          }
+      }
     )
   }
 }
