@@ -696,7 +696,7 @@ libraryDependencies += "com.github.valskalla" %% "odin-slf4j" % "@VERSION@"
 ```scala mdoc:reset
 //package org.slf4j.impl
 
-import cats.effect.{ConcurrentEffect, ContextShift, IO, Timer}
+import cats.effect.{ContextShift, Clock, Effect, IO, Timer}
 import io.odin._
 import io.odin.slf4j.OdinLoggerBinder
 
@@ -706,10 +706,11 @@ import scala.concurrent.ExecutionContext
 //log line will be recorded right after the call with no suspension
 class StaticLoggerBinder extends OdinLoggerBinder[IO] {
 
-  val ec: ExecutionContext = scala.concurrent.ExecutionContext.global //or other EC of your choice
+  val ec: ExecutionContext = scala.concurrent.ExecutionContext.global
   implicit val timer: Timer[IO] = IO.timer(ec)
+  implicit val clock: Clock[IO] = timer.clock
   implicit val cs: ContextShift[IO] = IO.contextShift(ec)
-  implicit val F: ConcurrentEffect[IO] = IO.ioConcurrentEffect
+  implicit val F: Effect[IO] = IO.ioEffect
     
   val loggers: PartialFunction[String, Logger[IO]] = {
     case "some.external.package.SpecificClass" =>

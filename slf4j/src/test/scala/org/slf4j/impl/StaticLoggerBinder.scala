@@ -1,6 +1,6 @@
 package org.slf4j.impl
 
-import cats.effect.{ConcurrentEffect, ContextShift, IO, Timer}
+import cats.effect.{Clock, ContextShift, Effect, IO, Timer}
 import io.odin._
 import io.odin.slf4j.{BufferingLogger, OdinLoggerBinder}
 
@@ -10,8 +10,9 @@ class StaticLoggerBinder extends OdinLoggerBinder[IO] {
 
   val ec: ExecutionContext = scala.concurrent.ExecutionContext.global
   implicit val timer: Timer[IO] = IO.timer(ec)
+  implicit val clock: Clock[IO] = timer.clock
   implicit val cs: ContextShift[IO] = IO.contextShift(ec)
-  implicit val F: ConcurrentEffect[IO] = IO.ioConcurrentEffect
+  implicit val F: Effect[IO] = IO.ioEffect
 
   val loggers: PartialFunction[String, Logger[IO]] = {
     case Level.Trace.toString => new BufferingLogger[IO](Level.Trace)
