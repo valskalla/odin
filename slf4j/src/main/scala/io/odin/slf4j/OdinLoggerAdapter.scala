@@ -3,7 +3,7 @@ package io.odin.slf4j
 import java.util.concurrent.TimeUnit
 
 import cats.Eval
-import cats.effect.{ConcurrentEffect, Timer}
+import cats.effect.{Clock, Effect}
 import cats.syntax.all._
 import io.odin.meta.Position
 import io.odin.{Level, LoggerMessage, Logger => OdinLogger}
@@ -11,14 +11,14 @@ import org.slf4j.Logger
 import org.slf4j.helpers.{FormattingTuple, MarkerIgnoringBase, MessageFormatter}
 
 case class OdinLoggerAdapter[F[_]](loggerName: String, underlying: OdinLogger[F])(
-    implicit F: ConcurrentEffect[F],
-    timer: Timer[F]
+    implicit F: Effect[F],
+    clock: Clock[F]
 ) extends MarkerIgnoringBase
     with Logger {
 
   private def run(level: Level, msg: String, t: Option[Throwable] = None): Unit =
     F.toIO(F.whenA(level >= underlying.minLevel)(for {
-        timestamp <- timer.clock.realTime(TimeUnit.MILLISECONDS)
+        timestamp <- clock.realTime(TimeUnit.MILLISECONDS)
         _ <- underlying.log(
           LoggerMessage(
             level = level,

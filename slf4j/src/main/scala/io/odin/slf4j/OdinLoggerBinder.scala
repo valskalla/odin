@@ -1,14 +1,14 @@
 package io.odin.slf4j
 
-import cats.effect.{ConcurrentEffect, Timer}
+import cats.effect.{Clock, Effect}
 import io.odin.Logger
 import org.slf4j.ILoggerFactory
 import org.slf4j.spi.LoggerFactoryBinder
 
 abstract class OdinLoggerBinder[F[_]] extends LoggerFactoryBinder {
 
-  implicit def timer: Timer[F]
-  implicit def F: ConcurrentEffect[F]
+  implicit def clock: Clock[F]
+  implicit def F: Effect[F]
 
   def loggers: PartialFunction[String, Logger[F]]
 
