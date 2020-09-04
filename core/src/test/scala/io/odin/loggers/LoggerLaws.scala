@@ -1,7 +1,6 @@
 package io.odin.loggers
 
 import cats.Monad
-import cats.instances.list._
 import cats.kernel.laws.{IsEq, _}
 import cats.syntax.all._
 import io.odin.{Level, Logger, LoggerMessage}

@@ -4,7 +4,6 @@ import java.time.LocalDateTime
 
 import cats.Monad
 import cats.effect.Timer
-import cats.instances.list._
 import cats.syntax.all._
 import io.odin.internal.StringContextLength
 import io.odin.loggers.DefaultLogger

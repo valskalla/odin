@@ -3,7 +3,6 @@ package io.odin.loggers
 import cats.arrow.FunctionK
 import cats.data.{ReaderT, WriterT}
 import cats.effect.{Clock, IO, Timer}
-import cats.instances.list._
 import cats.mtl.instances.all._
 import io.odin.syntax._
 import io.odin.{LoggerMessage, OdinSpec}

@@ -4,10 +4,6 @@ import java.util.UUID
 
 import cats.data.WriterT
 import cats.effect.{Clock, IO, Timer}
-import cats.instances.list._
-import cats.instances.tuple._
-import cats.instances.unit._
-import cats.instances.uuid._
 import cats.kernel.laws.discipline.MonoidTests
 import cats.syntax.all._
 import io.odin.{Level, Logger, LoggerMessage, OdinSpec}
