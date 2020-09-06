@@ -140,10 +140,7 @@ object Formatter {
       }
       builder.append(System.lineSeparator())
 
-      val filteredStackTrace = filter.fold(t.getStackTrace)(set =>
-        t.getStackTrace.filterNot(row => set.contains(row.getClassName.stripSuffix("$")))
-      )
-      writeStackTrace(builder, depth.fold(filteredStackTrace)(filteredStackTrace.take), indent)
+      writeStackTrace(builder, depth, filter, t.getStackTrace, indent)
       if (Option(t.getCause).isEmpty) {
         builder
       } else {
@@ -154,25 +151,39 @@ object Formatter {
     loop(t, new StringBuilder).toString()
   }
 
-  @tailrec
-  private def writeStackTrace(b: StringBuilder, elements: Array[StackTraceElement], indent: String): Unit = {
-    elements.headOption match {
-      case None => // No more elements
-      case Some(head) =>
-        b.append(indent)
-        b.append(head.getClassName)
-        b.append('.')
-        b.append(head.getMethodName)
-        b.append('(')
-        b.append(head.getFileName)
-        if (head.getLineNumber > 0) {
-          b.append(':')
-          b.append(head.getLineNumber)
-        }
-        b.append(')')
-        b.append(System.lineSeparator())
-        writeStackTrace(b, elements.tail, indent)
+  private def writeStackTrace(
+      b: StringBuilder,
+      maybeDepth: Option[Int],
+      maybeFilter: Option[Set[String]],
+      elements: Array[StackTraceElement],
+      indent: String
+  ): Unit = {
+    val filter = maybeFilter.getOrElse(Set.empty)
+    @tailrec
+    def write(depth: Int, elements: Array[StackTraceElement]): Unit = {
+      elements.headOption match {
+        case None                  => // No more elements
+        case Some(_) if depth == 0 => // Already printed all
+        case Some(head) if filter.nonEmpty && filter.contains(head.getClassName.stripSuffix("$")) => // Need to exclude
+          write(depth, elements.tail)
+        case Some(head) =>
+          b.append(indent)
+          b.append(head.getClassName)
+          b.append('.')
+          b.append(head.getMethodName)
+          b.append('(')
+          b.append(head.getFileName)
+          if (head.getLineNumber > 0) {
+            b.append(':')
+            b.append(head.getLineNumber)
+          }
+          b.append(')')
+          b.append(System.lineSeparator())
+          write(depth - 1, elements.tail)
+      }
     }
+
+    write(maybeDepth.getOrElse(-1), elements)
   }
 
   private def abbreviate(enclosure: String): String = {

@@ -4,7 +4,6 @@ import cats.data.WriterT
 import cats.effect.{IO, Timer}
 import io.odin._
 import io.odin.syntax._
-import cats.instances.list._
 import cats.syntax.all._
 
 class FilterLoggerSpec extends OdinSpec {

@@ -2,8 +2,6 @@ package io.odin.config
 
 import cats.Monad
 import cats.effect.Timer
-import cats.instances.list._
-import cats.instances.map._
 import cats.syntax.all._
 import io.odin.loggers.DefaultLogger
 import io.odin.{Logger, LoggerMessage}

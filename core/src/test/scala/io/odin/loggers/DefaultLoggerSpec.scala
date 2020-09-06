@@ -1,7 +1,6 @@
 package io.odin.loggers
 
 import cats.Id
-import cats.instances.list._
 import cats.data.Writer
 import cats.effect.{Clock, Timer}
 import cats.syntax.all._
