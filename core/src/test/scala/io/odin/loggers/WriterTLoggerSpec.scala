@@ -3,7 +3,6 @@ package io.odin.loggers
 import cats.Id
 import cats.data.Writer
 import cats.effect.Timer
-import cats.instances.list._
 import io.odin.{LoggerMessage, OdinSpec}
 
 class WriterTLoggerSpec extends OdinSpec {

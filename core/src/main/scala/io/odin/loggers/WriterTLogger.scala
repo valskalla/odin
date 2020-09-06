@@ -3,7 +3,6 @@ package io.odin.loggers
 import cats.Monad
 import cats.data.WriterT
 import cats.effect.Timer
-import cats.instances.list._
 import io.odin.LoggerMessage
 
 /**

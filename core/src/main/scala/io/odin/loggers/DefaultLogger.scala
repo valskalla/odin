@@ -4,7 +4,6 @@ import java.util.concurrent.TimeUnit
 
 import cats.{Eval, Monad}
 import cats.effect.Timer
-import cats.instances.all._
 import cats.syntax.all._
 import io.odin.meta.{Position, Render, ToThrowable}
 import io.odin.{Level, Logger, LoggerMessage}

@@ -2,7 +2,6 @@ package io.odin.loggers
 
 import cats.effect.Resource
 import cats.effect.concurrent.Ref
-import cats.instances.list._
 import cats.syntax.all._
 import io.odin.{Level, Logger, LoggerMessage, OdinSpec}
 import monix.catnap.ConcurrentQueue

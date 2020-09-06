@@ -2,7 +2,6 @@ package io.odin.config
 
 import cats.data.WriterT
 import cats.effect.{IO, Timer}
-import cats.instances.list._
 import cats.syntax.all._
 import io.odin.loggers.DefaultLogger
 import io.odin.{Level, Logger, LoggerMessage, OdinSpec}
