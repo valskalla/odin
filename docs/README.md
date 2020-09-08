@@ -369,8 +369,12 @@ It uses `ConcurrentQueue[F]` from Monix as the buffer that is asynchronously flu
 Conversion of any logger into async one is straightforward:
 
 ```scala mdoc:silent
-import cats.effect.Resource
+import cats.effect.{Resource, Timer}
 import io.odin.syntax._ //to enable additional implicit methods
+
+//timer is required to run async version of logger
+//provided by IOApp out of the box
+implicit val timer: Timer[IO] = IO.timer(scala.concurrent.ExecutionContext.global)
 
 val asyncLoggerResource: Resource[IO, Logger[IO]] = consoleLogger[IO]().withAsync()
 ```
@@ -696,7 +700,7 @@ libraryDependencies += "com.github.valskalla" %% "odin-slf4j" % "@VERSION@"
 ```scala mdoc:reset
 //package org.slf4j.impl
 
-import cats.effect.{ContextShift, Clock, Effect, IO, Clock}
+import cats.effect.{ContextShift, Clock, Effect, IO}
 import io.odin._
 import io.odin.slf4j.OdinLoggerBinder
 
