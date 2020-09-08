@@ -1,6 +1,6 @@
 package io.odin.extras
 
-import cats.effect.{Concurrent, ContextShift, Timer}
+import cats.effect.{Clock, Concurrent, ContextShift}
 import io.odin.extras.loggers.ConditionalLogger
 import io.odin.{Level, Logger}
 
@@ -18,7 +18,7 @@ package object syntax {
     def withErrorLevel[A](
         minLevelOnError: Level,
         maxBufferSize: Option[Int] = None
-    )(use: Logger[F] => F[A])(implicit timer: Timer[F], F: Concurrent[F], contextShift: ContextShift[F]): F[A] =
+    )(use: Logger[F] => F[A])(implicit clock: Clock[F], F: Concurrent[F], contextShift: ContextShift[F]): F[A] =
       ConditionalLogger.create[F](logger, minLevelOnError, maxBufferSize).use(use)
 
   }

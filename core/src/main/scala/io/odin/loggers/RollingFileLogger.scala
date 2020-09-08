@@ -8,7 +8,7 @@ import java.util.concurrent.TimeUnit
 
 import cats.Monad
 import cats.effect.concurrent.Ref
-import cats.effect.{Concurrent, ContextShift, Fiber, Resource, Timer}
+import cats.effect.{Clock, Concurrent, ContextShift, Fiber, Resource, Timer}
 import cats.syntax.all._
 import io.odin.formatter.Formatter
 import io.odin.{Level, Logger, LoggerMessage}
@@ -34,7 +34,7 @@ object RollingFileLogger {
     ).mk
   }
 
-  private[odin] class RefLogger[F[_]: Timer: Monad](
+  private[odin] class RefLogger[F[_]: Clock: Monad](
       current: Ref[F, Logger[F]],
       override val minLevel: Level
   ) extends DefaultLogger[F](minLevel) {

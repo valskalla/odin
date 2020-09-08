@@ -166,13 +166,13 @@ The most common logger to use:
 ```scala mdoc:silent
 import io.odin._
 import cats.effect.{ContextShift, IO}
-import cats.effect.Timer
+import cats.effect.Clock
 
 //required to derive Concurrent/ConcurrentEffect for async operations with IO later. IOApp provides it out of the box
 implicit val contextShiftIO: ContextShift[IO] = IO.contextShift(scala.concurrent.ExecutionContext.global)
 
 //required for log timestamps. IOApp provides it out of the box
-implicit val timer: Timer[IO] = IO.timer(scala.concurrent.ExecutionContext.global)
+implicit val clock: Clock[IO] = Clock.create
 
 val logger: Logger[IO] = consoleLogger[IO]()
 ```
@@ -193,7 +193,7 @@ All messages of level `WARN` and higher are routed to the _STDERR_ while message
 `consoleLogger` has the following definition:
 
 ```scala
-def consoleLogger[F[_]: Sync: Timer](
+def consoleLogger[F[_]: Sync: Clock](
       formatter: Formatter = Formatter.default,
       minLevel: Level = Level.Trace
   ): Logger[F]
@@ -289,7 +289,7 @@ Performance wise, it'll cost only the allocation of `F.unit` value.
 Another backend that Odin provides by default is the basic file logger:
 
 ```scala
-def fileLogger[F[_]: Sync: Timer](
+def fileLogger[F[_]: Sync: Clock](
       fileName: String,
       formatter: Formatter = Formatter.default,
       minLevel: Level = Level.Trace
@@ -369,8 +369,12 @@ It uses `ConcurrentQueue[F]` from Monix as the buffer that is asynchronously flu
 Conversion of any logger into async one is straightforward:
 
 ```scala mdoc:silent
-import cats.effect.Resource
+import cats.effect.{Resource, Timer}
 import io.odin.syntax._ //to enable additional implicit methods
+
+//timer is required to run async version of logger
+//provided by IOApp out of the box
+implicit val timer: Timer[IO] = IO.timer(scala.concurrent.ExecutionContext.global)
 
 val asyncLoggerResource: Resource[IO, Logger[IO]] = consoleLogger[IO]().withAsync()
 ```
@@ -595,7 +599,7 @@ import io.odin.extras.syntax._
 
 case class User(id: String)
 
-class UserService[F[_]: Timer: ContextShift](logger: Logger[F])(implicit F: Concurrent[F]) {
+class UserService[F[_]: Clock: ContextShift](logger: Logger[F])(implicit F: Concurrent[F]) {
 
   import cats.syntax.functor._
   import cats.syntax.flatMap._
@@ -692,25 +696,18 @@ It requires a two-step setup:
 ```scala
 libraryDependencies += "com.github.valskalla" %% "odin-slf4j" % "@VERSION@"
 ```
-- Create `StaticLoggerBuilder` class/object in the package `org.slf4j.impl` with a similar content:
+- Create Scala class `ExternalLogger` somewhere in the project:
 ```scala mdoc:reset
-//package org.slf4j.impl
-
-import cats.effect.{ContextShift, Clock, Effect, IO, Timer}
+import cats.effect.{Clock, Effect, IO}
 import io.odin._
 import io.odin.slf4j.OdinLoggerBinder
 
-import scala.concurrent.ExecutionContext
-
 //effect type should be specified inbefore
 //log line will be recorded right after the call with no suspension
-class StaticLoggerBinder extends OdinLoggerBinder[IO] {
+class ExternalLogger extends OdinLoggerBinder[IO] {
 
-  val ec: ExecutionContext = scala.concurrent.ExecutionContext.global
-  implicit val timer: Timer[IO] = IO.timer(ec)
-  implicit val clock: Clock[IO] = timer.clock
-  implicit val cs: ContextShift[IO] = IO.contextShift(ec)
   implicit val F: Effect[IO] = IO.ioEffect
+  implicit val clock: Clock[IO] = Clock.create
     
   val loggers: PartialFunction[String, Logger[IO]] = {
     case "some.external.package.SpecificClass" =>
@@ -719,18 +716,30 @@ class StaticLoggerBinder extends OdinLoggerBinder[IO] {
       consoleLogger[IO]()
   }
 }
+```
 
-object StaticLoggerBinder extends StaticLoggerBinder {
+- Create `StaticLoggerBuilder.java` class in the package `org.slf4j.impl` with the following content:
+```java
+package org.slf4j.impl;
 
-    var REQUESTED_API_VERSION: String = "1.7"
+import io.odin.slf4j.ExternalLogger;
 
-    def getSingleton: StaticLoggerBinder = this
+public class StaticLoggerBinder extends ExternalLogger {
+
+    public static String REQUESTED_API_VERSION = "1.7";
+
+    private static final StaticLoggerBinder _instance = new StaticLoggerBinder();
+
+    public static StaticLoggerBinder getSingleton() {
+        return _instance;
+    }
 
 }
 ```
 
-Latter is required for SL4J API to load it in runtime and use as a binder for `LoggerFactory`. Partial function is used
-as a factory router to load correct logger backend. On undefined case the no-op logger is provided by default,
+Latter is required for SL4J API to load it in runtime and use as a binder for `LoggerFactory`. All the logic is 
+encapsulated in `ExternalLogger` class, so the Java part here is required only for bootstrapping.  
+Partial function is used as a factory router to load correct logger backend. On undefined case the no-op logger is provided by default,
 so no logs are recorded. 
 
 This bridge doesn't support MDC.

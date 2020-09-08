@@ -1,13 +1,13 @@
 package io.odin.loggers
 
 import cats.Monad
-import cats.effect.Timer
+import cats.effect.Clock
 import io.odin.{Logger, LoggerMessage}
 
 /**
   * Filter each `LoggerMessage` using given predicate before passing it to the next logger
   */
-case class FilterLogger[F[_]: Timer](fn: LoggerMessage => Boolean, inner: Logger[F])(implicit F: Monad[F])
+case class FilterLogger[F[_]: Clock](fn: LoggerMessage => Boolean, inner: Logger[F])(implicit F: Monad[F])
     extends DefaultLogger[F](inner.minLevel) {
   def log(msg: LoggerMessage): F[Unit] =
     F.whenA(fn(msg))(inner.log(msg))

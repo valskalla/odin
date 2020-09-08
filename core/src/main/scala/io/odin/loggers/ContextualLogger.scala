@@ -1,7 +1,7 @@
 package io.odin.loggers
 
 import cats.Monad
-import cats.effect.Timer
+import cats.effect.Clock
 import cats.mtl.ApplicativeAsk
 import cats.syntax.all._
 import io.odin.{Logger, LoggerMessage}
@@ -13,7 +13,7 @@ import io.odin.{Logger, LoggerMessage}
   * function `A => M[B]`. If there is a way to extract context `Map[String, String]` from the `A` (see [[HasContext]]),
   * then it's possible to add this context to the log.
   */
-case class ContextualLogger[F[_]: Timer: Monad](inner: Logger[F])(implicit withContext: WithContext[F])
+case class ContextualLogger[F[_]: Clock: Monad](inner: Logger[F])(implicit withContext: WithContext[F])
     extends DefaultLogger[F](inner.minLevel) {
   def log(msg: LoggerMessage): F[Unit] =
     withContext.context.flatMap { ctx =>
@@ -27,7 +27,7 @@ case class ContextualLogger[F[_]: Timer: Monad](inner: Logger[F])(implicit withC
 }
 
 object ContextualLogger {
-  def withContext[F[_]: Timer: Monad: WithContext](inner: Logger[F]): Logger[F] = ContextualLogger(inner)
+  def withContext[F[_]: Clock: Monad: WithContext](inner: Logger[F]): Logger[F] = ContextualLogger(inner)
 }
 
 /**

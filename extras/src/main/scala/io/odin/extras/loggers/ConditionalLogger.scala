@@ -1,7 +1,7 @@
 package io.odin.extras.loggers
 
 import cats.MonadError
-import cats.effect.{Concurrent, ContextShift, ExitCase, Resource, Timer}
+import cats.effect.{Clock, Concurrent, ContextShift, ExitCase, Resource}
 import cats.syntax.applicativeError._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
@@ -11,7 +11,7 @@ import io.odin.{Level, Logger, LoggerMessage}
 import monix.catnap.ConcurrentQueue
 import monix.execution.{BufferCapacity, ChannelType}
 
-final case class ConditionalLogger[F[_]: Timer] private (
+final case class ConditionalLogger[F[_]: Clock] private(
     queue: ConcurrentQueue[F, LoggerMessage],
     inner: Logger[F],
     override val minLevel: Level
@@ -68,7 +68,7 @@ object ConditionalLogger {
     * @param maxBufferSize If `maxBufferSize` is set to some value and buffer size grows to that value,
     *                      any new events might be dropped until there is a space in the buffer.
     */
-  def create[F[_]: Timer: Concurrent: ContextShift](
+  def create[F[_]: Clock: Concurrent: ContextShift](
       inner: Logger[F],
       minLevelOnError: Level,
       maxBufferSize: Option[Int]

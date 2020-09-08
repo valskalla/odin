@@ -3,16 +3,16 @@ package io.odin.loggers
 import java.util.concurrent.TimeUnit
 
 import cats.{Eval, Monad}
-import cats.effect.Timer
+import cats.effect.Clock
 import cats.syntax.all._
 import io.odin.meta.{Position, Render, ToThrowable}
 import io.odin.{Level, Logger, LoggerMessage}
 
 /**
-  * Default logger that relies on implicits of `Timer[F]` and `Monad[F]` to get timestamp and create log
+  * Default logger that relies on implicits of `Clock[F]` and `Monad[F]` to get timestamp and create log
   * message with this timestamp
   */
-abstract class DefaultLogger[F[_]](val minLevel: Level = Level.Trace)(implicit timer: Timer[F], F: Monad[F])
+abstract class DefaultLogger[F[_]](val minLevel: Level = Level.Trace)(implicit clock: Clock[F], F: Monad[F])
     extends Logger[F] { self =>
   private def log[M](level: Level, msg: => M, ctx: Map[String, String] = Map.empty, t: Option[Throwable] = None)(
       implicit render: Render[M],
@@ -20,7 +20,7 @@ abstract class DefaultLogger[F[_]](val minLevel: Level = Level.Trace)(implicit t
   ): F[Unit] =
     F.whenA(level >= minLevel) {
       for {
-        timestamp <- timer.clock.realTime(TimeUnit.MILLISECONDS)
+        timestamp <- clock.realTime(TimeUnit.MILLISECONDS)
         _ <- log(
           LoggerMessage(
             level = level,

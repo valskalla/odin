@@ -2,13 +2,13 @@ package io.odin.loggers
 
 import cats.Id
 import cats.data.Writer
-import cats.effect.Timer
+import cats.effect.Clock
 import io.odin.{LoggerMessage, OdinSpec}
 
 class WriterTLoggerSpec extends OdinSpec {
   type F[A] = Writer[List[LoggerMessage], A]
 
-  implicit val timer: Timer[Id] = zeroTimer
+  implicit val clock: Clock[Id] = zeroClock
 
   checkAll(
     "WriterTLogger",

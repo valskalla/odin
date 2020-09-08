@@ -2,27 +2,17 @@ package io.odin.loggers
 
 import cats.arrow.FunctionK
 import cats.data.{ReaderT, WriterT}
-import cats.effect.{Clock, IO, Timer}
+import cats.effect.{Clock, IO}
 import cats.mtl.instances.all._
 import io.odin.syntax._
 import io.odin.{LoggerMessage, OdinSpec}
-
-import scala.concurrent.duration.{FiniteDuration, TimeUnit}
 
 class ContextualLoggerSpec extends OdinSpec {
   type W[A] = WriterT[IO, List[LoggerMessage], A]
   type F[A] = ReaderT[W, Map[String, String], A]
 
   implicit val hasContext: HasContext[Map[String, String]] = (env: Map[String, String]) => env
-  implicit val timer: Timer[IO] = new Timer[IO] {
-    def clock: Clock[IO] = new Clock[IO] {
-      def realTime(unit: TimeUnit): IO[Long] = IO.pure(0)
-
-      def monotonic(unit: TimeUnit): IO[Long] = IO.pure(0)
-    }
-
-    def sleep(duration: FiniteDuration): IO[Unit] = ???
-  }
+  implicit val clock: Clock[IO] = zeroClock
 
   private val logger = new WriterTLogger[IO].mapK(λ[FunctionK[W, F]](ReaderT.liftF(_))).withContext
 
