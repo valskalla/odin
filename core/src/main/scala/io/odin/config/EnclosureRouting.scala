@@ -1,14 +1,14 @@
 package io.odin.config
 
 import cats.Monad
-import cats.effect.Timer
+import cats.effect.Clock
 import cats.syntax.all._
 import io.odin.loggers.DefaultLogger
 import io.odin.{Logger, LoggerMessage}
 
 import scala.annotation.tailrec
 
-private[config] class EnclosureRouting[F[_]: Timer](fallback: Logger[F], router: List[(String, Logger[F])])(
+private[config] class EnclosureRouting[F[_]: Clock](fallback: Logger[F], router: List[(String, Logger[F])])(
     implicit F: Monad[F]
 ) extends DefaultLogger {
   private val indexedRouter = router.mapWithIndex {

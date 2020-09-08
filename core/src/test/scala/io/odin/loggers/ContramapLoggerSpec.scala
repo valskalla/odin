@@ -1,14 +1,14 @@
 package io.odin.loggers
 
 import cats.data.WriterT
-import cats.effect.{IO, Timer}
+import cats.effect.{Clock, IO}
 import cats.syntax.all._
-import io.odin.{LoggerMessage, OdinSpec}
 import io.odin.syntax._
+import io.odin.{LoggerMessage, OdinSpec}
 
 class ContramapLoggerSpec extends OdinSpec {
   type F[A] = WriterT[IO, List[LoggerMessage], A]
-  implicit val timer: Timer[IO] = zeroTimer
+  implicit val clock: Clock[IO] = zeroClock
 
   checkAll("ContramapLogger", LoggerTests[F](new WriterTLogger[IO].contramap(identity), _.written.unsafeRunSync()).all)
 

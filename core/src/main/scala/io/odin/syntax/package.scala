@@ -1,7 +1,7 @@
 package io.odin
 
 import cats.Monad
-import cats.effect.{Concurrent, ConcurrentEffect, ContextShift, Resource, Timer}
+import cats.effect.{Clock, Concurrent, ConcurrentEffect, ContextShift, Resource, Timer}
 import io.odin.loggers.{AsyncLogger, ConstContextLogger, ContextualLogger, ContramapLogger, FilterLogger, WithContext}
 import io.odin.meta.Render
 
@@ -14,14 +14,14 @@ package object syntax {
       * Create logger that adds constant context to each log record
       * @param ctx constant context
       */
-    def withConstContext(ctx: Map[String, String])(implicit clock: Timer[F], monad: Monad[F]): Logger[F] =
+    def withConstContext(ctx: Map[String, String])(implicit clock: Clock[F], monad: Monad[F]): Logger[F] =
       ConstContextLogger.withConstContext(ctx, logger)
 
     /**
       * Create contextual logger that is capable of picking up context from inside of `F[_]`.
       * See `ContextualLogger` for more info
       */
-    def withContext(implicit clock: Timer[F], monad: Monad[F], withContext: WithContext[F]): Logger[F] =
+    def withContext(implicit clock: Clock[F], monad: Monad[F], withContext: WithContext[F]): Logger[F] =
       ContextualLogger.withContext(logger)
 
     /**
@@ -52,13 +52,13 @@ package object syntax {
     /**
       * Modify logger message before it's written to the logger
       */
-    def contramap(f: LoggerMessage => LoggerMessage)(implicit timer: Timer[F], F: Monad[F]): Logger[F] =
+    def contramap(f: LoggerMessage => LoggerMessage)(implicit clock: Clock[F], F: Monad[F]): Logger[F] =
       ContramapLogger(f, logger)
 
     /**
       * Filter messages given the predicate. Falsified cases are dropped from the logging
       */
-    def filter(f: LoggerMessage => Boolean)(implicit timer: Timer[F], F: Monad[F]): Logger[F] =
+    def filter(f: LoggerMessage => Boolean)(implicit clock: Clock[F], F: Monad[F]): Logger[F] =
       FilterLogger(f, logger)
   }
 
@@ -84,26 +84,26 @@ package object syntax {
       * Create logger that adds constant context to each log record
       * @param ctx constant context
       */
-    def withConstContext(ctx: Map[String, String])(implicit clock: Timer[F], monad: Monad[F]): Resource[F, Logger[F]] =
+    def withConstContext(ctx: Map[String, String])(implicit clock: Clock[F], monad: Monad[F]): Resource[F, Logger[F]] =
       resource.map(ConstContextLogger.withConstContext(ctx, _))
 
     /**
       * Create contextual logger that is capable of picking up context from inside of `F[_]`.
       * See `ContextualLogger` for more info
       */
-    def withContext(implicit clock: Timer[F], monad: Monad[F], withContext: WithContext[F]): Resource[F, Logger[F]] =
+    def withContext(implicit clock: Clock[F], monad: Monad[F], withContext: WithContext[F]): Resource[F, Logger[F]] =
       resource.map(ContextualLogger.withContext[F])
 
     /**
       * Intercept logger message before it's written to the logger
       */
-    def contramap(f: LoggerMessage => LoggerMessage)(implicit timer: Timer[F], F: Monad[F]): Resource[F, Logger[F]] =
+    def contramap(f: LoggerMessage => LoggerMessage)(implicit clock: Clock[F], F: Monad[F]): Resource[F, Logger[F]] =
       resource.map(ContramapLogger(f, _))
 
     /**
       * Filter messages given the predicate. Falsified cases are dropped from the logging
       */
-    def filter(f: LoggerMessage => Boolean)(implicit timer: Timer[F], F: Monad[F]): Resource[F, Logger[F]] =
+    def filter(f: LoggerMessage => Boolean)(implicit clock: Clock[F], F: Monad[F]): Resource[F, Logger[F]] =
       resource.map(FilterLogger(f, _))
   }
 

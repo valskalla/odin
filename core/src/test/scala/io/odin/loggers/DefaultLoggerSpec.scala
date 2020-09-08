@@ -2,18 +2,16 @@ package io.odin.loggers
 
 import cats.Id
 import cats.data.Writer
-import cats.effect.{Clock, Timer}
+import cats.effect.Clock
 import cats.syntax.all._
 import io.odin.{Level, Logger, LoggerMessage, OdinSpec}
-
-import scala.concurrent.duration.{FiniteDuration, TimeUnit}
 
 class DefaultLoggerSpec extends OdinSpec {
   type F[A] = Writer[List[LoggerMessage], A]
 
   it should "correctly construct LoggerMessage" in {
     forAll { (msg: String, ctx: Map[String, String], throwable: Throwable, timestamp: Long) =>
-      implicit val clk: Timer[Id] = clock(timestamp)
+      implicit val clk: Clock[Id] = fixedClock(timestamp)
       val log = logger.withMinimalLevel(Level.Trace)
       check(log.trace(msg))(Level.Trace, msg, timestamp)
       check(log.trace(msg, throwable))(Level.Trace, msg, timestamp, throwable = Some(throwable))
@@ -44,13 +42,13 @@ class DefaultLoggerSpec extends OdinSpec {
 
   it should "write multiple messages" in {
     forAll { msgs: List[LoggerMessage] =>
-      implicit val clk: Timer[Id] = clock(0L)
+      implicit val clk: Clock[Id] = zeroClock
       logger.withMinimalLevel(Level.Trace).log(msgs).written shouldBe msgs
     }
   }
 
   it should "filter by minimal level" in {
-    implicit val clk: Timer[Id] = clock(0)
+    implicit val clk: Clock[Id] = zeroClock
     forAll { (minLevel: Level, msgLevel: Level, msg: String) =>
       val l = logger.withMinimalLevel(minLevel)
       val fn = levelToFn(l, msgLevel) _
@@ -71,16 +69,7 @@ class DefaultLoggerSpec extends OdinSpec {
     case Level.Error => logger.error(msg)
   }
 
-  private def clock(timestamp: Long): Timer[Id] = new Timer[Id] {
-    def clock: Clock[Id] = new Clock[Id] {
-      def realTime(unit: TimeUnit): Id[Long] = timestamp
-      def monotonic(unit: TimeUnit): Id[Long] = timestamp
-    }
-
-    def sleep(duration: FiniteDuration): Id[Unit] = ???
-  }
-
-  private def logger(implicit timer: Timer[Id]): Logger[F] = {
+  private def logger(implicit clock: Clock[Id]): Logger[F] = {
     new DefaultLogger[F] {
       def log(msg: LoggerMessage): Writer[List[LoggerMessage], Unit] = Writer.tell(List(msg))
     }

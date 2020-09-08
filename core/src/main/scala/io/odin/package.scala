@@ -2,7 +2,7 @@ package io
 
 import java.time.LocalDateTime
 
-import cats.effect.{Concurrent, ContextShift, Resource, Sync, Timer}
+import cats.effect.{Clock, Concurrent, ContextShift, Resource, Sync, Timer}
 import io.odin.formatter.Formatter
 import io.odin.loggers.{ConsoleLogger, FileLogger, RollingFileLogger}
 import io.odin.syntax._
@@ -16,7 +16,7 @@ package object odin {
     * @param formatter formatter to use for log messages
     * @param minLevel minimal level of logs to be printed
     */
-  def consoleLogger[F[_]: Sync: Timer](
+  def consoleLogger[F[_]: Sync: Clock](
       formatter: Formatter = Formatter.default,
       minLevel: Level = Level.Trace
   ): Logger[F] =
@@ -28,7 +28,7 @@ package object odin {
     * @param formatter formatter to use
     * @param minLevel minimal level of logs to be printed
     */
-  def fileLogger[F[_]: Sync: Timer](
+  def fileLogger[F[_]: Sync: Clock](
       fileName: String,
       formatter: Formatter = Formatter.default,
       minLevel: Level = Level.Trace

@@ -166,13 +166,13 @@ The most common logger to use:
 ```scala mdoc:silent
 import io.odin._
 import cats.effect.{ContextShift, IO}
-import cats.effect.Timer
+import cats.effect.Clock
 
 //required to derive Concurrent/ConcurrentEffect for async operations with IO later. IOApp provides it out of the box
 implicit val contextShiftIO: ContextShift[IO] = IO.contextShift(scala.concurrent.ExecutionContext.global)
 
 //required for log timestamps. IOApp provides it out of the box
-implicit val timer: Timer[IO] = IO.timer(scala.concurrent.ExecutionContext.global)
+implicit val clock: Clock[IO] = Clock.create
 
 val logger: Logger[IO] = consoleLogger[IO]()
 ```
@@ -193,7 +193,7 @@ All messages of level `WARN` and higher are routed to the _STDERR_ while message
 `consoleLogger` has the following definition:
 
 ```scala
-def consoleLogger[F[_]: Sync: Timer](
+def consoleLogger[F[_]: Sync: Clock](
       formatter: Formatter = Formatter.default,
       minLevel: Level = Level.Trace
   ): Logger[F]
@@ -289,7 +289,7 @@ Performance wise, it'll cost only the allocation of `F.unit` value.
 Another backend that Odin provides by default is the basic file logger:
 
 ```scala
-def fileLogger[F[_]: Sync: Timer](
+def fileLogger[F[_]: Sync: Clock](
       fileName: String,
       formatter: Formatter = Formatter.default,
       minLevel: Level = Level.Trace
@@ -595,7 +595,7 @@ import io.odin.extras.syntax._
 
 case class User(id: String)
 
-class UserService[F[_]: Timer: ContextShift](logger: Logger[F])(implicit F: Concurrent[F]) {
+class UserService[F[_]: Clock: ContextShift](logger: Logger[F])(implicit F: Concurrent[F]) {
 
   import cats.syntax.functor._
   import cats.syntax.flatMap._
@@ -696,7 +696,7 @@ libraryDependencies += "com.github.valskalla" %% "odin-slf4j" % "@VERSION@"
 ```scala mdoc:reset
 //package org.slf4j.impl
 
-import cats.effect.{ContextShift, Clock, Effect, IO, Timer}
+import cats.effect.{ContextShift, Clock, Effect, IO, Clock}
 import io.odin._
 import io.odin.slf4j.OdinLoggerBinder
 
@@ -707,8 +707,7 @@ import scala.concurrent.ExecutionContext
 class StaticLoggerBinder extends OdinLoggerBinder[IO] {
 
   val ec: ExecutionContext = scala.concurrent.ExecutionContext.global
-  implicit val timer: Timer[IO] = IO.timer(ec)
-  implicit val clock: Clock[IO] = timer.clock
+  implicit val clock: Clock[IO] = Clock.create
   implicit val cs: ContextShift[IO] = IO.contextShift(ec)
   implicit val F: Effect[IO] = IO.ioEffect
     

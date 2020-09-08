@@ -1,14 +1,14 @@
 package io.odin.loggers
 
 import cats.data.WriterT
-import cats.effect.{IO, Timer}
+import cats.effect.{Clock, IO}
 import io.odin.syntax._
 import io.odin.{LoggerMessage, OdinSpec}
 
 class ConstContextLoggerSpec extends OdinSpec {
   type F[A] = WriterT[IO, List[LoggerMessage], A]
 
-  implicit val timer: Timer[IO] = zeroTimer
+  implicit val clock: Clock[IO] = zeroClock
 
   checkAll(
     "ContextualLogger",

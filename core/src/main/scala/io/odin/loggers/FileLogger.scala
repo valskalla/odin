@@ -4,7 +4,7 @@ import java.io.BufferedWriter
 import java.nio.file.{Files, Paths}
 
 import cats.effect.syntax.all._
-import cats.effect.{Resource, Sync, Timer}
+import cats.effect.{Resource, Sync, Clock}
 import cats.syntax.all._
 import io.odin.formatter.Formatter
 import io.odin.{Level, Logger, LoggerMessage}
@@ -12,7 +12,7 @@ import io.odin.{Level, Logger, LoggerMessage}
 /**
   * Write to given log writer with provided formatter
   */
-case class FileLogger[F[_]: Timer](buffer: BufferedWriter, formatter: Formatter, override val minLevel: Level)(
+case class FileLogger[F[_]: Clock](buffer: BufferedWriter, formatter: Formatter, override val minLevel: Level)(
     implicit F: Sync[F]
 ) extends DefaultLogger[F](minLevel) {
   def log(msg: LoggerMessage): F[Unit] =
@@ -30,7 +30,7 @@ case class FileLogger[F[_]: Timer](buffer: BufferedWriter, formatter: Formatter,
 }
 
 object FileLogger {
-  def apply[F[_]: Timer](fileName: String, formatter: Formatter, minLevel: Level)(
+  def apply[F[_]: Clock](fileName: String, formatter: Formatter, minLevel: Level)(
       implicit F: Sync[F]
   ): Resource[F, Logger[F]] = {
     def mkBuffer: F[BufferedWriter] = F.delay(Files.newBufferedWriter(Paths.get(fileName)))

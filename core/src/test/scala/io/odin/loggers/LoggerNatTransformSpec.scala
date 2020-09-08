@@ -1,11 +1,9 @@
 package io.odin.loggers
 
 import cats.data.{Writer, WriterT}
-import cats.effect.{Clock, IO, Timer}
-import cats.{~>, Id}
+import cats.effect.{Clock, IO}
+import cats.{Id, ~>}
 import io.odin.{Level, Logger, LoggerMessage, OdinSpec}
-
-import scala.concurrent.duration.{FiniteDuration, TimeUnit}
 
 class LoggerNatTransformSpec extends OdinSpec {
   type F[A] = Writer[List[LoggerMessage], A]
@@ -13,7 +11,7 @@ class LoggerNatTransformSpec extends OdinSpec {
 
   it should "transform each method" in {
     forAll { (msg: String, ctx: Map[String, String], throwable: Throwable, timestamp: Long) =>
-      implicit val clk: Timer[Id] = clock(timestamp)
+      implicit val clk: Clock[Id] = fixedClock(timestamp)
       val logF = logger.withMinimalLevel(Level.Trace)
       val logFF = logF.mapK(nat).withMinimalLevel(Level.Trace)
       check(logF.trace(msg), logFF.trace(msg))
@@ -52,16 +50,7 @@ class LoggerNatTransformSpec extends OdinSpec {
       fa.mapK(idToIo)
   }
 
-  private def clock(timestamp: Long): Timer[Id] = new Timer[Id] {
-    def clock: Clock[Id] = new Clock[Id] {
-      def realTime(unit: TimeUnit): Id[Long] = timestamp
-      def monotonic(unit: TimeUnit): Id[Long] = timestamp
-    }
-
-    def sleep(duration: FiniteDuration): Id[Unit] = ???
-  }
-
-  private def logger(implicit timer: Timer[Id]): Logger[F] = new WriterTLogger[Id]
+  private def logger(implicit clock: Clock[Id]): Logger[F] = new WriterTLogger[Id]
 
   private def check(fnF: => F[Unit], fnFF: => FF[Unit]) = {
     val List(loggerMessageF) = fnF.written

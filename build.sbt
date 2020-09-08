@@ -2,7 +2,7 @@ lazy val versions = new {
   val scalaTest = "3.1.3"
   val scalaTestScalaCheck = "3.2.0.0"
   val cats = "2.2.0"
-  val catsEffect = "2.0.0"
+  val catsEffect = "2.2.0"
   val catsMtl = "0.7.1"
   val sourcecode = "0.2.1"
   val monix = "3.2.2"
@@ -97,7 +97,7 @@ lazy val sharedSettings = Seq(
 lazy val `odin-core` = (project in file("core"))
   .settings(sharedSettings)
   .settings(
-    libraryDependencies ++= (monix % Test) :: catsMtl :: sourcecode :: monixCatnap :: perfolation :: cats
+    libraryDependencies ++= (monix % Test) :: catsMtl :: sourcecode :: monixCatnap :: perfolation :: catsEffect :: cats
   )
 
 lazy val `odin-json` = (project in file("json"))

@@ -2,7 +2,7 @@ package io.odin
 
 import java.time.LocalDateTime
 
-import cats.effect.{Clock, Timer}
+import cats.effect.Clock
 import cats.{Applicative, Eval}
 import io.odin.formatter.Formatter
 import io.odin.meta.Position
@@ -12,7 +12,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.{Checkers, ScalaCheckDrivenPropertyChecks}
 import org.typelevel.discipline.Laws
 
-import scala.concurrent.duration.{FiniteDuration, TimeUnit}
+import scala.concurrent.duration.TimeUnit
 
 trait OdinSpec extends AnyFlatSpec with Matchers with Checkers with ScalaCheckDrivenPropertyChecks with EqInstances {
   def checkAll(name: String, ruleSet: Laws#RuleSet): Unit = {
@@ -22,14 +22,11 @@ trait OdinSpec extends AnyFlatSpec with Matchers with Checkers with ScalaCheckDr
       }
   }
 
-  def zeroTimer[F[_]](implicit F: Applicative[F]): Timer[F] = new Timer[F] {
-    def clock: Clock[F] = new Clock[F] {
-      def realTime(unit: TimeUnit): F[Long] = F.pure(0L)
+  def zeroClock[F[_]: Applicative]: Clock[F] = fixedClock(0)
 
-      def monotonic(unit: TimeUnit): F[Long] = F.pure(0L)
-    }
-
-    def sleep(duration: FiniteDuration): F[Unit] = ???
+  def fixedClock[F[_]](time: Long)(implicit F: Applicative[F]): Clock[F] = new Clock[F] {
+    def realTime(unit: TimeUnit): F[Long] = F.pure(time)
+    def monotonic(unit: TimeUnit): F[Long] = F.pure(time)
   }
 
   val lineSeparator: String = System.lineSeparator()

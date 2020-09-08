@@ -3,7 +3,7 @@ package io.odin
 import java.time.LocalDateTime
 
 import cats.Monad
-import cats.effect.Timer
+import cats.effect.Clock
 import cats.syntax.all._
 import io.odin.internal.StringContextLength
 import io.odin.loggers.DefaultLogger
@@ -16,7 +16,7 @@ package object config extends FileNamePatternSyntax {
     * Route logs to specific logger based on the fully qualified package name.
     * Beware of O(n) complexity due to the partial matching done during the logging
     */
-  def enclosureRouting[F[_]: Timer: Monad](router: (String, Logger[F])*): DefaultBuilder[F] = {
+  def enclosureRouting[F[_]: Clock: Monad](router: (String, Logger[F])*): DefaultBuilder[F] = {
     new DefaultBuilder[F](new EnclosureRouting(_, router.toList))
   }
 
@@ -24,7 +24,7 @@ package object config extends FileNamePatternSyntax {
     * Route logs to specific logger based on `Class[_]` instance.
     * Beware of O(n) complexity due to the partial matching done during the logging
     */
-  def classRouting[F[_]: Timer: Monad](
+  def classRouting[F[_]: Clock: Monad](
       router: (Class[_], Logger[F])*
   ): DefaultBuilder[F] =
     new DefaultBuilder[F](new EnclosureRouting(_, router.toList.map {
@@ -36,7 +36,7 @@ package object config extends FileNamePatternSyntax {
     *
     * Complexity should be roughly constant
     */
-  def levelRouting[F[_]: Timer: Monad](router: Map[Level, Logger[F]]): DefaultBuilder[F] =
+  def levelRouting[F[_]: Clock: Monad](router: Map[Level, Logger[F]]): DefaultBuilder[F] =
     new DefaultBuilder[F]({ default: Logger[F] =>
       new DefaultLogger[F]() {
         def log(msg: LoggerMessage): F[Unit] = router.getOrElse(msg.level, default).log(msg)
