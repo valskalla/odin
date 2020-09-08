@@ -696,24 +696,18 @@ It requires a two-step setup:
 ```scala
 libraryDependencies += "com.github.valskalla" %% "odin-slf4j" % "@VERSION@"
 ```
-- Create `StaticLoggerBuilder` class/object in the package `org.slf4j.impl` with a similar content:
+- Create Scala class `ExternalLogger` somewhere in the project:
 ```scala mdoc:reset
-//package org.slf4j.impl
-
-import cats.effect.{ContextShift, Clock, Effect, IO}
+import cats.effect.{Clock, Effect, IO}
 import io.odin._
 import io.odin.slf4j.OdinLoggerBinder
 
-import scala.concurrent.ExecutionContext
-
 //effect type should be specified inbefore
 //log line will be recorded right after the call with no suspension
-class StaticLoggerBinder extends OdinLoggerBinder[IO] {
+class ExternalLogger extends OdinLoggerBinder[IO] {
 
-  val ec: ExecutionContext = scala.concurrent.ExecutionContext.global
-  implicit val clock: Clock[IO] = Clock.create
-  implicit val cs: ContextShift[IO] = IO.contextShift(ec)
   implicit val F: Effect[IO] = IO.ioEffect
+  implicit val clock: Clock[IO] = Clock.create
     
   val loggers: PartialFunction[String, Logger[IO]] = {
     case "some.external.package.SpecificClass" =>
@@ -722,18 +716,30 @@ class StaticLoggerBinder extends OdinLoggerBinder[IO] {
       consoleLogger[IO]()
   }
 }
+```
 
-object StaticLoggerBinder extends StaticLoggerBinder {
+- Create `StaticLoggerBuilder.java` class in the package `org.slf4j.impl` with the following content:
+```java
+package org.slf4j.impl;
 
-    var REQUESTED_API_VERSION: String = "1.7"
+import io.odin.slf4j.ExternalLogger;
 
-    def getSingleton: StaticLoggerBinder = this
+public class StaticLoggerBinder extends ExternalLogger {
+
+    public static String REQUESTED_API_VERSION = "1.7";
+
+    private static final StaticLoggerBinder _instance = new StaticLoggerBinder();
+
+    public static StaticLoggerBinder getSingleton() {
+        return _instance;
+    }
 
 }
 ```
 
-Latter is required for SL4J API to load it in runtime and use as a binder for `LoggerFactory`. Partial function is used
-as a factory router to load correct logger backend. On undefined case the no-op logger is provided by default,
+Latter is required for SL4J API to load it in runtime and use as a binder for `LoggerFactory`. All the logic is 
+encapsulated in `ExternalLogger` class, so the Java part here is required only for bootstrapping.  
+Partial function is used as a factory router to load correct logger backend. On undefined case the no-op logger is provided by default,
 so no logs are recorded. 
 
 This bridge doesn't support MDC.
