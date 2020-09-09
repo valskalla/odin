@@ -2,27 +2,13 @@ package io.odin.loggers
 
 import java.security.MessageDigest
 
-import cats.Monad
-import cats.effect.Clock
+import io.odin.LoggerMessage
 import io.odin.util.Hex
-import io.odin.{Logger, LoggerMessage}
 
-case class SecretLogger[F[_]: Clock](secrets: Set[String], inner: Logger[F], algo: String = "SHA-1")(
-    implicit F: Monad[F]
-) extends DefaultLogger[F](inner.minLevel) {
-  def log(msg: LoggerMessage): F[Unit] = {
+object SecretLogger {
+
+  def apply(secrets: Set[String], algo: String = "SHA-1")(msg: LoggerMessage): LoggerMessage = {
     val md = MessageDigest.getInstance(algo)
-    inner.log(hash(md, msg))
-  }
-
-  override def log(msgs: List[LoggerMessage]): F[Unit] = {
-    val md = MessageDigest.getInstance(algo)
-    inner.log(
-      msgs.map(hash(md, _))
-    )
-  }
-
-  private def hash(md: MessageDigest, msg: LoggerMessage): LoggerMessage = {
     msg.copy(
       context = msg.context.map {
         case (key, value) =>
@@ -34,4 +20,5 @@ case class SecretLogger[F[_]: Clock](secrets: Set[String], inner: Logger[F], alg
       }
     )
   }
+
 }

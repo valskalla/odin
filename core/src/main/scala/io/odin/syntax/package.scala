@@ -68,8 +68,8 @@ package object syntax {
     def withSecretContext(
         key: String,
         keys: String*
-    )(implicit timer: Timer[F], monad: Monad[F]): Logger[F] =
-      SecretLogger(Set(key) ++ keys, logger)
+    )(implicit clock: Clock[F], monad: Monad[F]): Logger[F] =
+      logger.contramap(SecretLogger(Set(key) ++ keys))
   }
 
   /**
@@ -122,8 +122,8 @@ package object syntax {
     def withSecretContext(
         key: String,
         keys: String*
-    )(implicit timer: Timer[F], monad: Monad[F]): Resource[F, Logger[F]] =
-      resource.map(logger => SecretLogger(Set(key) ++ keys, logger))
+    )(implicit timer: Clock[F], monad: Monad[F]): Resource[F, Logger[F]] =
+      resource.map(logger => logger.contramap(SecretLogger(Set(key) ++ keys)))
   }
 
   implicit class RenderInterpolator(private val sc: StringContext) extends AnyVal {
