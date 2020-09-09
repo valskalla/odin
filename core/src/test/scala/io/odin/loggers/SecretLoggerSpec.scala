@@ -3,7 +3,6 @@ package io.odin.loggers
 import cats.Id
 import cats.data.Writer
 import cats.effect.Clock
-import cats.instances.list._
 import io.odin.syntax._
 import io.odin.{LoggerMessage, OdinSpec}
 
@@ -12,6 +11,7 @@ class SecretLoggerSpec extends OdinSpec {
   type F[A] = Writer[List[LoggerMessage], A]
 
   implicit val clock: Clock[Id] = zeroClock
+  implicit val clockT: Clock[F] = zeroClock
 
   checkAll(
     "SecretLogger",
