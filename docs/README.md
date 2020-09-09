@@ -100,6 +100,7 @@ Documentation
 - [Loggers composition](#loggers-composition)
 - [Constant context](#constant-context)
 - [Contextual effects](#contextual-effects)
+- [Secret Context](#secret-context)
 - [Contramap and filter](#contramap-and-filter)
 - [ToThrowable](#tothrowable)
 - [Testing logger](#testing-logger)
@@ -518,6 +519,23 @@ If this constraint isn't satisfied, it's required to manually provide an instanc
 trait WithContext[F[_]] {
   def context: F[Map[String, String]]
 }
+```
+
+## Secret Context
+
+Sometimes it's neccessary to hide sensitive information from the logs, would it be user identification data, passwords or
+anything else.
+
+Odin can hash the values of predefined context keys to preserve the fact of information existence, but exact value
+becomes unknown:
+
+```scala mdoc
+import io.odin.syntax._
+
+consoleLogger[IO]()
+    .withSecretContext("password")
+    .info("Hello, username", Map("password" -> "qwerty"))
+    .unsafeRunSync() //rendered context contains first 6 symbols of SHA-1 hash of password
 ```
 
 ## Contramap and filter
