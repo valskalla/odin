@@ -2,7 +2,7 @@ package io.odin.loggers
 
 import cats.Monad
 import cats.effect.Clock
-import cats.mtl.ApplicativeAsk
+import cats.mtl.Ask
 import cats.syntax.all._
 import io.odin.{Logger, LoggerMessage}
 
@@ -47,11 +47,11 @@ trait WithContext[F[_]] {
 object WithContext {
 
   /**
-    * Default implementation of `WithContext` that works for any `F[_]` with `ApplicativeAsk` instance and
-    * instance of [[HasContext]] for environment of this `ApplicativeAsk`
+    * Default implementation of `WithContext` that works for any `F[_]` with `Ask` instance and
+    * instance of [[HasContext]] for environment of this `Ask`
     */
   implicit def fromHasContext[F[_], Env](
-      implicit A: ApplicativeAsk[F, Env],
+      implicit A: Ask[F, Env],
       hasContext: HasContext[Env],
       F: Monad[F]
   ): WithContext[F] = new WithContext[F] {
