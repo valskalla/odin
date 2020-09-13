@@ -488,12 +488,11 @@ Odin allows to build a logger that extracts this information from effect and put
 ```scala mdoc
 import io.odin.loggers._
 import cats.data.ReaderT
-import cats.mtl.instances.all._ //provides ApplicativeAsk instance for ReaderT
 
 case class Env(ctx: Map[String, String])
 
 object Env {
-  //it's neccessary to describe how to extract context from env
+  //it's necessary to describe how to extract context from env
   implicit val hasContext: HasContext[Env] = new HasContext[Env] {
     def getContext(env: Env): Map[String, String] = env.ctx
   }
@@ -508,7 +507,7 @@ consoleLogger[M]()
     .unsafeRunSync()
 ```
 
-Odin automatically derives required type classes for each type `F[_]` that has `ApplicativeAsk[F, E]` defined, or in other words
+Odin automatically derives required type classes for each type `F[_]` that has `Ask[F, E]` defined, or in other words
 for all the types that allow `F[A] => F[E]`.
 
 If this constraint isn't satisfied, it's required to manually provide an instance for `WithContext` type class:  
@@ -523,7 +522,7 @@ trait WithContext[F[_]] {
 
 ## Secret Context
 
-Sometimes it's neccessary to hide sensitive information from the logs, would it be user identification data, passwords or
+Sometimes it's necessary to hide sensitive information from the logs, would it be user identification data, passwords or
 anything else.
 
 Odin can hash the values of predefined context keys to preserve the fact of information existence, but exact value

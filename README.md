@@ -505,12 +505,11 @@ Odin allows to build a logger that extracts this information from effect and put
 ```scala
 import io.odin.loggers._
 import cats.data.ReaderT
-import cats.mtl.instances.all._ //provides ApplicativeAsk instance for ReaderT //provides ApplicativeAsk instance for ReaderT
 
 case class Env(ctx: Map[String, String])
 
 object Env {
-  //it's neccessary to describe how to extract context from env
+  //it's necessary to describe how to extract context from env
   implicit val hasContext: HasContext[Env] = new HasContext[Env] {
     def getContext(env: Env): Map[String, String] = env.ctx
   }
@@ -526,7 +525,7 @@ consoleLogger[M]()
 // 2020-08-13T11:20:18,305 [run-main-0] INFO repl.MdocSession.App#res13:264 - Hello world - env: ctx
 ```
 
-Odin automatically derives required type classes for each type `F[_]` that has `ApplicativeAsk[F, E]` defined, or in other words
+Odin automatically derives required type classes for each type `F[_]` that has `Ask[F, E]` defined, or in other words
 for all the types that allow `F[A] => F[E]`.
 
 If this constraint isn't satisfied, it's required to manually provide an instance for `WithContext` type class:  

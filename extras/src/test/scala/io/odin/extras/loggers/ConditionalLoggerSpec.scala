@@ -3,7 +3,6 @@ package io.odin.extras.loggers
 import cats.data.Kleisli
 import cats.effect.Sync
 import cats.effect.concurrent.Ref
-import cats.mtl.instances.all._
 import cats.syntax.applicativeError._
 import cats.syntax.flatMap._
 import cats.syntax.order._

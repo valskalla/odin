@@ -3,7 +3,7 @@ lazy val versions = new {
   val scalaTestScalaCheck = "3.2.0.0"
   val cats = "2.2.0"
   val catsEffect = "2.2.0"
-  val catsMtl = "0.7.1"
+  val catsMtl = "1.0.0"
   val sourcecode = "0.2.1"
   val monix = "3.2.2"
   val magnolia = "0.17.0"
@@ -30,7 +30,7 @@ lazy val cats = List(
 
 lazy val catsEffect = "org.typelevel" %% "cats-effect" % versions.catsEffect
 
-lazy val catsMtl = "org.typelevel" %% "cats-mtl-core" % versions.catsMtl
+lazy val catsMtl = "org.typelevel" %% "cats-mtl" % versions.catsMtl
 
 lazy val sourcecode = "com.lihaoyi" %% "sourcecode" % versions.sourcecode
 
