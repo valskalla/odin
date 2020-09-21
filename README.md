@@ -35,7 +35,7 @@ libraryDependencies ++= Seq(
   "com.github.valskalla" %% "odin-core",
   "com.github.valskalla" %% "odin-json", //to enable JSON formatter if needed
   "com.github.valskalla" %% "odin-extras" //to enable additional features if needed (see docs)
-).map(_ % "0.8.1")
+).map(_ % "0.9.0")
 ```
 
 Example
@@ -70,9 +70,9 @@ Some time could be saved by using the effect-predefined variants of Odin. There 
 
 ```scala
 //ZIO
-libraryDependencies += "com.github.valskalla" %% "odin-zio" % "0.8.1"
+libraryDependencies += "com.github.valskalla" %% "odin-zio" % "0.9.0"
 //or Monix
-libraryDependencies += "com.github.valskalla" %% "odin-monix" % "0.8.1"
+libraryDependencies += "com.github.valskalla" %% "odin-monix" % "0.9.0"
 ```
 
 Use corresponding import to get an access to the loggers:
@@ -100,6 +100,7 @@ Documentation
 - [Loggers composition](#loggers-composition)
 - [Constant context](#constant-context)
 - [Contextual effects](#contextual-effects)
+- [Secret Context](#secret-context)
 - [Contramap and filter](#contramap-and-filter)
 - [ToThrowable](#tothrowable)
 - [Testing logger](#testing-logger)
@@ -166,13 +167,13 @@ The most common logger to use:
 ```scala
 import io.odin._
 import cats.effect.{ContextShift, IO}
-import cats.effect.Timer
+import cats.effect.Clock
 
 //required to derive Concurrent/ConcurrentEffect for async operations with IO later. IOApp provides it out of the box
 implicit val contextShiftIO: ContextShift[IO] = IO.contextShift(scala.concurrent.ExecutionContext.global)
 
 //required for log timestamps. IOApp provides it out of the box
-implicit val timer: Timer[IO] = IO.timer(scala.concurrent.ExecutionContext.global)
+implicit val clock: Clock[IO] = Clock.create
 
 val logger: Logger[IO] = consoleLogger[IO]()
 ```
@@ -183,20 +184,52 @@ Now to the call:
 //doesn't print anything as the effect is suspended in IO
 logger.info("Hello?")
 // res0: IO[Unit] = Map(
-//   source = Bind(
-//     source = Delay(
-//       thunk = cats.effect.Clock$$anon$1$$Lambda$9001/463610442@62025c7d
-//     ),
-//     f = io.odin.loggers.DefaultLogger$$Lambda$9002/1586352081@117160f
-//   ),
-//   f = scala.Function1$$Lambda$9009/1452607249@3a0fb5ae,
-//   index = 1
-// )
+//   source = Map(
+//     source = Bind(
+//       source = Delay(
+//         thunk = cats.effect.Clock$$anon$1$$Lambda$9111/174536398@4dfb64b
+//       ),
+//       f = io.odin.loggers.DefaultLogger$$Lambda$9112/315309450@2303646a,
+//       trace = StackTrace(
+//         stackTrace = List(
+//           cats.effect.internals.IOTracing$.buildFrame(IOTracing.scala:48),
+//           cats.effect.internals.IOTracing$.buildCachedFrame(IOTracing.scala:39),
+//           cats.effect.internals.IOTracing$.cached(IOTracing.scala:34),
+//           cats.effect.IO.flatMap(IO.scala:133),
+//           cats.effect.IOLowPriorityInstances$IOEffect.flatMap(IO.scala:886),
+//           cats.effect.IOLowPriorityInstances$IOEffect.flatMap(IO.scala:863),
+//           cats.FlatMap$Ops.flatMap(FlatMap.scala:229),
+//           cats.FlatMap$Ops.flatMap$(FlatMap.scala:229),
+//           cats.FlatMap$ToFlatMapOps$$anon$2.flatMap(FlatMap.scala:243),
+//           io.odin.loggers.DefaultLogger.$anonfun$log$1(DefaultLogger.scala:23),
+//           cats.Applicative.whenA(Applicative.scala:187),
+//           cats.Applicative.whenA$(Applicative.scala:186),
+//           cats.effect.IOLowPriorityInstances$IOEffect.whenA(IO.scala:863),
+//           io.odin.loggers.DefaultLogger.log(DefaultLogger.scala:23),
+//           io.odin.loggers.DefaultLogger.$anonfun$info$1(DefaultLogger.scala:98),
+//           cats.Applicative.whenA(Applicative.scala:187),
+//           cats.Applicative.whenA$(Applicative.scala:186),
+//           cats.effect.IOLowPriorityInstances$IOEffect.whenA(IO.scala:863),
+//           io.odin.loggers.DefaultLogger.info(DefaultLogger.scala:98),
+//           repl.MdocSession$App.<init>(README.md:62),
+//           repl.MdocSession$.app(README.md:3),
+//           mdoc.internal.document.DocumentBuilder$$doc$.$anonfun$build$2(DocumentBuilder.scala:89),
+//           scala.runtime.java8.JFunction0$mcV$sp.apply(JFunction0$mcV$sp.scala:18),
+//           scala.util.DynamicVariable.withValue(DynamicVariable.scala:59),
+//           scala.Console$.withErr(Console.scala:193),
+//           mdoc.internal.document.DocumentBuilder$$doc$.$anonfun$build$1(DocumentBuilder.scala:89),
+//           scala.runtime.java8.JFunction0$mcV$sp.apply(JFunction0$mcV$sp.scala:18),
+//           scala.util.DynamicVariable.withValue(DynamicVariable.scala:59),
+//           scala.Console$.withOut(Console.scala:164),
+//           mdoc.internal.document.DocumentBuilder$$doc$.build(DocumentBuilder.scala:88),
+//           mdoc.internal.markdown.MarkdownBuilder$.buildDocument(MarkdownBuilder.scala:44),
+//           mdoc.internal.markdown.Processor.processScalaInputs(Processor.scala:186),
+//           mdoc.internal.markdown.Processor.processScalaInputs(Processor.scala:15...
 
 //prints "Hello world" to the STDOUT.
 //Although, don't use `unsafeRunSync` in production unless you know what you're doing
 logger.info("Hello world").unsafeRunSync()
-// 2020-08-13T11:20:17,850 [run-main-0] INFO repl.MdocSession.App#res1:65 - Hello world
+// 2020-09-21T14:30:24,43 [run-main-0] INFO repl.MdocSession.App#res1:65 - Hello world
 ```
 
 All messages of level `WARN` and higher are routed to the _STDERR_ while messages with level `INFO` and below go to the _STDOUT_.
@@ -204,7 +237,7 @@ All messages of level `WARN` and higher are routed to the _STDERR_ while message
 `consoleLogger` has the following definition:
 
 ```scala
-def consoleLogger[F[_]: Sync: Timer](
+def consoleLogger[F[_]: Sync: Clock](
       formatter: Formatter = Formatter.default,
       minLevel: Level = Level.Trace
   ): Logger[F]
@@ -235,8 +268,8 @@ _odin-core_ provides the `Formatter.default` and `Formatter.colorful` that print
 
 ```scala
 (logger.info("No context") *> logger.info("Some context", Map("key" -> "value"))).unsafeRunSync()
-// 2020-08-13T11:20:17,891 [run-main-0] INFO repl.MdocSession.App#res2:71 - No context
-// 2020-08-13T11:20:17,891 [run-main-0] INFO repl.MdocSession.App#res2:71 - Some context - key: value
+// 2020-09-21T14:30:24,77 [run-main-0] INFO repl.MdocSession.App#res2:71 - No context
+// 2020-09-21T14:30:24,77 [run-main-0] INFO repl.MdocSession.App#res2:71 - Some context - key: value
 ```
 
 The latter adds a bit of colors to the default formatter:
@@ -257,7 +290,7 @@ Now messages printed with this logger will be encoded as JSON string using circe
 
 ```scala
 jsonLogger.info("This is JSON").unsafeRunSync()
-// {"level":"INFO","message":"This is JSON","context":{},"exception":null,"position":"repl.MdocSession.App#res3:86","thread_name":"run-main-0","timestamp":"2020-08-13T11:20:17,915"}
+// {"level":"INFO","message":"This is JSON","context":{},"exception":null,"position":"repl.MdocSession.App#res3:86","thread_name":"run-main-0","timestamp":"2020-09-21T14:30:24,106"}
 ```
 
 ### Customized formatter
@@ -303,7 +336,7 @@ Performance wise, it'll cost only the allocation of `F.unit` value.
 Another backend that Odin provides by default is the basic file logger:
 
 ```scala
-def fileLogger[F[_]: Sync: Timer](
+def fileLogger[F[_]: Sync: Clock](
       fileName: String,
       formatter: Formatter = Formatter.default,
       minLevel: Level = Level.Trace
@@ -355,9 +388,9 @@ import io.odin.config._
 import java.time.LocalDateTime
 
 val fileNamePattern = file"/var/log/$year-$month-$day-$hour-$minute-$second.log"
-// fileNamePattern: LocalDateTime => String = io.odin.config.package$FileNamePatternInterpolator$$$Lambda$9024/837490158@f58d908
+// fileNamePattern: LocalDateTime => String = io.odin.config.package$FileNamePatternInterpolator$$$Lambda$9128/2100359047@5f8560ec
 val fileName = fileNamePattern(LocalDateTime.now)
-// fileName: String = "/var/log/2020-08-13-11-20-17.log"
+// fileName: String = "/var/log/2020-09-21-14-30-24.log"
 ```
 
 Interpolator placeholders used above are provided with `io.odin.config` package as well:
@@ -365,13 +398,13 @@ Interpolator placeholders used above are provided with `io.odin.config` package 
 year.extract(LocalDateTime.now)
 // res6: String = "2020"
 month.extract(LocalDateTime.now)
-// res7: String = "08"
+// res7: String = "09"
 hour.extract(LocalDateTime.now)
-// res8: String = "11"
+// res8: String = "14"
 minute.extract(LocalDateTime.now)
-// res9: String = "20"
+// res9: String = "30"
 second.extract(LocalDateTime.now)
-// res10: String = "17"
+// res10: String = "24"
 ```
 
 All the placeholders are padded with `0` to contain at least two digits. It's also possible to include any string
@@ -389,8 +422,12 @@ It uses `ConcurrentQueue[F]` from Monix as the buffer that is asynchronously flu
 Conversion of any logger into async one is straightforward:
 
 ```scala
-import cats.effect.Resource
+import cats.effect.{Resource, Timer}
 import io.odin.syntax._ //to enable additional implicit methods
+
+//timer is required to run async version of logger
+//provided by IOApp out of the box
+implicit val timer: Timer[IO] = IO.timer(scala.concurrent.ExecutionContext.global)
 
 val asyncLoggerResource: Resource[IO, Logger[IO]] = consoleLogger[IO]().withAsync()
 ```
@@ -401,7 +438,6 @@ async logger shall be done inside of `Resource.use` block:
 ```scala
 //queue will be flushed on release even if flushing timer didn't hit the mark yet
 asyncLoggerResource.use(logger => logger.info("Async info")).unsafeRunSync()
-// 2020-08-13T11:20:18,223 [run-main-0] INFO repl.MdocSession.App#res11:169 - Async info
 ```
 
 Package `io.odin.syntax._` also pimps the `Resource[F, Logger[F]]` type with the same `.withAsync` method to use
@@ -492,7 +528,8 @@ import io.odin.syntax._
 consoleLogger[IO]()
     .withConstContext(Map("predefined" -> "context"))
     .info("Hello world").unsafeRunSync()
-// 2020-08-13T11:20:18,247 [run-main-0] INFO repl.MdocSession.App#res12:233 - Hello world - predefined: context
+// 2020-09-21T14:30:24,310 [run-main-0] INFO repl.MdocSession.App#res11:172 - Async info
+// 2020-09-21T14:30:24,344 [run-main-0] INFO repl.MdocSession.App#res12:236 - Hello world - predefined: context
 ```
 
 ## Contextual effects
@@ -522,7 +559,7 @@ consoleLogger[M]()
     .info("Hello world")
     .run(Env(Map("env" -> "ctx")))
     .unsafeRunSync()
-// 2020-08-13T11:20:18,305 [run-main-0] INFO repl.MdocSession.App#res13:264 - Hello world - env: ctx
+// 2020-09-21T14:30:24,383 [run-main-0] INFO repl.MdocSession.App#res13:264 - Hello world - env: ctx
 ```
 
 Odin automatically derives required type classes for each type `F[_]` that has `Ask[F, E]` defined, or in other words
@@ -538,6 +575,24 @@ trait WithContext[F[_]] {
 }
 ```
 
+## Secret Context
+
+Sometimes it's necessary to hide sensitive information from the logs, would it be user identification data, passwords or
+anything else.
+
+Odin can hash the values of predefined context keys to preserve the fact of information existence, but exact value
+becomes unknown:
+
+```scala
+import io.odin.syntax._
+
+consoleLogger[IO]()
+    .withSecretContext("password")
+    .info("Hello, username", Map("password" -> "qwerty"))
+    .unsafeRunSync() //rendered context contains first 6 symbols of SHA-1 hash of password
+// 2020-09-21T14:30:24,388 [run-main-0] INFO repl.MdocSession.App#res14:277 - Hello, username - password: secret:b1b377
+```
+
 ## Contramap and filter
 
 To modify or filter log messages before they're written, use corresponding combinators `contramap` and `filter`:
@@ -549,7 +604,7 @@ consoleLogger[IO]()
     .contramap(msg => msg.copy(message = msg.message.map(_ + " World")))
     .info("Hello")
     .unsafeRunSync()
-// 2020-08-13T11:20:18,310 [run-main-0] INFO repl.MdocSession.App#res14:277 - Hello World
+// 2020-09-21T14:30:24,392 [run-main-0] INFO repl.MdocSession.App#res15:289 - Hello World
 
 consoleLogger[IO]()
     .filter(msg => msg.message.value.size < 10)
@@ -601,7 +656,7 @@ The `odin-extras` module provides additional functionality: ConditionalLogger, R
 - Add following dependency to your build:
 
 ```scala
-libraryDependencies += "com.github.valskalla" %% "odin-extras" % "0.8.1"
+libraryDependencies += "com.github.valskalla" %% "odin-extras" % "0.9.0"
 ```
 
 ### Extras. Conditional logging
@@ -618,7 +673,7 @@ import io.odin.extras.syntax._
 
 case class User(id: String)
 
-class UserService[F[_]: Timer: ContextShift](logger: Logger[F])(implicit F: Concurrent[F]) {
+class UserService[F[_]: Clock: ContextShift](logger: Logger[F])(implicit F: Concurrent[F]) {
 
   import cats.syntax.functor._
   import cats.syntax.flatMap._
@@ -647,15 +702,15 @@ class UserService[F[_]: Timer: ContextShift](logger: Logger[F])(implicit F: Conc
 }
 
 val service = new UserService[IO](consoleLogger[IO](minLevel = Level.Info))
-// service: UserService[IO] = repl.MdocSession$App$UserService@2a18c2f9
+// service: UserService[IO] = repl.MdocSession$App$UserService@8f4c68f
 
 service.findAndVerify("good-user").attempt.unsafeRunSync()
-// 2020-08-13T11:20:18,336 [run-main-0] INFO repl.MdocSession.App#UserService#findAndVerify:316 - User found and verified User(my-user-good-user)
-// res16: Either[Throwable, Unit] = Right(value = ())
+// 2020-09-21T14:30:24,420 [run-main-0] INFO repl.MdocSession.App#UserService#findAndVerify:328 - User found and verified User(my-user-good-user)
+// res17: Either[Throwable, Unit] = Right(value = ())
 service.findAndVerify("bad-user").attempt.unsafeRunSync()
-// 2020-08-13T11:20:18,339 [run-main-0] DEBUG repl.MdocSession.App#UserService#findAndVerify:312 - Looking for user by id [bad-user]
-// 2020-08-13T11:20:18,339 [run-main-0] DEBUG repl.MdocSession.App#UserService#findAndVerify:314 - Found user User(my-user-bad-user)
-// res17: Either[Throwable, Unit] = Left(
+// 2020-09-21T14:30:24,423 [run-main-0] DEBUG repl.MdocSession.App#UserService#findAndVerify:324 - Looking for user by id [bad-user]
+// 2020-09-21T14:30:24,423 [run-main-0] DEBUG repl.MdocSession.App#UserService#findAndVerify:326 - Found user User(my-user-bad-user)
+// res18: Either[Throwable, Unit] = Left(
 //   value = java.lang.RuntimeException: Bad User
 // )
 ```
@@ -728,27 +783,20 @@ It requires a two-step setup:
 
 - Add following dependency to your build:
 ```scala
-libraryDependencies += "com.github.valskalla" %% "odin-slf4j" % "0.8.1"
+libraryDependencies += "com.github.valskalla" %% "odin-slf4j" % "0.9.0"
 ```
-- Create `StaticLoggerBuilder` class/object in the package `org.slf4j.impl` with a similar content:
+- Create Scala class `ExternalLogger` somewhere in the project:
 ```scala
-//package org.slf4j.impl
-
-import cats.effect.{ContextShift, Clock, Effect, IO, Timer}
+import cats.effect.{Clock, Effect, IO}
 import io.odin._
 import io.odin.slf4j.OdinLoggerBinder
 
-import scala.concurrent.ExecutionContext
-
 //effect type should be specified inbefore
 //log line will be recorded right after the call with no suspension
-class StaticLoggerBinder extends OdinLoggerBinder[IO] {
+class ExternalLogger extends OdinLoggerBinder[IO] {
 
-  val ec: ExecutionContext = scala.concurrent.ExecutionContext.global
-  implicit val timer: Timer[IO] = IO.timer(ec)
-  implicit val clock: Clock[IO] = timer.clock
-  implicit val cs: ContextShift[IO] = IO.contextShift(ec)
   implicit val F: Effect[IO] = IO.ioEffect
+  implicit val clock: Clock[IO] = Clock.create
     
   val loggers: PartialFunction[String, Logger[IO]] = {
     case "some.external.package.SpecificClass" =>
@@ -757,18 +805,30 @@ class StaticLoggerBinder extends OdinLoggerBinder[IO] {
       consoleLogger[IO]()
   }
 }
+```
 
-object StaticLoggerBinder extends StaticLoggerBinder {
+- Create `StaticLoggerBuilder.java` class in the package `org.slf4j.impl` with the following content:
+```java
+package org.slf4j.impl;
 
-    var REQUESTED_API_VERSION: String = "1.7"
+import io.odin.slf4j.ExternalLogger;
 
-    def getSingleton: StaticLoggerBinder = this
+public class StaticLoggerBinder extends ExternalLogger {
+
+    public static String REQUESTED_API_VERSION = "1.7";
+
+    private static final StaticLoggerBinder _instance = new StaticLoggerBinder();
+
+    public static StaticLoggerBinder getSingleton() {
+        return _instance;
+    }
 
 }
 ```
 
-Latter is required for SL4J API to load it in runtime and use as a binder for `LoggerFactory`. Partial function is used
-as a factory router to load correct logger backend. On undefined case the no-op logger is provided by default,
+Latter is required for SL4J API to load it in runtime and use as a binder for `LoggerFactory`. All the logic is 
+encapsulated in `ExternalLogger` class, so the Java part here is required only for bootstrapping.  
+Partial function is used as a factory router to load correct logger backend. On undefined case the no-op logger is provided by default,
 so no logs are recorded. 
 
 This bridge doesn't support MDC.
