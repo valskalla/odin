@@ -15,7 +15,7 @@ Odin library enables functional approach to logging in Scala applications with r
 top priorities.
 
 - Each effect is suspended within the polymorphic `F[_]`
-- Context is a first-class citizen. Logger is structured by default, no more `TheadLocal` MDCs
+- Context is a first-class citizen. Logger is structured by default, no more `ThreadLocal` MDCs
 - Programmatically configurable. Scala is the perfect language for describing configs
 - Position tracing implemented with macro instead of reflection considerably boosts the performance
 - Own performant logger backends for console and log files
