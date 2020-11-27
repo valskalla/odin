@@ -22,7 +22,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: set up sbt and java
-      uses: olafurpg/setup-scala@v5
+      uses: olafurpg/setup-scala@v10
       with:
         java-version: ${{ matrix.java }}
     - name: Run tests
