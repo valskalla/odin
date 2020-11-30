@@ -807,7 +807,7 @@ class ExternalLogger extends OdinLoggerBinder[IO] {
 }
 ```
 
-- Create `StaticLoggerBuilder.java` class in the package `org.slf4j.impl` with the following content:
+- Create `StaticLoggerBinder.java` class in the package `org.slf4j.impl` with the following content:
 ```java
 package org.slf4j.impl;
 
