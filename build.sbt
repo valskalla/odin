@@ -1,9 +1,9 @@
 lazy val versions = new {
   val scalaTest = "3.1.3"
   val scalaTestScalaCheck = "3.2.0.0"
-  val cats = "2.2.0"
-  val catsEffect = "2.2.0"
-  val catsMtl = "1.0.0"
+  val cats = "2.3.0"
+  val catsEffect = "2.3.0"
+  val catsMtl = "1.1.0"
   val sourcecode = "0.2.1"
   val monix = "3.3.0"
   val magnolia = "0.17.0"
@@ -63,7 +63,7 @@ lazy val sharedSettings = Seq(
   scalaVersion := "2.13.2",
   organization := "com.github.valskalla",
   libraryDependencies ++= scalaTestScalaCheck :: scalaCheck :: scalaTest :: Nil,
-  addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.11.0" cross CrossVersion.full),
+  addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.11.2" cross CrossVersion.full),
   crossScalaVersions := scalaVersions,
   classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.ScalaLibrary,
   scalacOptions := scalacOptionsVersion(scalaVersion.value),
