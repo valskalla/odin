@@ -2,7 +2,7 @@ package io.odin.loggers
 
 import cats.data.{Writer, WriterT}
 import cats.effect.{Clock, IO}
-import cats.{Id, ~>}
+import cats.{~>, Id}
 import io.odin.{Level, Logger, LoggerMessage, OdinSpec}
 
 class LoggerNatTransformSpec extends OdinSpec {

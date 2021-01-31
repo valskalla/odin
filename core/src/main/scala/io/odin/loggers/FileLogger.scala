@@ -1,10 +1,10 @@
 package io.odin.loggers
 
 import java.io.BufferedWriter
-import java.nio.file.{Files, Paths}
+import java.nio.file.{Files, OpenOption, Paths}
 
 import cats.effect.syntax.all._
-import cats.effect.{Resource, Sync, Clock}
+import cats.effect.{Clock, Resource, Sync}
 import cats.syntax.all._
 import io.odin.formatter.Formatter
 import io.odin.{Level, Logger, LoggerMessage}
@@ -30,14 +30,22 @@ case class FileLogger[F[_]: Clock](buffer: BufferedWriter, formatter: Formatter,
 }
 
 object FileLogger {
-  def apply[F[_]: Clock](fileName: String, formatter: Formatter, minLevel: Level)(
+  def apply[F[_]: Clock](
+      fileName: String,
+      formatter: Formatter,
+      minLevel: Level,
+      openOptions: Seq[OpenOption] = Seq.empty
+  )(
       implicit F: Sync[F]
   ): Resource[F, Logger[F]] = {
-    def mkBuffer: F[BufferedWriter] = F.delay(Files.newBufferedWriter(Paths.get(fileName)))
+    def mkDirs: F[Unit] = F.delay {
+      Option(Paths.get(fileName).getParent).foreach(_.toFile.mkdirs())
+    }
+    def mkBuffer: F[BufferedWriter] = F.delay(Files.newBufferedWriter(Paths.get(fileName), openOptions: _*))
     def closeBuffer(buffer: BufferedWriter): F[Unit] =
       F.delay(buffer.close()).handleErrorWith(_ => F.unit)
 
-    Resource.make(mkBuffer)(closeBuffer).map { buffer =>
+    Resource.make(mkDirs >> mkBuffer)(closeBuffer).map { buffer =>
       FileLogger(buffer, formatter, minLevel)
     }
   }
