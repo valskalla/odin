@@ -1,6 +1,6 @@
 package io.odin.loggers
 
-import java.io.{BufferedWriter, File}
+import java.io.BufferedWriter
 import java.nio.file.{Files, OpenOption, Paths}
 
 import cats.effect.syntax.all._

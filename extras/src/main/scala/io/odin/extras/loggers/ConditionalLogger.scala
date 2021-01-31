@@ -11,7 +11,7 @@ import io.odin.{Level, Logger, LoggerMessage}
 import monix.catnap.ConcurrentQueue
 import monix.execution.{BufferCapacity, ChannelType}
 
-final case class ConditionalLogger[F[_]: Clock] private(
+final case class ConditionalLogger[F[_]: Clock] private (
     queue: ConcurrentQueue[F, LoggerMessage],
     inner: Logger[F],
     override val minLevel: Level

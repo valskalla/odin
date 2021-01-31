@@ -172,7 +172,8 @@ class FormatterSpec extends OdinSpec {
   private lazy val filterGen: Gen[Filter] =
     Gen.oneOf(
       Gen.const(Filter.NoFilter),
-      Gen.someOf("class1", "class3", "class2", "notIncludedClass")
+      Gen
+        .someOf("class1", "class3", "class2", "notIncludedClass")
         .map(_.toSet)
         .map(Filter.Excluding.apply)
     )

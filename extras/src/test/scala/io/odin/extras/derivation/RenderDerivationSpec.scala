@@ -27,7 +27,8 @@ class RenderDerivationSpec extends OdinSpec {
 
     // The expected hash was generated using:
     // echo -n '123.4' | shasum -a 256
-    val expected = "WithHashed(field = my-field, hashed (sha256 hash) = 5f466d7afa48b619c7045d54b15d8d48f47e401335078e9267f5e1d942e09ca5)"
+    val expected =
+      "WithHashed(field = my-field, hashed (sha256 hash) = 5f466d7afa48b619c7045d54b15d8d48f47e401335078e9267f5e1d942e09ca5)"
 
     Render[WithHashed[String, Double]].render(instance) shouldBe expected
   }

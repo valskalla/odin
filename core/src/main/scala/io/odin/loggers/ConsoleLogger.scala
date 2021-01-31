@@ -2,7 +2,7 @@ package io.odin.loggers
 
 import java.io.PrintStream
 
-import cats.effect.{Sync, Clock}
+import cats.effect.{Clock, Sync}
 import cats.syntax.all._
 import io.odin.formatter.Formatter
 import io.odin.{Level, Logger, LoggerMessage}
