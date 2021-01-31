@@ -1,5 +1,6 @@
 package io
 
+import java.nio.file.OpenOption
 import java.time.LocalDateTime
 
 import cats.effect.{Clock, Concurrent, ContextShift, Resource, Sync, Timer}
@@ -31,9 +32,10 @@ package object odin {
   def fileLogger[F[_]: Sync: Clock](
       fileName: String,
       formatter: Formatter = Formatter.default,
-      minLevel: Level = Level.Trace
+      minLevel: Level = Level.Trace,
+      openOptions: Seq[OpenOption] = Seq.empty
   ): Resource[F, Logger[F]] = {
-    FileLogger(fileName, formatter, minLevel)
+    FileLogger(fileName, formatter, minLevel, openOptions)
   }
 
   /**
@@ -60,9 +62,10 @@ package object odin {
       rolloverInterval: Option[FiniteDuration],
       maxFileSizeInBytes: Option[Long],
       formatter: Formatter = Formatter.default,
-      minLevel: Level = Level.Trace
+      minLevel: Level = Level.Trace,
+      openOptions: Seq[OpenOption] = Seq.empty
   ): Resource[F, Logger[F]] = {
-    RollingFileLogger(fileNamePattern, maxFileSizeInBytes, rolloverInterval, formatter, minLevel)
+    RollingFileLogger(fileNamePattern, maxFileSizeInBytes, rolloverInterval, formatter, minLevel, openOptions)
   }
 
   /**
@@ -78,9 +81,10 @@ package object odin {
       formatter: Formatter = Formatter.default,
       timeWindow: FiniteDuration = 1.second,
       maxBufferSize: Option[Int] = None,
-      minLevel: Level = Level.Trace
+      minLevel: Level = Level.Trace,
+      openOptions: Seq[OpenOption] = Seq.empty
   ): Resource[F, Logger[F]] =
-    fileLogger[F](fileName, formatter, minLevel).withAsync(timeWindow, maxBufferSize)
+    fileLogger[F](fileName, formatter, minLevel, openOptions).withAsync(timeWindow, maxBufferSize)
 
   /**
     * Same as [[rollingFileLogger]] but with intermediate async buffer
@@ -101,8 +105,9 @@ package object odin {
       timeWindow: FiniteDuration = 1.second,
       maxBufferSize: Option[Int] = None,
       formatter: Formatter = Formatter.default,
-      minLevel: Level = Level.Trace
+      minLevel: Level = Level.Trace,
+      openOptions: Seq[OpenOption] = Seq.empty
   ): Resource[F, Logger[F]] =
-    rollingFileLogger(fileNamePattern, rolloverInterval, maxFileSizeInBytes, formatter, minLevel)
+    rollingFileLogger(fileNamePattern, rolloverInterval, maxFileSizeInBytes, formatter, minLevel, openOptions)
       .withAsync(timeWindow, maxBufferSize)
 }

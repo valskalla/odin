@@ -1,6 +1,6 @@
 package io.odin.loggers
 
-import java.nio.file.{Files, Path, Paths}
+import java.nio.file.{Files, OpenOption, Path, Paths}
 import java.time.{Instant, LocalDateTime}
 import java.time.format.DateTimeFormatter
 import java.util.TimeZone
@@ -22,7 +22,8 @@ object RollingFileLogger {
       maxFileSizeInBytes: Option[Long],
       rolloverInterval: Option[FiniteDuration],
       formatter: Formatter,
-      minLevel: Level
+      minLevel: Level,
+      openOptions: Seq[OpenOption] = Seq.empty
   )(implicit F: Concurrent[F], timer: Timer[F], cs: ContextShift[F]): Resource[F, Logger[F]] = {
     new RollingFileLoggerFactory(
       fileNamePattern,
@@ -30,7 +31,8 @@ object RollingFileLogger {
       rolloverInterval,
       formatter,
       minLevel,
-      FileLogger.apply[F]
+      FileLogger.apply[F],
+      openOptions = openOptions
     ).mk
   }
 
@@ -51,8 +53,9 @@ object RollingFileLogger {
       rolloverInterval: Option[FiniteDuration],
       formatter: Formatter,
       minLevel: Level,
-      underlyingLogger: (String, Formatter, Level) => Resource[F, Logger[F]],
-      fileSizeCheck: Path => Long = Files.size
+      underlyingLogger: (String, Formatter, Level, Seq[OpenOption]) => Resource[F, Logger[F]],
+      fileSizeCheck: Path => Long = Files.size,
+      openOptions: Seq[OpenOption]
   )(implicit F: Concurrent[F], timer: Timer[F], cs: ContextShift[F]) {
 
     val df: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss")
@@ -80,7 +83,7 @@ object RollingFileLogger {
       Resource.suspend(now.map { time =>
         val localTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(time), TimeZone.getDefault.toZoneId)
         val fileName = fileNamePattern(localTime)
-        underlyingLogger(fileName, formatter, minLevel).product(fileWatcher(fileName))
+        underlyingLogger(fileName, formatter, minLevel, openOptions).product(fileWatcher(fileName))
       })
 
     /**

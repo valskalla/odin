@@ -293,7 +293,8 @@ Another backend that Odin provides by default is the basic file logger:
 def fileLogger[F[_]: Sync: Clock](
       fileName: String,
       formatter: Formatter = Formatter.default,
-      minLevel: Level = Level.Trace
+      minLevel: Level = Level.Trace,
+      openOptions: Seq[OpenOption] = Seq.empty
   ): Resource[F, Logger[F]]
 ```
 
@@ -310,7 +311,11 @@ file.use { logger =>
 ```
 
 Usual pattern here is to compose and allocate such resources during the start of your program and wrap execution of
-the logic inside of `.use` block.  
+the logic inside of `.use` block.
+
+The `openOptions` parameter allows overriding the default `OpenOption` parameters when creating a file.
+See [java.nio.file.Files](https://docs.oracle.com/javase/7/docs/api/java/nio/file/Files.html#newBufferedWriter(java.nio.file.Path,%20java.nio.charset.Charset,%20java.nio.file.OpenOption...))
+for details. In case if the directories in the file name do not exist in the file system, Odin will try to create them.
 
 **Important notice**: this logger doesn't buffer and tries to flush to the file on each log due to the safety guarantees.
 Consider to use `asyncFileLogger` version with almost the same signature (except the `Concurrent[F]` constraint)
