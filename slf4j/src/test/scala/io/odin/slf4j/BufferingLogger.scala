@@ -12,5 +12,5 @@ class BufferingLogger[F[_]: Clock](override val minLevel: Level)(implicit F: Syn
 
   val buffer: Ref[F, Queue[LoggerMessage]] = Ref.unsafe[F, Queue[LoggerMessage]](Queue.empty)
 
-  def log(msg: LoggerMessage): F[Unit] = buffer.update(_.enqueue(msg))
+  def submit(msg: LoggerMessage): F[Unit] = buffer.update(_.enqueue(msg))
 }

@@ -41,9 +41,9 @@ object RollingFileLogger {
       override val minLevel: Level
   ) extends DefaultLogger[F](minLevel) {
 
-    def log(msg: LoggerMessage): F[Unit] = current.get.flatMap(_.log(msg))
+    def submit(msg: LoggerMessage): F[Unit] = current.get.flatMap(_.log(msg))
 
-    override def log(msgs: List[LoggerMessage]): F[Unit] = current.get.flatMap(_.log(msgs))
+    override def submit(msgs: List[LoggerMessage]): F[Unit] = current.get.flatMap(_.log(msgs))
 
   }
 

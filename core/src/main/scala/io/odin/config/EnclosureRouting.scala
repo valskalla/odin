@@ -15,9 +15,9 @@ private[config] class EnclosureRouting[F[_]: Clock](fallback: Logger[F], router:
     case ((packageName, logger), idx) => (packageName, (idx, logger))
   }
 
-  def log(msg: LoggerMessage): F[Unit] = recLog(indexedRouter, msg)
+  def submit(msg: LoggerMessage): F[Unit] = recLog(indexedRouter, msg)
 
-  override def log(msgs: List[LoggerMessage]): F[Unit] = {
+  override def submit(msgs: List[LoggerMessage]): F[Unit] = {
     msgs
       .map { msg =>
         indexedRouter

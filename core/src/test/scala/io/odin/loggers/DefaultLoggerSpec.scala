@@ -71,7 +71,7 @@ class DefaultLoggerSpec extends OdinSpec {
 
   private def logger(implicit clock: Clock[Id]): Logger[F] = {
     new DefaultLogger[F] {
-      def log(msg: LoggerMessage): Writer[List[LoggerMessage], Unit] = Writer.tell(List(msg))
+      def submit(msg: LoggerMessage): Writer[List[LoggerMessage], Unit] = Writer.tell(List(msg))
     }
   }
 

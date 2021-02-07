@@ -15,12 +15,12 @@ import io.odin.{Logger, LoggerMessage}
   */
 case class ContextualLogger[F[_]: Clock: Monad](inner: Logger[F])(implicit withContext: WithContext[F])
     extends DefaultLogger[F](inner.minLevel) {
-  def log(msg: LoggerMessage): F[Unit] =
+  def submit(msg: LoggerMessage): F[Unit] =
     withContext.context.flatMap { ctx =>
       inner.log(msg.copy(context = msg.context ++ ctx))
     }
 
-  override def log(msgs: List[LoggerMessage]): F[Unit] =
+  override def submit(msgs: List[LoggerMessage]): F[Unit] =
     withContext.context.flatMap { ctx =>
       inner.log(msgs.map(msg => msg.copy(context = msg.context ++ ctx)))
     }

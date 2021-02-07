@@ -17,7 +17,7 @@ case class ConsoleLogger[F[_]: Clock](
   private def println(out: PrintStream, msg: LoggerMessage, formatter: Formatter): F[Unit] =
     F.delay(out.println(formatter.format(msg)))
 
-  def log(msg: LoggerMessage): F[Unit] =
+  def submit(msg: LoggerMessage): F[Unit] =
     if (msg.level < Level.Warn) {
       println(out, msg, formatter)
     } else {

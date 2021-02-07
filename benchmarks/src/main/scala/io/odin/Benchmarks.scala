@@ -55,7 +55,7 @@ class DefaultLoggerBenchmarks extends OdinBenchmarks {
   val noop: Logger[IO] = Logger.noop
 
   val defaultLogger: Logger[IO] = new DefaultLogger[IO] {
-    def log(msg: LoggerMessage): IO[Unit] = noop.log(msg)
+    def submit(msg: LoggerMessage): IO[Unit] = noop.log(msg)
   }
 
   @Benchmark

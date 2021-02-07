@@ -39,9 +39,9 @@ package object config extends FileNamePatternSyntax {
   def levelRouting[F[_]: Clock: Monad](router: Map[Level, Logger[F]]): DefaultBuilder[F] =
     new DefaultBuilder[F]({ default: Logger[F] =>
       new DefaultLogger[F]() {
-        def log(msg: LoggerMessage): F[Unit] = router.getOrElse(msg.level, default).log(msg)
+        def submit(msg: LoggerMessage): F[Unit] = router.getOrElse(msg.level, default).log(msg)
 
-        override def log(msgs: List[LoggerMessage]): F[Unit] = {
+        override def submit(msgs: List[LoggerMessage]): F[Unit] = {
           msgs.groupBy(_.level).toList.traverse_ {
             case (level, msgs) => router.getOrElse(level, default).log(msgs)
           }

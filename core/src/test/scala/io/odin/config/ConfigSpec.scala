@@ -12,7 +12,7 @@ class ConfigSpec extends OdinSpec {
   type F[A] = WriterT[IO, List[(String, LoggerMessage)], A]
 
   case class TestLogger(loggerName: String) extends DefaultLogger[F] {
-    def log(msg: LoggerMessage): F[Unit] = WriterT.tell(List(loggerName -> msg))
+    def submit(msg: LoggerMessage): F[Unit] = WriterT.tell(List(loggerName -> msg))
   }
 
   it should "route based on the package" in {

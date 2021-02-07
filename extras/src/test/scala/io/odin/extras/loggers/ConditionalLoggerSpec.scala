@@ -20,7 +20,7 @@ class ConditionalLoggerSpec extends OdinSpec {
   type F[A] = Kleisli[Task, Map[String, String], A]
 
   case class RefLogger(ref: Ref[F, List[LoggerMessage]]) extends DefaultLogger[F] {
-    def log(msg: LoggerMessage): F[Unit] = ref.update(_ :+ msg)
+    def submit(msg: LoggerMessage): F[Unit] = ref.update(_ :+ msg)
   }
 
   implicit private val hasContext: HasContext[Map[String, String]] = (env: Map[String, String]) => env

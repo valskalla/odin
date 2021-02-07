@@ -45,7 +45,7 @@ class LoggerMonoidSpec extends OdinSpec {
   }
 
   case class NamedLogger(loggerId: UUID) extends DefaultLogger[F] {
-    def log(msg: LoggerMessage): F[Unit] = WriterT.tell(List(loggerId -> msg))
+    def submit(msg: LoggerMessage): F[Unit] = WriterT.tell(List(loggerId -> msg))
   }
 
   implicit def clock: Clock[IO] = zeroClock

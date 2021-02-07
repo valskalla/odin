@@ -18,7 +18,7 @@ final case class ConditionalLogger[F[_]: Clock] private (
 )(implicit F: MonadError[F, Throwable])
     extends DefaultLogger[F](minLevel) {
 
-  def log(msg: LoggerMessage): F[Unit] =
+  def submit(msg: LoggerMessage): F[Unit] =
     queue.tryOffer(msg).void
 
   private def drain(exitCase: ExitCase[Throwable]): F[Unit] = {
@@ -29,7 +29,14 @@ final case class ConditionalLogger[F[_]: Clock] private (
 
     queue
       .drain(0, Int.MaxValue)
-      .flatMap(msgs => inner.log(msgs.filter(_.level >= level).toList))
+      .flatMap(msgs =>
+        inner match {
+          case default: DefaultLogger[F] =>
+            default.submit(msgs.filter(_.level >= level).toList)
+          case _: Logger[F] =>
+            inner.log(msgs.filter(_.level >= level).toList)
+        }
+      )
       .attempt
       .void
   }

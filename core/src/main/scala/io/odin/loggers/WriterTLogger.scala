@@ -9,7 +9,7 @@ import io.odin.LoggerMessage
   * Pure logger that stores logs in `WriterT` log
   */
 class WriterTLogger[F[_]: Clock: Monad] extends DefaultLogger[WriterT[F, List[LoggerMessage], *]] {
-  def log(msg: LoggerMessage): WriterT[F, List[LoggerMessage], Unit] = WriterT.tell(List(msg))
+  def submit(msg: LoggerMessage): WriterT[F, List[LoggerMessage], Unit] = WriterT.tell(List(msg))
 
-  override def log(msgs: List[LoggerMessage]): WriterT[F, List[LoggerMessage], Unit] = WriterT.tell(msgs)
+  override def submit(msgs: List[LoggerMessage]): WriterT[F, List[LoggerMessage], Unit] = WriterT.tell(msgs)
 }

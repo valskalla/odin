@@ -18,32 +18,35 @@ abstract class DefaultLogger[F[_]](val minLevel: Level = Level.Trace)(implicit c
       implicit render: Render[M],
       position: Position
   ): F[Unit] =
-    F.whenA(level >= minLevel) {
-      for {
-        timestamp <- clock.realTime(TimeUnit.MILLISECONDS)
-        _ <- log(
-          LoggerMessage(
-            level = level,
-            message = Eval.later(render.render(msg)),
-            context = ctx,
-            exception = t,
-            position = position,
-            threadName = Thread.currentThread().getName,
-            timestamp = timestamp
-          )
+    for {
+      timestamp <- clock.realTime(TimeUnit.MILLISECONDS)
+      _ <- log(
+        LoggerMessage(
+          level = level,
+          message = Eval.later(render.render(msg)),
+          context = ctx,
+          exception = t,
+          position = position,
+          threadName = Thread.currentThread().getName,
+          timestamp = timestamp
         )
-      } yield {
-        ()
-      }
+      )
+    } yield {
+      ()
     }
 
+  def submit(msg: LoggerMessage): F[Unit]
+  def submit(msgs: List[LoggerMessage]): F[Unit] = msgs.traverse_(msg => submit(msg))
+
   def withMinimalLevel(level: Level): Logger[F] = new DefaultLogger[F](level) {
-    def log(msg: LoggerMessage): F[Unit] = self.log(msg)
+    def submit(msg: LoggerMessage): F[Unit] = self.submit(msg)
     override def log(msgs: List[LoggerMessage]): F[Unit] = self.log(msgs)
   }
 
+  def log(msg: LoggerMessage): F[Unit] = F.whenA(msg.level >= minLevel)(self.submit(msg))
+
   def log(msgs: List[LoggerMessage]): F[Unit] =
-    msgs.traverse(msg => log(msg)).void
+    submit(msgs.filter(_.level >= minLevel))
 
   def trace[M](msg: => M)(implicit render: Render[M], position: Position): F[Unit] =
     F.whenA(minLevel <= Level.Trace) {
