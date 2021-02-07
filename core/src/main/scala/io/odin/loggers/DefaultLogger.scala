@@ -40,7 +40,7 @@ abstract class DefaultLogger[F[_]](val minLevel: Level = Level.Trace)(implicit c
 
   def withMinimalLevel(level: Level): Logger[F] = new DefaultLogger[F](level) {
     def submit(msg: LoggerMessage): F[Unit] = self.submit(msg)
-    override def log(msgs: List[LoggerMessage]): F[Unit] = self.log(msgs)
+    override def submit(msgs: List[LoggerMessage]): F[Unit] = self.submit(msgs)
   }
 
   def log(msg: LoggerMessage): F[Unit] = F.whenA(msg.level >= minLevel)(self.submit(msg))

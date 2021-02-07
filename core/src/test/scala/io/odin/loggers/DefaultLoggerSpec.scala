@@ -61,6 +61,36 @@ class DefaultLoggerSpec extends OdinSpec {
     }
   }
 
+  it should "decrease min log level on update" in {
+    implicit val clk: Clock[Id] = zeroClock
+    forAll { (maxLevel: Level, minLevel: Level, msg: LoggerMessage) =>
+      whenever(maxLevel > minLevel) {
+        val l = logger.withMinimalLevel(maxLevel).withMinimalLevel(minLevel)
+        val written = l.log(msg).written
+        if (msg.level >= minLevel) {
+          written shouldBe Symbol("nonEmpty")
+        } else {
+          written shouldBe Symbol("empty")
+        }
+      }
+    }
+  }
+
+  it should "increase min log level on update" in {
+    implicit val clk: Clock[Id] = zeroClock
+    forAll { (maxLevel: Level, minLevel: Level, msg: LoggerMessage) =>
+      whenever(maxLevel > minLevel) {
+        val l = logger.withMinimalLevel(minLevel).withMinimalLevel(maxLevel)
+        val written = l.log(msg).written
+        if (msg.level >= maxLevel) {
+          written shouldBe Symbol("nonEmpty")
+        } else {
+          written shouldBe Symbol("empty")
+        }
+      }
+    }
+  }
+
   private def levelToFn(logger: Logger[F], level: Level)(msg: String): F[Unit] = level match {
     case Level.Trace => logger.trace(msg)
     case Level.Debug => logger.debug(msg)
