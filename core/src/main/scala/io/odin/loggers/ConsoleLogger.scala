@@ -23,6 +23,8 @@ case class ConsoleLogger[F[_]: Clock](
     } else {
       println(err, msg, formatter)
     }
+
+  def withMinimalLevel(level: Level): Logger[F] = copy(minLevel = level)
 }
 
 object ConsoleLogger {

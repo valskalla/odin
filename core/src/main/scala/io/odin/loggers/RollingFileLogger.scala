@@ -36,7 +36,7 @@ object RollingFileLogger {
     ).mk
   }
 
-  private[odin] class RefLogger[F[_]: Clock: Monad](
+  private[odin] case class RefLogger[F[_]: Clock: Monad](
       current: Ref[F, Logger[F]],
       override val minLevel: Level
   ) extends DefaultLogger[F](minLevel) {
@@ -45,6 +45,7 @@ object RollingFileLogger {
 
     override def submit(msgs: List[LoggerMessage]): F[Unit] = current.get.flatMap(_.log(msgs))
 
+    def withMinimalLevel(level: Level): Logger[F] = copy(minLevel = level)
   }
 
   private[odin] class RollingFileLoggerFactory[F[_]](

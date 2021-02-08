@@ -27,6 +27,8 @@ case class FileLogger[F[_]: Clock](buffer: BufferedWriter, formatter: Formatter,
     }
 
   private def flush: F[Unit] = F.delay(buffer.flush()).handleErrorWith(_ => F.unit)
+
+  def withMinimalLevel(level: Level): Logger[F] = copy(minLevel = level)
 }
 
 object FileLogger {

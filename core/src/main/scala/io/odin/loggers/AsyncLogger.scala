@@ -2,7 +2,7 @@ package io.odin.loggers
 
 import cats.effect.{Concurrent, ConcurrentEffect, ContextShift, Fiber, Resource, Timer}
 import cats.syntax.all._
-import io.odin.{Logger, LoggerMessage}
+import io.odin.{Level, Logger, LoggerMessage}
 import monix.catnap.ConcurrentQueue
 import monix.execution.{BufferCapacity, ChannelType}
 
@@ -44,6 +44,8 @@ case class AsyncLogger[F[_]](queue: ConcurrentQueue[F, LoggerMessage], timeWindo
       Fiber(fiber.join, drain >> fiber.cancel)
     }
   }
+
+  def withMinimalLevel(level: Level): Logger[F] = copy(inner = inner.withMinimalLevel(level))
 }
 
 object AsyncLogger {

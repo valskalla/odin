@@ -61,13 +61,14 @@ class LoggerMonoidSpec extends OdinSpec {
     }
   }
 
-  case class NamedLogger(loggerId: UUID) extends DefaultLogger[F] {
+  case class NamedLogger(loggerId: UUID, override val minLevel: Level = Level.Trace) extends DefaultLogger[F](minLevel) {
     def submit(msg: LoggerMessage): F[Unit] = WriterT.tell(List(loggerId -> msg))
+    def withMinimalLevel(level: Level): Logger[F] = copy(minLevel = level)
   }
 
   implicit def clock: Clock[IO] = zeroClock
 
   implicit def arbitraryWriterLogger: Arbitrary[Logger[F]] = Arbitrary(
-    Gen.uuid.map(NamedLogger)
+    Gen.uuid.map(NamedLogger(_))
   )
 }

@@ -180,10 +180,9 @@ trait LoggerInstances {
   implicit def monoidLogger[F[_]: Applicative]: Monoid[Logger[F]] = new MonoidLogger[F]
 }
 
-private[odin] class NoopLogger[F[_]](implicit F: Applicative[F]) extends Logger[F] { self =>
-  val minLevel: Level = UpperBounded[Level].maxBound
+private[odin] class NoopLogger[F[_]](val minLevel: Level = UpperBounded[Level].maxBound)(implicit F: Applicative[F]) extends Logger[F] { self =>
 
-  def withMinimalLevel(level: Level): Logger[F] = self
+  def withMinimalLevel(level: Level): Logger[F] = new NoopLogger[F](level)
 
   def log(msg: LoggerMessage): F[Unit] = F.unit
 

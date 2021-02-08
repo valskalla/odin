@@ -2,7 +2,7 @@ package io.odin.loggers
 
 import cats.Monad
 import cats.effect.Clock
-import io.odin.{Logger, LoggerMessage}
+import io.odin.{Level, Logger, LoggerMessage}
 
 /**
   * Filter each `LoggerMessage` using given predicate before passing it to the next logger
@@ -14,4 +14,6 @@ case class FilterLogger[F[_]: Clock](fn: LoggerMessage => Boolean, inner: Logger
 
   override def submit(msgs: List[LoggerMessage]): F[Unit] =
     inner.log(msgs.filter(fn))
+
+  def withMinimalLevel(level: Level): Logger[F] = copy(inner = inner.withMinimalLevel(level))
 }

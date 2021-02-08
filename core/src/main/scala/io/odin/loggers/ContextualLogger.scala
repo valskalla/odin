@@ -4,7 +4,7 @@ import cats.Monad
 import cats.effect.Clock
 import cats.mtl.Ask
 import cats.syntax.all._
-import io.odin.{Logger, LoggerMessage}
+import io.odin.{Level, Logger, LoggerMessage}
 
 /**
   * Logger that extracts context from environment of `F[_]` with the help of [[WithContext]] type class.
@@ -24,6 +24,8 @@ case class ContextualLogger[F[_]: Clock: Monad](inner: Logger[F])(implicit withC
     withContext.context.flatMap { ctx =>
       inner.log(msgs.map(msg => msg.copy(context = msg.context ++ ctx)))
     }
+
+  def withMinimalLevel(level: Level): Logger[F] = copy(inner = inner.withMinimalLevel(level))
 }
 
 object ContextualLogger {

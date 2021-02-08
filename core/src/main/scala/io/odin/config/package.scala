@@ -38,7 +38,7 @@ package object config extends FileNamePatternSyntax {
     */
   def levelRouting[F[_]: Clock: Monad](router: Map[Level, Logger[F]]): DefaultBuilder[F] =
     new DefaultBuilder[F]({ default: Logger[F] =>
-      new DefaultLogger[F]() {
+      new DefaultLogger[F](Level.Trace) {
         def submit(msg: LoggerMessage): F[Unit] = router.getOrElse(msg.level, default).log(msg)
 
         override def submit(msgs: List[LoggerMessage]): F[Unit] = {
@@ -46,6 +46,10 @@ package object config extends FileNamePatternSyntax {
             case (level, msgs) => router.getOrElse(level, default).log(msgs)
           }
         }
+
+        def withMinimalLevel(level: Level): Logger[F] =
+          levelRouting(router.view.mapValues(_.withMinimalLevel(level)).toMap)
+            .withDefault(default.withMinimalLevel(level))
       }
     })
 

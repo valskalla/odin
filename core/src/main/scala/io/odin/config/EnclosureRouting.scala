@@ -4,13 +4,13 @@ import cats.Monad
 import cats.effect.Clock
 import cats.syntax.all._
 import io.odin.loggers.DefaultLogger
-import io.odin.{Logger, LoggerMessage}
+import io.odin.{Level, Logger, LoggerMessage}
 
 import scala.annotation.tailrec
 
 private[config] class EnclosureRouting[F[_]: Clock](fallback: Logger[F], router: List[(String, Logger[F])])(
     implicit F: Monad[F]
-) extends DefaultLogger {
+) extends DefaultLogger(Level.Trace) {
   private val indexedRouter = router.mapWithIndex {
     case ((packageName, logger), idx) => (packageName, (idx, logger))
   }
@@ -44,4 +44,9 @@ private[config] class EnclosureRouting[F[_]: Clock](fallback: Logger[F], router:
       logger.log(msg)
     case _ :: tail => recLog(tail, msg)
   }
+
+  def withMinimalLevel(level: Level): Logger[F] =
+    new EnclosureRouting[F](fallback.withMinimalLevel(level), router.map {
+      case (route, logger) => route -> logger.withMinimalLevel(level)
+    })
 }

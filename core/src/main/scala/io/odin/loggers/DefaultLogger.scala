@@ -12,7 +12,7 @@ import io.odin.{Level, Logger, LoggerMessage}
   * Default logger that relies on implicits of `Clock[F]` and `Monad[F]` to get timestamp and create log
   * message with this timestamp
   */
-abstract class DefaultLogger[F[_]](val minLevel: Level = Level.Trace)(implicit clock: Clock[F], F: Monad[F])
+abstract class DefaultLogger[F[_]](val minLevel: Level)(implicit clock: Clock[F], F: Monad[F])
     extends Logger[F] { self =>
   private def log[M](level: Level, msg: => M, ctx: Map[String, String] = Map.empty, t: Option[Throwable] = None)(
       implicit render: Render[M],
@@ -37,11 +37,6 @@ abstract class DefaultLogger[F[_]](val minLevel: Level = Level.Trace)(implicit c
 
   def submit(msg: LoggerMessage): F[Unit]
   def submit(msgs: List[LoggerMessage]): F[Unit] = msgs.traverse_(msg => submit(msg))
-
-  def withMinimalLevel(level: Level): Logger[F] = new DefaultLogger[F](level) {
-    def submit(msg: LoggerMessage): F[Unit] = self.submit(msg)
-    override def submit(msgs: List[LoggerMessage]): F[Unit] = self.submit(msgs)
-  }
 
   def log(msg: LoggerMessage): F[Unit] = F.whenA(msg.level >= minLevel)(self.submit(msg))
 

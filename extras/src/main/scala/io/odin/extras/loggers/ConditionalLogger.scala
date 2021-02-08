@@ -5,7 +5,6 @@ import cats.effect.{Clock, Concurrent, ContextShift, ExitCase, Resource}
 import cats.syntax.applicativeError._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
-import cats.syntax.order._
 import io.odin.loggers.DefaultLogger
 import io.odin.{Level, Logger, LoggerMessage}
 import monix.catnap.ConcurrentQueue
@@ -30,17 +29,13 @@ final case class ConditionalLogger[F[_]: Clock] private (
     queue
       .drain(0, Int.MaxValue)
       .flatMap(msgs =>
-        inner match {
-          case default: DefaultLogger[F] =>
-            default.submit(msgs.filter(_.level >= level).toList)
-          case _: Logger[F] =>
-            inner.log(msgs.filter(_.level >= level).toList)
-        }
+        inner.withMinimalLevel(level).log(msgs.toList)
       )
       .attempt
       .void
   }
 
+  def withMinimalLevel(level: Level): Logger[F] = copy(inner = inner.withMinimalLevel(level), minLevel = level)
 }
 
 object ConditionalLogger {
