@@ -14,7 +14,8 @@ import scala.concurrent.duration._
 class AsyncLoggerSpec extends OdinSpec {
   implicit private val scheduler: TestScheduler = TestScheduler()
 
-  case class RefLogger(ref: Ref[Task, List[LoggerMessage]], override val minLevel: Level = Level.Trace) extends DefaultLogger[Task](minLevel) {
+  case class RefLogger(ref: Ref[Task, List[LoggerMessage]], override val minLevel: Level = Level.Trace)
+      extends DefaultLogger[Task](minLevel) {
     def submit(msg: LoggerMessage): Task[Unit] = Task.raiseError(new IllegalStateException("Async should always batch"))
 
     override def submit(msgs: List[LoggerMessage]): Task[Unit] = {

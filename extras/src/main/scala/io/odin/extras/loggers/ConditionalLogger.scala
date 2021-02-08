@@ -28,9 +28,7 @@ final case class ConditionalLogger[F[_]: Clock] private (
 
     queue
       .drain(0, Int.MaxValue)
-      .flatMap(msgs =>
-        inner.withMinimalLevel(level).log(msgs.toList)
-      )
+      .flatMap(msgs => inner.withMinimalLevel(level).log(msgs.toList))
       .attempt
       .void
   }

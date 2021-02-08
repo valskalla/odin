@@ -19,7 +19,8 @@ class ConditionalLoggerSpec extends OdinSpec {
 
   type F[A] = Kleisli[Task, Map[String, String], A]
 
-  case class RefLogger(ref: Ref[F, List[LoggerMessage]], override val minLevel: Level = Level.Trace) extends DefaultLogger[F](minLevel) {
+  case class RefLogger(ref: Ref[F, List[LoggerMessage]], override val minLevel: Level = Level.Trace)
+      extends DefaultLogger[F](minLevel) {
     def submit(msg: LoggerMessage): F[Unit] = ref.update(_ :+ msg)
     def withMinimalLevel(level: Level): Logger[F] = copy(minLevel = level)
   }

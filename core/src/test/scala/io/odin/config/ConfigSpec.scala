@@ -11,7 +11,8 @@ class ConfigSpec extends OdinSpec {
 
   type F[A] = WriterT[IO, List[(String, LoggerMessage)], A]
 
-  case class TestLogger(loggerName: String, override val minLevel: Level = Level.Trace) extends DefaultLogger[F](minLevel) {
+  case class TestLogger(loggerName: String, override val minLevel: Level = Level.Trace)
+      extends DefaultLogger[F](minLevel) {
     def submit(msg: LoggerMessage): F[Unit] = WriterT.tell(List(loggerName -> msg))
 
     def withMinimalLevel(level: Level): Logger[F] = copy(minLevel = level)
