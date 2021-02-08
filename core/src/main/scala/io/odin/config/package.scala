@@ -48,8 +48,9 @@ package object config extends FileNamePatternSyntax {
         }
 
         def withMinimalLevel(level: Level): Logger[F] =
-          levelRouting(router.view.mapValues(_.withMinimalLevel(level)).toMap)
-            .withDefault(default.withMinimalLevel(level))
+          levelRouting(router.map {
+            case (level, logger) => level -> logger.withMinimalLevel(level)
+          }).withDefault(default.withMinimalLevel(level))
       }
     })
 
