@@ -12,7 +12,7 @@ class DefaultLoggerSpec extends OdinSpec {
   it should "correctly construct LoggerMessage" in {
     forAll { (msg: String, ctx: Map[String, String], throwable: Throwable, timestamp: Long) =>
       implicit val clk: Clock[Id] = fixedClock(timestamp)
-      val log = logger.withMinimalLevel(Level.Trace)
+      val log = logger().withMinimalLevel(Level.Trace)
       check(log.trace(msg))(Level.Trace, msg, timestamp)
       check(log.trace(msg, throwable))(Level.Trace, msg, timestamp, throwable = Some(throwable))
       check(log.trace(msg, ctx))(Level.Trace, msg, timestamp, ctx)
@@ -43,20 +43,50 @@ class DefaultLoggerSpec extends OdinSpec {
   it should "write multiple messages" in {
     forAll { msgs: List[LoggerMessage] =>
       implicit val clk: Clock[Id] = zeroClock
-      logger.withMinimalLevel(Level.Trace).log(msgs).written shouldBe msgs
+      logger().withMinimalLevel(Level.Trace).log(msgs).written shouldBe msgs
     }
   }
 
   it should "filter by minimal level" in {
     implicit val clk: Clock[Id] = zeroClock
     forAll { (minLevel: Level, msgLevel: Level, msg: String) =>
-      val l = logger.withMinimalLevel(minLevel)
+      val l = logger().withMinimalLevel(minLevel)
       val fn = levelToFn(l, msgLevel) _
       val written = fn(msg).written
       if (msgLevel >= minLevel) {
         written shouldBe Symbol("nonEmpty")
       } else {
         written shouldBe Symbol("empty")
+      }
+    }
+  }
+
+  it should "decrease min log level on update" in {
+    implicit val clk: Clock[Id] = zeroClock
+    forAll { (maxLevel: Level, minLevel: Level, msg: LoggerMessage) =>
+      whenever(maxLevel > minLevel) {
+        val l = logger().withMinimalLevel(maxLevel).withMinimalLevel(minLevel)
+        val written = l.log(msg).written
+        if (msg.level >= minLevel) {
+          written should not be empty
+        } else {
+          written shouldBe empty
+        }
+      }
+    }
+  }
+
+  it should "increase min log level on update" in {
+    implicit val clk: Clock[Id] = zeroClock
+    forAll { (maxLevel: Level, minLevel: Level, msg: LoggerMessage) =>
+      whenever(maxLevel > minLevel) {
+        val l = logger().withMinimalLevel(minLevel).withMinimalLevel(maxLevel)
+        val written = l.log(msg).written
+        if (msg.level >= maxLevel) {
+          written should not be empty
+        } else {
+          written shouldBe empty
+        }
       }
     }
   }
@@ -69,9 +99,10 @@ class DefaultLoggerSpec extends OdinSpec {
     case Level.Error => logger.error(msg)
   }
 
-  private def logger(implicit clock: Clock[Id]): Logger[F] = {
-    new DefaultLogger[F] {
-      def log(msg: LoggerMessage): Writer[List[LoggerMessage], Unit] = Writer.tell(List(msg))
+  private def logger(minLevel: Level = Level.Trace)(implicit clock: Clock[Id]): Logger[F] = {
+    new DefaultLogger[F](minLevel) {
+      def submit(msg: LoggerMessage): Writer[List[LoggerMessage], Unit] = Writer.tell(List(msg))
+      def withMinimalLevel(level: Level): Logger[F] = logger(level)
     }
   }
 

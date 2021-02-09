@@ -9,7 +9,7 @@ import cats.syntax.order._
 import io.odin.loggers.{DefaultLogger, HasContext}
 import io.odin.syntax._
 import io.odin.extras.syntax._
-import io.odin.{Level, LoggerMessage, OdinSpec}
+import io.odin.{Level, Logger, LoggerMessage, OdinSpec}
 import monix.eval.Task
 import monix.execution.schedulers.TestScheduler
 
@@ -19,8 +19,10 @@ class ConditionalLoggerSpec extends OdinSpec {
 
   type F[A] = Kleisli[Task, Map[String, String], A]
 
-  case class RefLogger(ref: Ref[F, List[LoggerMessage]]) extends DefaultLogger[F] {
-    def log(msg: LoggerMessage): F[Unit] = ref.update(_ :+ msg)
+  case class RefLogger(ref: Ref[F, List[LoggerMessage]], override val minLevel: Level = Level.Trace)
+      extends DefaultLogger[F](minLevel) {
+    def submit(msg: LoggerMessage): F[Unit] = ref.update(_ :+ msg)
+    def withMinimalLevel(level: Level): Logger[F] = copy(minLevel = level)
   }
 
   implicit private val hasContext: HasContext[Map[String, String]] = (env: Map[String, String]) => env

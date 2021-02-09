@@ -12,38 +12,36 @@ import io.odin.{Level, Logger, LoggerMessage}
   * Default logger that relies on implicits of `Clock[F]` and `Monad[F]` to get timestamp and create log
   * message with this timestamp
   */
-abstract class DefaultLogger[F[_]](val minLevel: Level = Level.Trace)(implicit clock: Clock[F], F: Monad[F])
-    extends Logger[F] { self =>
+abstract class DefaultLogger[F[_]](val minLevel: Level)(implicit clock: Clock[F], F: Monad[F]) extends Logger[F] {
+  self =>
   private def log[M](level: Level, msg: => M, ctx: Map[String, String] = Map.empty, t: Option[Throwable] = None)(
       implicit render: Render[M],
       position: Position
   ): F[Unit] =
-    F.whenA(level >= minLevel) {
-      for {
-        timestamp <- clock.realTime(TimeUnit.MILLISECONDS)
-        _ <- log(
-          LoggerMessage(
-            level = level,
-            message = Eval.later(render.render(msg)),
-            context = ctx,
-            exception = t,
-            position = position,
-            threadName = Thread.currentThread().getName,
-            timestamp = timestamp
-          )
+    for {
+      timestamp <- clock.realTime(TimeUnit.MILLISECONDS)
+      _ <- log(
+        LoggerMessage(
+          level = level,
+          message = Eval.later(render.render(msg)),
+          context = ctx,
+          exception = t,
+          position = position,
+          threadName = Thread.currentThread().getName,
+          timestamp = timestamp
         )
-      } yield {
-        ()
-      }
+      )
+    } yield {
+      ()
     }
 
-  def withMinimalLevel(level: Level): Logger[F] = new DefaultLogger[F](level) {
-    def log(msg: LoggerMessage): F[Unit] = self.log(msg)
-    override def log(msgs: List[LoggerMessage]): F[Unit] = self.log(msgs)
-  }
+  def submit(msg: LoggerMessage): F[Unit]
+  def submit(msgs: List[LoggerMessage]): F[Unit] = msgs.traverse_(msg => submit(msg))
+
+  def log(msg: LoggerMessage): F[Unit] = F.whenA(msg.level >= minLevel)(self.submit(msg))
 
   def log(msgs: List[LoggerMessage]): F[Unit] =
-    msgs.traverse(msg => log(msg)).void
+    submit(msgs.filter(_.level >= minLevel))
 
   def trace[M](msg: => M)(implicit render: Render[M], position: Position): F[Unit] =
     F.whenA(minLevel <= Level.Trace) {

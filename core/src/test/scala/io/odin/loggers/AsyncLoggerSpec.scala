@@ -14,12 +14,15 @@ import scala.concurrent.duration._
 class AsyncLoggerSpec extends OdinSpec {
   implicit private val scheduler: TestScheduler = TestScheduler()
 
-  case class RefLogger(ref: Ref[Task, List[LoggerMessage]]) extends DefaultLogger[Task] {
-    def log(msg: LoggerMessage): Task[Unit] = Task.raiseError(new IllegalStateException("Async should always batch"))
+  case class RefLogger(ref: Ref[Task, List[LoggerMessage]], override val minLevel: Level = Level.Trace)
+      extends DefaultLogger[Task](minLevel) {
+    def submit(msg: LoggerMessage): Task[Unit] = Task.raiseError(new IllegalStateException("Async should always batch"))
 
-    override def log(msgs: List[LoggerMessage]): Task[Unit] = {
+    override def submit(msgs: List[LoggerMessage]): Task[Unit] = {
       ref.update(_ ::: msgs)
     }
+
+    def withMinimalLevel(level: Level): Logger[Task] = copy(minLevel = level)
   }
 
   it should "push logs down the chain" in {
@@ -40,7 +43,7 @@ class AsyncLoggerSpec extends OdinSpec {
     forAll { msgs: List[LoggerMessage] =>
       (for {
         queue <- ConcurrentQueue.unbounded[Task, LoggerMessage]()
-        logger = AsyncLogger(queue, 1.millis, Logger.noop[Task])
+        logger = AsyncLogger(queue, 1.millis, Logger.noop[Task]).withMinimalLevel(Level.Trace)
         _ <- msgs.traverse(logger.log)
         reported <- queue.drain(0, Int.MaxValue)
       } yield {
@@ -50,8 +53,10 @@ class AsyncLoggerSpec extends OdinSpec {
   }
 
   it should "ignore errors in underlying logger" in {
-    val errorLogger = new DefaultLogger[Task] {
-      def log(msg: LoggerMessage): Task[Unit] = Task.raiseError(new Error)
+    val errorLogger = new DefaultLogger[Task](Level.Trace) {
+      def submit(msg: LoggerMessage): Task[Unit] = Task.raiseError(new Error)
+
+      def withMinimalLevel(level: Level): Logger[Task] = this
     }
     forAll { msgs: List[LoggerMessage] =>
       (for {

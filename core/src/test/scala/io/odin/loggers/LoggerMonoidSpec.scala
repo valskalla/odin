@@ -44,13 +44,32 @@ class LoggerMonoidSpec extends OdinSpec {
     }
   }
 
-  case class NamedLogger(loggerId: UUID) extends DefaultLogger[F] {
-    def log(msg: LoggerMessage): F[Unit] = WriterT.tell(List(loggerId -> msg))
+  it should "respect underlying log level of each logger" in {
+    forAll { (uuid1: UUID, uuid2: UUID, level1: Level, level2: Level, msg: List[LoggerMessage]) =>
+      whenever(level1 != level2) {
+        val logger1: Logger[F] = NamedLogger(uuid1).withMinimalLevel(level1)
+        val logger2: Logger[F] = NamedLogger(uuid2).withMinimalLevel(level2)
+        val logs = msg.map(_.copy(level = level2))
+        val written = (logger1 |+| logger2).log(logs).written.unsafeRunSync()
+
+        if (level1 > level2) {
+          written shouldBe logs.tupleLeft(uuid2)
+        } else {
+          written shouldBe logs.tupleLeft(uuid1) ++ logs.tupleLeft(uuid2)
+        }
+      }
+    }
+  }
+
+  case class NamedLogger(loggerId: UUID, override val minLevel: Level = Level.Trace)
+      extends DefaultLogger[F](minLevel) {
+    def submit(msg: LoggerMessage): F[Unit] = WriterT.tell(List(loggerId -> msg))
+    def withMinimalLevel(level: Level): Logger[F] = copy(minLevel = level)
   }
 
   implicit def clock: Clock[IO] = zeroClock
 
   implicit def arbitraryWriterLogger: Arbitrary[Logger[F]] = Arbitrary(
-    Gen.uuid.map(NamedLogger)
+    Gen.uuid.map(NamedLogger(_))
   )
 }

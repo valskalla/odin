@@ -8,3 +8,4 @@ target/
 /project/metals.sbt
 null/
 .bsp
+.vscode

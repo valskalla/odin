@@ -15,10 +15,10 @@ import io.odin.{Level, Logger, LoggerMessage}
 case class FileLogger[F[_]: Clock](buffer: BufferedWriter, formatter: Formatter, override val minLevel: Level)(
     implicit F: Sync[F]
 ) extends DefaultLogger[F](minLevel) {
-  def log(msg: LoggerMessage): F[Unit] =
+  def submit(msg: LoggerMessage): F[Unit] =
     write(msg, formatter).guarantee(flush)
 
-  override def log(msgs: List[LoggerMessage]): F[Unit] =
+  override def submit(msgs: List[LoggerMessage]): F[Unit] =
     msgs.traverse(write(_, formatter)).void.guarantee(flush)
 
   private def write(msg: LoggerMessage, formatter: Formatter): F[Unit] =
@@ -27,6 +27,8 @@ case class FileLogger[F[_]: Clock](buffer: BufferedWriter, formatter: Formatter,
     }
 
   private def flush: F[Unit] = F.delay(buffer.flush()).handleErrorWith(_ => F.unit)
+
+  def withMinimalLevel(level: Level): Logger[F] = copy(minLevel = level)
 }
 
 object FileLogger {

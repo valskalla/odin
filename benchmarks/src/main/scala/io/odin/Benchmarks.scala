@@ -6,6 +6,7 @@ import java.util.concurrent.TimeUnit
 
 import cats.Eval
 import cats.effect.{ContextShift, IO, Timer}
+import io.odin
 import io.odin.loggers.DefaultLogger
 import io.odin.syntax._
 import io.odin.formatter.Formatter
@@ -54,8 +55,10 @@ abstract class OdinBenchmarks {
 class DefaultLoggerBenchmarks extends OdinBenchmarks {
   val noop: Logger[IO] = Logger.noop
 
-  val defaultLogger: Logger[IO] = new DefaultLogger[IO] {
-    def log(msg: LoggerMessage): IO[Unit] = noop.log(msg)
+  val defaultLogger: Logger[IO] = new DefaultLogger[IO](io.odin.Level.Trace) {
+    def submit(msg: LoggerMessage): IO[Unit] = noop.log(msg)
+
+    def withMinimalLevel(level: odin.Level): Logger[IO] = this
   }
 
   @Benchmark
