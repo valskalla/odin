@@ -18,7 +18,7 @@ lazy val versions = new {
   val circe = "0.13.0"
 }
 
-lazy val scalaVersions = List("2.13.2", "2.12.11")
+lazy val scalaVersions = List("2.13.2", "2.12.13")
 
 lazy val scalaTest = "org.scalatest" %% "scalatest" % versions.scalaTest % Test
 lazy val scalaTestScalaCheck = "org.scalatestplus" %% "scalacheck-1-14" % versions.scalaTestScalaCheck % Test
