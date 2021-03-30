@@ -26,7 +26,7 @@ class FileLoggerSpec extends OdinSpec {
         path <- fileResource
         fileName = path.toString
         logger <- FileLogger[Task](fileName, formatter, Level.Trace)
-        _ <- Resource.liftF(logger.log(loggerMessage))
+        _ <- Resource.eval(logger.log(loggerMessage))
       } yield {
         new String(Files.readAllBytes(Paths.get(fileName))) shouldBe formatter.format(loggerMessage) + lineSeparator
       }).use(Task(_))
@@ -40,7 +40,7 @@ class FileLoggerSpec extends OdinSpec {
         path <- fileResource
         fileName = path.toString
         logger <- FileLogger[Task](fileName, formatter, Level.Trace)
-        _ <- Resource.liftF(logger.log(loggerMessage))
+        _ <- Resource.eval(logger.log(loggerMessage))
       } yield {
         new String(Files.readAllBytes(Paths.get(fileName))) shouldBe loggerMessage
           .map(formatter.format)
@@ -56,8 +56,8 @@ class FileLoggerSpec extends OdinSpec {
         path <- fileResource
         fileName = path.toString
         logger <- asyncFileLogger[Task](fileName, formatter)
-        _ <- Resource.liftF(logger.withMinimalLevel(Level.Trace).log(loggerMessage))
-        _ <- Resource.liftF(Task(scheduler.tick(2.seconds)))
+        _ <- Resource.eval(logger.withMinimalLevel(Level.Trace).log(loggerMessage))
+        _ <- Resource.eval(Task(scheduler.tick(2.seconds)))
       } yield {
         new String(Files.readAllBytes(Paths.get(fileName))) shouldBe loggerMessage
           .map(formatter.format)
