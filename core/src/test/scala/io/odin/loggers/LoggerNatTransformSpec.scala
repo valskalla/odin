@@ -1,16 +1,22 @@
 package io.odin.loggers
 
 import cats.data.{Writer, WriterT}
+import cats.effect.unsafe.IORuntime
 import cats.effect.{Clock, IO}
-import cats.{~>, Id}
+import cats.{Id, ~>}
 import io.odin.{Level, Logger, LoggerMessage, OdinSpec}
+
+import scala.concurrent.duration.FiniteDuration
 
 class LoggerNatTransformSpec extends OdinSpec {
   type F[A] = Writer[List[LoggerMessage], A]
   type FF[A] = WriterT[IO, List[LoggerMessage], A]
 
+  private implicit val ioRuntime: IORuntime = IORuntime.global
+
   it should "transform each method" in {
-    forAll { (msg: String, ctx: Map[String, String], throwable: Throwable, timestamp: Long) =>
+    forAll { (msg: String, ctx: Map[String, String], throwable: Throwable, ts: FiniteDuration) =>
+      val timestamp = ts.toMillis
       implicit val clk: Clock[Id] = fixedClock(timestamp)
       val logF = logger.withMinimalLevel(Level.Trace)
       val logFF = logF.mapK(nat).withMinimalLevel(Level.Trace)

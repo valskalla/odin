@@ -1,15 +1,15 @@
 package io.odin.examples
 
-import cats.effect.{ExitCode, IO, IOApp}
+import cats.effect.{IO, IOApp}
 import io.odin._
 import io.odin.syntax._
 
 /**
   * Prints `Hello World` log line with some predefined constant context
   */
-object WithConstContext extends IOApp {
+object WithConstContext extends IOApp.Simple {
   val logger: Logger[IO] = consoleLogger[IO]().withConstContext(Map("this is" -> "context"))
 
-  def run(args: List[String]): IO[ExitCode] =
-    logger.info("Hello world").as(ExitCode.Success)
+  def run: IO[Unit] =
+    logger.info("Hello world")
 }

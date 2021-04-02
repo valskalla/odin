@@ -1,7 +1,7 @@
 package io.odin.config
 
 import cats.Monad
-import cats.effect.Clock
+import cats.effect.kernel.Clock
 import cats.syntax.all._
 import io.odin.loggers.DefaultLogger
 import io.odin.{Level, Logger, LoggerMessage}

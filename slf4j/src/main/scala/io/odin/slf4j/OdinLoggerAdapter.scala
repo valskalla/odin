@@ -1,9 +1,8 @@
 package io.odin.slf4j
 
-import java.util.concurrent.TimeUnit
-
 import cats.Eval
-import cats.effect.{Clock, Effect}
+import cats.effect.kernel.{Clock, Sync}
+import cats.effect.std.Dispatcher
 import cats.syntax.all._
 import io.odin.meta.Position
 import io.odin.{Level, LoggerMessage, Logger => OdinLogger}
@@ -11,16 +10,17 @@ import org.slf4j.Logger
 import org.slf4j.helpers.{FormattingTuple, MarkerIgnoringBase, MessageFormatter}
 
 case class OdinLoggerAdapter[F[_]](loggerName: String, underlying: OdinLogger[F])(
-    implicit F: Effect[F],
-    clock: Clock[F]
+  implicit F: Sync[F],
+  clock: Clock[F],
+  dispatcher: Dispatcher[F]
 ) extends MarkerIgnoringBase
     with Logger {
 
   override def getName: String = loggerName
 
   private def run(level: Level, msg: String, t: Option[Throwable] = None): Unit =
-    F.toIO(for {
-        timestamp <- clock.realTime(TimeUnit.MILLISECONDS)
+    dispatcher.unsafeRunSync(for {
+        timestamp <- clock.realTime
         _ <- underlying.log(
           LoggerMessage(
             level = level,
@@ -34,13 +34,12 @@ case class OdinLoggerAdapter[F[_]](loggerName: String, underlying: OdinLogger[F]
               line = -1
             ),
             threadName = Thread.currentThread().getName,
-            timestamp = timestamp
+            timestamp = timestamp.toMillis
           )
         )
       } yield {
         ()
       })
-      .unsafeRunSync()
 
   private def runFormatted(level: Level, tuple: FormattingTuple): Unit =
     run(level, tuple.getMessage, Option(tuple.getThrowable))

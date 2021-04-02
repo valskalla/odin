@@ -1,13 +1,15 @@
 package io.odin.config
 
 import cats.data.WriterT
-import cats.effect.{IO, Timer}
+import cats.effect.IO
+import cats.effect.unsafe.IORuntime
 import cats.syntax.all._
 import io.odin.loggers.DefaultLogger
 import io.odin.{Level, Logger, LoggerMessage, OdinSpec}
 
 class ConfigSpec extends OdinSpec {
-  implicit val timer: Timer[IO] = IO.timer(scala.concurrent.ExecutionContext.global)
+
+  private implicit val ioRuntime: IORuntime = IORuntime.global
 
   type F[A] = WriterT[IO, List[(String, LoggerMessage)], A]
 

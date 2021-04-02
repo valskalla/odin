@@ -1,6 +1,6 @@
 package io.odin.examples
 
-import cats.effect.{ExitCode, IO, IOApp}
+import cats.effect.{IO, IOApp}
 import io.odin._
 import io.odin.config._
 
@@ -9,7 +9,7 @@ import io.odin.config._
   *
   * Mind that match is done in order of definition, therefore the most specific routes should always appear on top
   */
-object EnclosureBasedRouting extends IOApp {
+object EnclosureBasedRouting extends IOApp.Simple {
   val logger: Logger[IO] =
     enclosureRouting(
       "io.odin.examples.EnclosureBasedRouting.foo" -> consoleLogger[IO]().withMinimalLevel(Level.Warn),
@@ -21,7 +21,7 @@ object EnclosureBasedRouting extends IOApp {
   def foo: IO[Unit] = logger.info("Never shown")
   def bar: IO[Unit] = logger.warn("Warning")
 
-  def run(args: List[String]): IO[ExitCode] = {
-    (zoo *> foo *> bar).as(ExitCode.Success)
+  def run: IO[Unit] = {
+    (zoo *> foo *> bar)
   }
 }

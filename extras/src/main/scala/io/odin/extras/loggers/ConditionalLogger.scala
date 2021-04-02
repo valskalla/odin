@@ -1,17 +1,17 @@
 package io.odin.extras.loggers
 
 import cats.MonadError
-import cats.effect.{Clock, Concurrent, ContextShift, ExitCase, Resource}
+import cats.effect.kernel.{Async, Clock, Resource}
+import cats.effect.kernel.Resource.ExitCase
+import cats.effect.std.Queue
 import cats.syntax.applicativeError._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import io.odin.loggers.DefaultLogger
 import io.odin.{Level, Logger, LoggerMessage}
-import monix.catnap.ConcurrentQueue
-import monix.execution.{BufferCapacity, ChannelType}
 
 final case class ConditionalLogger[F[_]: Clock] private (
-    queue: ConcurrentQueue[F, LoggerMessage],
+    queue: Queue[F, LoggerMessage],
     inner: Logger[F],
     override val minLevel: Level
 )(implicit F: MonadError[F, Throwable])
@@ -20,20 +20,28 @@ final case class ConditionalLogger[F[_]: Clock] private (
   def submit(msg: LoggerMessage): F[Unit] =
     queue.tryOffer(msg).void
 
-  private def drain(exitCase: ExitCase[Throwable]): F[Unit] = {
+  private def drain(exitCase: ExitCase): F[Unit] = {
     val level = exitCase match {
-      case ExitCase.Completed => inner.minLevel
+      case ExitCase.Succeeded => inner.minLevel
       case _                  => minLevel
     }
 
-    queue
-      .drain(0, Int.MaxValue)
+    drainAll
       .flatMap(msgs => inner.withMinimalLevel(level).log(msgs.toList))
       .attempt
       .void
   }
 
   def withMinimalLevel(level: Level): Logger[F] = copy(inner = inner.withMinimalLevel(level), minLevel = level)
+
+  private def drainAll: F[Vector[LoggerMessage]] =
+    F.tailRecM(Vector.empty[LoggerMessage]) { acc =>
+      queue.tryTake.map {
+        case Some(value) => Left(acc :+ value)
+        case None => Right(acc)
+      }
+    }
+
 }
 
 object ConditionalLogger {
@@ -68,23 +76,23 @@ object ConditionalLogger {
     * @param maxBufferSize If `maxBufferSize` is set to some value and buffer size grows to that value,
     *                      any new events might be dropped until there is a space in the buffer.
     */
-  def create[F[_]: Clock: Concurrent: ContextShift](
+  def create[F[_]: Async](
       inner: Logger[F],
       minLevelOnError: Level,
       maxBufferSize: Option[Int]
   ): Resource[F, Logger[F]] = {
 
-    val queueCapacity = maxBufferSize match {
-      case Some(value) => BufferCapacity.Bounded(value)
-      case None        => BufferCapacity.Unbounded()
+    val createQueue = maxBufferSize match {
+      case Some(value) => Queue.bounded[F, LoggerMessage](value)
+      case None        => Queue.unbounded[F, LoggerMessage]
     }
 
     def acquire: F[ConditionalLogger[F]] =
       for {
-        queue <- ConcurrentQueue.withConfig[F, LoggerMessage](queueCapacity, ChannelType.MPSC)
+        queue <- createQueue
       } yield ConditionalLogger(queue, inner, minLevelOnError)
 
-    def release(logger: ConditionalLogger[F], exitCase: ExitCase[Throwable]): F[Unit] =
+    def release(logger: ConditionalLogger[F], exitCase: ExitCase): F[Unit] =
       logger.drain(exitCase)
 
     Resource.makeCase(acquire)(release).widen

@@ -5,7 +5,8 @@ import java.util.UUID
 import java.util.concurrent.TimeUnit
 
 import cats.Eval
-import cats.effect.{ContextShift, IO, Timer}
+import cats.effect.IO
+import cats.effect.unsafe.IORuntime
 import io.odin
 import io.odin.loggers.DefaultLogger
 import io.odin.syntax._
@@ -46,9 +47,7 @@ abstract class OdinBenchmarks {
     "just-a-test-thread",
     1574716305L
   )
-
-  implicit val timer: Timer[IO] = IO.timer(scala.concurrent.ExecutionContext.global)
-  implicit val contextShift: ContextShift[IO] = IO.contextShift(scala.concurrent.ExecutionContext.global)
+  implicit val ioRuntime: IORuntime = IORuntime.global
 }
 
 @State(Scope.Benchmark)

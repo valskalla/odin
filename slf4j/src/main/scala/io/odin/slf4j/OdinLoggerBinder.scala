@@ -1,14 +1,15 @@
 package io.odin.slf4j
 
-import cats.effect.{Clock, Effect}
+import cats.effect.kernel.Sync
+import cats.effect.std.Dispatcher
 import io.odin.Logger
 import org.slf4j.ILoggerFactory
 import org.slf4j.spi.LoggerFactoryBinder
 
 abstract class OdinLoggerBinder[F[_]] extends LoggerFactoryBinder {
 
-  implicit def clock: Clock[F]
-  implicit def F: Effect[F]
+  implicit def F: Sync[F]
+  implicit def dispatcher: Dispatcher[F]
 
   def loggers: PartialFunction[String, Logger[F]]
 

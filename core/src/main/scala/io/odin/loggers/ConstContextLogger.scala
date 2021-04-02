@@ -1,7 +1,7 @@
 package io.odin.loggers
 
 import cats.Monad
-import cats.effect.Clock
+import cats.effect.kernel.Clock
 import io.odin.{Level, Logger, LoggerMessage}
 
 case class ConstContextLogger[F[_]: Clock: Monad](ctx: Map[String, String], inner: Logger[F])

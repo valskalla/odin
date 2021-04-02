@@ -1,4 +1,5 @@
 package io.odin.examples
+/*
 
 import io.odin.Logger
 import zio._
@@ -10,3 +11,4 @@ object ZIOHelloWorld extends App {
   def run(args: List[String]): URIO[zio.ZEnv, ExitCode] =
     logger.info("Hello world").fold(_ => ExitCode.failure, _ => ExitCode.success)
 }
+*/

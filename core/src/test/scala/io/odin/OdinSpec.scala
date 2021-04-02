@@ -1,7 +1,6 @@
 package io.odin
 
 import java.time.LocalDateTime
-
 import cats.effect.Clock
 import cats.{Applicative, Eval}
 import io.odin.formatter.Formatter
@@ -12,7 +11,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.{Checkers, ScalaCheckDrivenPropertyChecks}
 import org.typelevel.discipline.Laws
 
-import scala.concurrent.duration.TimeUnit
+import scala.concurrent.duration._
 
 trait OdinSpec extends AnyFlatSpec with Matchers with Checkers with ScalaCheckDrivenPropertyChecks with EqInstances {
   def checkAll(name: String, ruleSet: Laws#RuleSet): Unit = {
@@ -25,8 +24,9 @@ trait OdinSpec extends AnyFlatSpec with Matchers with Checkers with ScalaCheckDr
   def zeroClock[F[_]: Applicative]: Clock[F] = fixedClock(0)
 
   def fixedClock[F[_]](time: Long)(implicit F: Applicative[F]): Clock[F] = new Clock[F] {
-    def realTime(unit: TimeUnit): F[Long] = F.pure(time)
-    def monotonic(unit: TimeUnit): F[Long] = F.pure(time)
+    def applicative: Applicative[F] = F
+    def monotonic: F[FiniteDuration] = F.pure(time.millis)
+    def realTime: F[FiniteDuration] = F.pure(time.millis)
   }
 
   val lineSeparator: String = System.lineSeparator()

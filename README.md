@@ -35,7 +35,7 @@ libraryDependencies ++= Seq(
   "com.github.valskalla" %% "odin-core",
   "com.github.valskalla" %% "odin-json", //to enable JSON formatter if needed
   "com.github.valskalla" %% "odin-extras" //to enable additional features if needed (see docs)
-).map(_ % "0.11.0")
+).map(_ % "0.11.0+3-19c38e47+20210402-1813-SNAPSHOT")
 ```
 
 Example
@@ -43,15 +43,15 @@ Example
 
 Using `IOApp`:
 ```scala
-import cats.effect.{ExitCode, IO, IOApp}
+import cats.effect.{IO, IOApp}
 import io.odin._
 
-object Simple extends IOApp {
+object Simple extends IOApp.Simple {
 
   val logger: Logger[IO] = consoleLogger()
 
-  def run(args: List[String]): IO[ExitCode] = {
-    logger.info("Hello world").as(ExitCode.Success)
+  def run: IO[Unit] = {
+    logger.info("Hello world")
   }
 }
 ```
@@ -70,9 +70,9 @@ Some time could be saved by using the effect-predefined variants of Odin. There 
 
 ```scala
 //ZIO
-libraryDependencies += "com.github.valskalla" %% "odin-zio" % "0.11.0"
+libraryDependencies += "com.github.valskalla" %% "odin-zio" % "0.11.0+3-19c38e47+20210402-1813-SNAPSHOT"
 //or Monix
-libraryDependencies += "com.github.valskalla" %% "odin-monix" % "0.11.0"
+libraryDependencies += "com.github.valskalla" %% "odin-monix" % "0.11.0+3-19c38e47+20210402-1813-SNAPSHOT"
 ```
 
 Use corresponding import to get an access to the loggers:
@@ -166,14 +166,11 @@ The most common logger to use:
 
 ```scala
 import io.odin._
-import cats.effect.{ContextShift, IO}
-import cats.effect.Clock
+import cats.effect.IO
+import cats.effect.unsafe.IORuntime
 
-//required to derive Concurrent/ConcurrentEffect for async operations with IO later. IOApp provides it out of the box
-implicit val contextShiftIO: ContextShift[IO] = IO.contextShift(scala.concurrent.ExecutionContext.global)
-
-//required for log timestamps. IOApp provides it out of the box
-implicit val clock: Clock[IO] = Clock.create
+//required for evaluation of IO later. IOApp provides it out of the box
+implicit val ioRuntime: IORuntime = IORuntime.global
 
 val logger: Logger[IO] = consoleLogger[IO]()
 ```
@@ -184,52 +181,17 @@ Now to the call:
 //doesn't print anything as the effect is suspended in IO
 logger.info("Hello?")
 // res0: IO[Unit] = Map(
-//   source = Bind(
-//     source = Delay(
-//       thunk = cats.effect.internals.DefaultClock$$Lambda$9530/1610750054@1b29629b
-//     ),
-//     f = io.odin.loggers.DefaultLogger$$Lambda$9531/348177457@6b7714fc,
-//     trace = StackTrace(
-//       stackTrace = List(
-//         cats.effect.internals.IOTracing$.buildFrame(IOTracing.scala:48),
-//         cats.effect.internals.IOTracing$.buildCachedFrame(IOTracing.scala:39),
-//         cats.effect.internals.IOTracing$.cached(IOTracing.scala:34),
-//         cats.effect.IO.flatMap(IO.scala:133),
-//         cats.effect.IOLowPriorityInstances$IOEffect.flatMap(IO.scala:886),
-//         cats.effect.IOLowPriorityInstances$IOEffect.flatMap(IO.scala:863),
-//         cats.FlatMap$Ops.flatMap(FlatMap.scala:229),
-//         cats.FlatMap$Ops.flatMap$(FlatMap.scala:229),
-//         cats.FlatMap$ToFlatMapOps$$anon$2.flatMap(FlatMap.scala:243),
-//         io.odin.loggers.DefaultLogger.log(DefaultLogger.scala:22),
-//         io.odin.loggers.DefaultLogger.$anonfun$info$1(DefaultLogger.scala:96),
-//         cats.Applicative.whenA(Applicative.scala:187),
-//         cats.Applicative.whenA$(Applicative.scala:186),
-//         cats.effect.IOLowPriorityInstances$IOEffect.whenA(IO.scala:863),
-//         io.odin.loggers.DefaultLogger.info(DefaultLogger.scala:96),
-//         repl.MdocSession$App.<init>(README.md:62),
-//         repl.MdocSession$.app(README.md:3),
-//         mdoc.internal.document.DocumentBuilder$$doc$.$anonfun$build$2(DocumentBuilder.scala:89),
-//         scala.runtime.java8.JFunction0$mcV$sp.apply(JFunction0$mcV$sp.scala:18),
-//         scala.util.DynamicVariable.withValue(DynamicVariable.scala:59),
-//         scala.Console$.withErr(Console.scala:193),
-//         mdoc.internal.document.DocumentBuilder$$doc$.$anonfun$build$1(DocumentBuilder.scala:89),
-//         scala.runtime.java8.JFunction0$mcV$sp.apply(JFunction0$mcV$sp.scala:18),
-//         scala.util.DynamicVariable.withValue(DynamicVariable.scala:59),
-//         scala.Console$.withOut(Console.scala:164),
-//         mdoc.internal.document.DocumentBuilder$$doc$.build(DocumentBuilder.scala:88),
-//         mdoc.internal.markdown.MarkdownBuilder$.buildDocument(MarkdownBuilder.scala:44),
-//         mdoc.internal.markdown.Processor.processScalaInputs(Processor.scala:182),
-//         mdoc.internal.markdown.Processor.processScalaInputs(Processor.scala:149),
-//         mdoc.internal.markdown.Processor.processDocument(Processor.scala:49),
-//         mdoc.internal.markdown.Markdown$.toMarkdown(Markdown.scala:131),
-//         mdoc.internal.cli.MainOps.handleMarkdown(MainOps.scala:82),
-//         mdoc.internal.cli.MainOps.handleFile(MainOps.scala:110),
-//         mdoc.internal.cli.MainOps.$anonfun$generateCompleteSite$1(MainOps.scala:...
+//   ioe = FlatMap(
+//     ioe = IO(...),
+//     f = io.odin.loggers.DefaultLogger$$Lambda$29616/0x0000000846b7e840@6b931e0b
+//   ),
+//   f = cats.effect.IO$$Lambda$29617/0x0000000846b7d840@5195a0ec
+// )
 
 //prints "Hello world" to the STDOUT.
 //Although, don't use `unsafeRunSync` in production unless you know what you're doing
 logger.info("Hello world").unsafeRunSync()
-// 2021-02-10T22:58:41,361 [run-main-0] INFO repl.MdocSession.App#res1:65 - Hello world
+// 2021-04-02T18:25:41,133 [io-compute-3] INFO repl.MdocSession.App#res1:62 - Hello world
 ```
 
 All messages of level `WARN` and higher are routed to the _STDERR_ while messages with level `INFO` and below go to the _STDOUT_.
@@ -237,7 +199,7 @@ All messages of level `WARN` and higher are routed to the _STDERR_ while message
 `consoleLogger` has the following definition:
 
 ```scala
-def consoleLogger[F[_]: Sync: Clock](
+def consoleLogger[F[_]: Sync](
       formatter: Formatter = Formatter.default,
       minLevel: Level = Level.Trace
   ): Logger[F]
@@ -268,8 +230,8 @@ _odin-core_ provides the `Formatter.default` and `Formatter.colorful` that print
 
 ```scala
 (logger.info("No context") *> logger.info("Some context", Map("key" -> "value"))).unsafeRunSync()
-// 2021-02-10T22:58:41,397 [run-main-0] INFO repl.MdocSession.App#res2:71 - No context
-// 2021-02-10T22:58:41,397 [run-main-0] INFO repl.MdocSession.App#res2:71 - Some context - key: value
+// 2021-04-02T18:25:41,268 [io-compute-2] INFO repl.MdocSession.App#res2:68 - No context
+// 2021-04-02T18:25:41,269 [io-compute-2] INFO repl.MdocSession.App#res2:68 - Some context - key: value
 ```
 
 The latter adds a bit of colors to the default formatter:
@@ -290,7 +252,7 @@ Now messages printed with this logger will be encoded as JSON string using circe
 
 ```scala
 jsonLogger.info("This is JSON").unsafeRunSync()
-// {"level":"INFO","message":"This is JSON","context":{},"exception":null,"position":"repl.MdocSession.App#res3:86","thread_name":"run-main-0","timestamp":"2021-02-10T22:58:41,422"}
+// {"level":"INFO","message":"This is JSON","context":{},"exception":null,"position":"repl.MdocSession.App#res3:83","thread_name":"io-compute-3","timestamp":"2021-04-02T18:25:41,325"}
 ```
 
 ### Customized formatter
@@ -375,7 +337,7 @@ Beside the basic file logger, Odin provides a rolling one to rollover log files.
 a configured log file size and/or timer, whichever happens first if set:
 
 ```scala
-def rollingFileLogger[F[_]: Concurrent: Timer: ContextShift](
+def rollingFileLogger[F[_]: Async](
       fileNamePattern: LocalDateTime => String,
       rolloverInterval: Option[FiniteDuration],
       maxFileSizeInBytes: Option[Long],
@@ -395,9 +357,9 @@ import io.odin.config._
 import java.time.LocalDateTime
 
 val fileNamePattern = file"/var/log/$year-$month-$day-$hour-$minute-$second.log"
-// fileNamePattern: LocalDateTime => String = io.odin.config.package$FileNamePatternInterpolator$$$Lambda$9549/1853518521@3576fc69
+// fileNamePattern: LocalDateTime => String = io.odin.config.package$FileNamePatternInterpolator$$$Lambda$29645/0x0000000846bbd840@3651f574
 val fileName = fileNamePattern(LocalDateTime.now)
-// fileName: String = "/var/log/2021-02-10-22-58-41.log"
+// fileName: String = "/var/log/2021-04-02-18-25-41.log"
 ```
 
 Interpolator placeholders used above are provided with `io.odin.config` package as well:
@@ -405,11 +367,11 @@ Interpolator placeholders used above are provided with `io.odin.config` package 
 year.extract(LocalDateTime.now)
 // res6: String = "2021"
 month.extract(LocalDateTime.now)
-// res7: String = "02"
+// res7: String = "04"
 hour.extract(LocalDateTime.now)
-// res8: String = "22"
+// res8: String = "18"
 minute.extract(LocalDateTime.now)
-// res9: String = "58"
+// res9: String = "25"
 second.extract(LocalDateTime.now)
 // res10: String = "41"
 ```
@@ -429,12 +391,8 @@ It uses `ConcurrentQueue[F]` from Monix as the buffer that is asynchronously flu
 Conversion of any logger into async one is straightforward:
 
 ```scala
-import cats.effect.{Resource, Timer}
+import cats.effect.Resource
 import io.odin.syntax._ //to enable additional implicit methods
-
-//timer is required to run async version of logger
-//provided by IOApp out of the box
-implicit val timer: Timer[IO] = IO.timer(scala.concurrent.ExecutionContext.global)
 
 val asyncLoggerResource: Resource[IO, Logger[IO]] = consoleLogger[IO]().withAsync()
 ```
@@ -445,7 +403,7 @@ async logger shall be done inside of `Resource.use` block:
 ```scala
 //queue will be flushed on release even if flushing timer didn't hit the mark yet
 asyncLoggerResource.use(logger => logger.info("Async info")).unsafeRunSync()
-// 2021-02-10T22:58:41,652 [run-main-0] INFO repl.MdocSession.App#res11:172 - Async info
+// 2021-04-02T18:25:41,597 [io-compute-2] INFO repl.MdocSession.App#res11:166 - Async info
 ```
 
 Package `io.odin.syntax._` also pimps the `Resource[F, Logger[F]]` type with the same `.withAsync` method to use
@@ -458,7 +416,7 @@ Definition of `withAsync` is following:
 def withAsync(
         timeWindow: FiniteDuration = 1.millis,
         maxBufferSize: Option[Int] = None
-    )(implicit timer: Timer[F], F: Concurrent[F], contextShift: ContextShift[F]): Resource[F, Logger[F]]
+    )(implicit F: Async[F]): Resource[F, Logger[F]]
 ```
 
 Following parameters are configurable if default ones don't fit:
@@ -536,7 +494,7 @@ import io.odin.syntax._
 consoleLogger[IO]()
     .withConstContext(Map("predefined" -> "context"))
     .info("Hello world").unsafeRunSync()
-// 2021-02-10T22:58:41,695 [run-main-0] INFO repl.MdocSession.App#res12:236 - Hello world - predefined: context
+// 2021-04-02T18:25:42,146 [io-compute-1] INFO repl.MdocSession.App#res12:230 - Hello world - predefined: context
 ```
 
 ## Contextual effects
@@ -566,7 +524,7 @@ consoleLogger[M]()
     .info("Hello world")
     .run(Env(Map("env" -> "ctx")))
     .unsafeRunSync()
-// 2021-02-10T22:58:41,744 [run-main-0] INFO repl.MdocSession.App#res13:264 - Hello world - env: ctx
+// 2021-04-02T18:25:42,265 [io-compute-5] INFO repl.MdocSession.App#res13:258 - Hello world - env: ctx
 ```
 
 Odin automatically derives required type classes for each type `F[_]` that has `Ask[F, E]` defined, or in other words
@@ -597,7 +555,7 @@ consoleLogger[IO]()
     .withSecretContext("password")
     .info("Hello, username", Map("password" -> "qwerty"))
     .unsafeRunSync() //rendered context contains first 6 symbols of SHA-1 hash of password
-// 2021-02-10T22:58:41,752 [run-main-0] INFO repl.MdocSession.App#res14:277 - Hello, username - password: secret:b1b377
+// 2021-04-02T18:25:42,272 [io-compute-0] INFO repl.MdocSession.App#res14:271 - Hello, username - password: secret:b1b377
 ```
 
 ## Contramap and filter
@@ -611,7 +569,7 @@ consoleLogger[IO]()
     .contramap(msg => msg.copy(message = msg.message.map(_ + " World")))
     .info("Hello")
     .unsafeRunSync()
-// 2021-02-10T22:58:41,757 [run-main-0] INFO repl.MdocSession.App#res15:289 - Hello World
+// 2021-04-02T18:25:42,277 [io-compute-5] INFO repl.MdocSession.App#res15:283 - Hello World
 
 consoleLogger[IO]()
     .filter(msg => msg.message.value.size < 10)
@@ -663,7 +621,7 @@ The `odin-extras` module provides additional functionality: ConditionalLogger, R
 - Add following dependency to your build:
 
 ```scala
-libraryDependencies += "com.github.valskalla" %% "odin-extras" % "0.11.0"
+libraryDependencies += "com.github.valskalla" %% "odin-extras" % "0.11.0+3-19c38e47+20210402-1813-SNAPSHOT"
 ```
 
 ### Extras. Conditional logging
@@ -674,13 +632,13 @@ For example, the default log level can be `Info`, but once an error is raised, p
 Example:
 
 ```scala
-import cats.effect.Concurrent
+import cats.effect.Async
 import io.odin.Logger
 import io.odin.extras.syntax._
 
 case class User(id: String)
 
-class UserService[F[_]: Clock: ContextShift](logger: Logger[F])(implicit F: Concurrent[F]) {
+class UserService[F[_]](logger: Logger[F])(implicit F: Async[F]) {
 
   import cats.syntax.functor._
   import cats.syntax.flatMap._
@@ -709,14 +667,14 @@ class UserService[F[_]: Clock: ContextShift](logger: Logger[F])(implicit F: Conc
 }
 
 val service = new UserService[IO](consoleLogger[IO](minLevel = Level.Info))
-// service: UserService[IO] = repl.MdocSession$App$UserService@77a9c9d9
+// service: UserService[IO] = repl.MdocSession$App$UserService@26f706b3
 
 service.findAndVerify("good-user").attempt.unsafeRunSync()
-// 2021-02-10T22:58:41,797 [run-main-0] INFO repl.MdocSession.App#UserService#findAndVerify:328 - User found and verified User(my-user-good-user)
+// 2021-04-02T18:25:42,343 [io-compute-1] INFO repl.MdocSession.App#UserService#findAndVerify:322 - User found and verified User(my-user-good-user)
 // res17: Either[Throwable, Unit] = Right(value = ())
 service.findAndVerify("bad-user").attempt.unsafeRunSync()
-// 2021-02-10T22:58:41,800 [run-main-0] DEBUG repl.MdocSession.App#UserService#findAndVerify:324 - Looking for user by id [bad-user]
-// 2021-02-10T22:58:41,800 [run-main-0] DEBUG repl.MdocSession.App#UserService#findAndVerify:326 - Found user User(my-user-bad-user)
+// 2021-04-02T18:25:42,348 [io-compute-3] DEBUG repl.MdocSession.App#UserService#findAndVerify:318 - Looking for user by id [bad-user]
+// 2021-04-02T18:25:42,348 [io-compute-3] DEBUG repl.MdocSession.App#UserService#findAndVerify:320 - Found user User(my-user-bad-user)
 // res18: Either[Throwable, Unit] = Left(
 //   value = java.lang.RuntimeException: Bad User
 // )
@@ -790,11 +748,13 @@ It requires a two-step setup:
 
 - Add following dependency to your build:
 ```scala
-libraryDependencies += "com.github.valskalla" %% "odin-slf4j" % "0.11.0"
+libraryDependencies += "com.github.valskalla" %% "odin-slf4j" % "0.11.0+3-19c38e47+20210402-1813-SNAPSHOT"
 ```
 - Create Scala class `ExternalLogger` somewhere in the project:
 ```scala
-import cats.effect.{Clock, Effect, IO}
+import cats.effect.{Sync, IO}
+import cats.effect.std.Dispatcher
+import cats.effect.unsafe.implicits.global
 import io.odin._
 import io.odin.slf4j.OdinLoggerBinder
 
@@ -802,8 +762,8 @@ import io.odin.slf4j.OdinLoggerBinder
 //log line will be recorded right after the call with no suspension
 class ExternalLogger extends OdinLoggerBinder[IO] {
 
-  implicit val F: Effect[IO] = IO.ioEffect
-  implicit val clock: Clock[IO] = Clock.create
+  implicit val F: Sync[IO] = IO.asyncForIO
+  implicit val dispatcher: Dispatcher[IO] = Dispatcher[IO].allocated.unsafeRunSync()._1
     
   val loggers: PartialFunction[String, Logger[IO]] = {
     case "some.external.package.SpecificClass" =>
