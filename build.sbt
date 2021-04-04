@@ -98,15 +98,7 @@ lazy val sharedSettings = Seq(
 lazy val `odin-core` = (project in file("core"))
   .settings(sharedSettings)
   .settings(
-    libraryDependencies ++= cats ++ Seq(
-      catsEffectStd,
-      catsMtl,
-      sourcecode,
-      //monixCatnap.exclude("org.typelevel", "cats-effect_2.13"),
-      perfolation,
-      monix % Test,
-      catsEffect % Test
-    )
+    libraryDependencies ++= (catsEffect % Test) :: catsMtl :: sourcecode :: perfolation :: catsEffectStd :: cats
   )
 
 lazy val `odin-json` = (project in file("json"))
