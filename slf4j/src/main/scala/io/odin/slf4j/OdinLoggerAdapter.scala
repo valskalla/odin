@@ -1,7 +1,7 @@
 package io.odin.slf4j
 
 import cats.Eval
-import cats.effect.kernel.{Clock, Sync}
+import cats.effect.kernel.Sync
 import cats.effect.std.Dispatcher
 import cats.syntax.all._
 import io.odin.meta.Position
