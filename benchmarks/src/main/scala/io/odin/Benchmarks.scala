@@ -7,6 +7,7 @@ import java.util.concurrent.TimeUnit
 import cats.Eval
 import cats.effect.IO
 import cats.effect.unsafe.IORuntime
+import cats.syntax.traverse._
 import io.odin
 import io.odin.loggers.DefaultLogger
 import io.odin.syntax._
@@ -82,17 +83,17 @@ class FileLoggerBenchmarks extends OdinBenchmarks {
   @Benchmark
   @OperationsPerInvocation(1000)
   def msg(): Unit =
-    for (_ <- 1 to 1000) logger.info(message).unsafeRunSync()
+    (1 to 1000).toList.traverse(_ => logger.info(message)).unsafeRunSync()
 
   @Benchmark
   @OperationsPerInvocation(1000)
   def msgAndCtx(): Unit =
-    for (_ <- 1 to 1000) logger.info(message, context).unsafeRunSync()
+    (1 to 1000).toList.traverse(_ => logger.info(message, context)).unsafeRunSync()
 
   @Benchmark
   @OperationsPerInvocation(1000)
   def msgCtxThrowable(): Unit =
-    for (_ <- 1 to 1000) logger.info(message, context, throwable).unsafeRunSync()
+    (1 to 1000).toList.traverse(_ => logger.info(message, context, throwable)).unsafeRunSync()
 
   @TearDown
   def tearDown(): Unit = {
@@ -184,17 +185,17 @@ class AsyncLoggerBenchmark extends OdinBenchmarks {
 
   @Benchmark
   @OperationsPerInvocation(1000)
-  def msg(): Unit = for (_ <- 1 to 1000) asyncLogger.info(message).unsafeRunSync()
+  def msg(): Unit = (1 to 1000).toList.traverse(_ => asyncLogger.info(message)).unsafeRunSync()
 
   @Benchmark
   @OperationsPerInvocation(1000)
   def msgAndCtx(): Unit =
-    for (_ <- 1 to 1000) asyncLogger.info(message, context).unsafeRunSync()
+    (1 to 1000).toList.traverse(_ => asyncLogger.info(message, context)).unsafeRunSync()
 
   @Benchmark
   @OperationsPerInvocation(1000)
   def msgCtxThrowable(): Unit =
-    for (_ <- 1 to 1000) asyncLogger.info(message, context, throwable).unsafeRunSync()
+    (1 to 1000).toList.traverse(_ => asyncLogger.info(message, context, throwable)).unsafeRunSync()
 
   @TearDown
   def tearDown(): Unit = {
