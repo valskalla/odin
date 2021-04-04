@@ -11,7 +11,7 @@ import scala.collection.immutable.Queue
 
 class Slf4jSpec extends OdinSpec {
 
-  private implicit val ioRuntime: IORuntime = IORuntime.global
+  implicit private val ioRuntime: IORuntime = IORuntime.global
 
   it should "log with correct level" in {
     forAll { msgs: List[LoggerMessage] =>

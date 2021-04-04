@@ -13,7 +13,7 @@ import scala.concurrent.duration._
 
 class FileLoggerSpec extends OdinSpec {
 
-  private implicit val ioRuntime: IORuntime = IORuntime.global
+  implicit private val ioRuntime: IORuntime = IORuntime.global
 
   private val fileResource = Resource.make[IO, Path] {
     IO.delay(Files.createTempFile(UUID.randomUUID().toString, ""))

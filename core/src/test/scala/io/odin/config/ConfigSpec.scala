@@ -9,7 +9,7 @@ import io.odin.{Level, Logger, LoggerMessage, OdinSpec}
 
 class ConfigSpec extends OdinSpec {
 
-  private implicit val ioRuntime: IORuntime = IORuntime.global
+  implicit private val ioRuntime: IORuntime = IORuntime.global
 
   type F[A] = WriterT[IO, List[(String, LoggerMessage)], A]
 

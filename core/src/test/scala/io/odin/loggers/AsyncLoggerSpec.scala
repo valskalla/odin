@@ -11,7 +11,7 @@ import scala.concurrent.duration._
 
 class AsyncLoggerSpec extends OdinSpec {
 
-  private implicit val ioRuntime: IORuntime = IORuntime.global
+  implicit private val ioRuntime: IORuntime = IORuntime.global
 
   case class RefLogger(ref: Ref[IO, List[LoggerMessage]], override val minLevel: Level = Level.Trace)
       extends DefaultLogger[IO](minLevel) {

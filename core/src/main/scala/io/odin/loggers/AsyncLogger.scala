@@ -14,7 +14,7 @@ import scala.concurrent.duration._
   * Use `AsyncLogger.withAsync` to instantiate it safely
   */
 case class AsyncLogger[F[_]](queue: Queue[F, LoggerMessage], timeWindow: FiniteDuration, inner: Logger[F])(
-    implicit F: Async[F],
+    implicit F: Async[F]
 ) extends DefaultLogger[F](inner.minLevel) {
   def submit(msg: LoggerMessage): F[Unit] = {
     queue.tryOffer(msg).void
@@ -48,7 +48,7 @@ case class AsyncLogger[F[_]](queue: Queue[F, LoggerMessage], timeWindow: FiniteD
     F.tailRecM(Vector.empty[LoggerMessage]) { acc =>
       queue.tryTake.map {
         case Some(value) => Left(acc :+ value)
-        case None => Right(acc)
+        case None        => Right(acc)
       }
     }
 }
@@ -104,6 +104,7 @@ object AsyncLogger {
       timeWindow: FiniteDuration,
       maxBufferSize: Option[Int]
   )(
-      implicit F: Async[F], dispatcher: Dispatcher[F]
+      implicit F: Async[F],
+      dispatcher: Dispatcher[F]
   ): Logger[F] = dispatcher.unsafeRunSync(withAsync(inner, timeWindow, maxBufferSize).allocated)._1
 }

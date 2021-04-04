@@ -10,9 +10,8 @@ import org.slf4j.Logger
 import org.slf4j.helpers.{FormattingTuple, MarkerIgnoringBase, MessageFormatter}
 
 case class OdinLoggerAdapter[F[_]](loggerName: String, underlying: OdinLogger[F])(
-  implicit F: Sync[F],
-  clock: Clock[F],
-  dispatcher: Dispatcher[F]
+    implicit F: Sync[F],
+    dispatcher: Dispatcher[F]
 ) extends MarkerIgnoringBase
     with Logger {
 
@@ -20,26 +19,26 @@ case class OdinLoggerAdapter[F[_]](loggerName: String, underlying: OdinLogger[F]
 
   private def run(level: Level, msg: String, t: Option[Throwable] = None): Unit =
     dispatcher.unsafeRunSync(for {
-        timestamp <- clock.realTime
-        _ <- underlying.log(
-          LoggerMessage(
-            level = level,
-            message = Eval.now(msg),
-            context = Map.empty,
-            exception = t,
-            position = Position(
-              fileName = loggerName,
-              enclosureName = loggerName,
-              packageName = loggerName,
-              line = -1
-            ),
-            threadName = Thread.currentThread().getName,
-            timestamp = timestamp.toMillis
-          )
+      timestamp <- F.realTime
+      _ <- underlying.log(
+        LoggerMessage(
+          level = level,
+          message = Eval.now(msg),
+          context = Map.empty,
+          exception = t,
+          position = Position(
+            fileName = loggerName,
+            enclosureName = loggerName,
+            packageName = loggerName,
+            line = -1
+          ),
+          threadName = Thread.currentThread().getName,
+          timestamp = timestamp.toMillis
         )
-      } yield {
-        ()
-      })
+      )
+    } yield {
+      ()
+    })
 
   private def runFormatted(level: Level, tuple: FormattingTuple): Unit =
     run(level, tuple.getMessage, Option(tuple.getThrowable))

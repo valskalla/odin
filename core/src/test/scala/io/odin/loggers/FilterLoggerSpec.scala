@@ -19,7 +19,10 @@ class FilterLoggerSpec extends OdinSpec {
 
   checkAll(
     "FilterLogger",
-    LoggerTests[F](new WriterTLogger[IO].filter(_.exception.isDefined), _.written.evalOn(singleThreadCtx).unsafeRunSync()).all
+    LoggerTests[F](
+      new WriterTLogger[IO].filter(_.exception.isDefined),
+      _.written.evalOn(singleThreadCtx).unsafeRunSync()
+    ).all
   )
 
   it should "logger.filter(p).log(msg) <-> F.whenA(p)(log(msg))" in {

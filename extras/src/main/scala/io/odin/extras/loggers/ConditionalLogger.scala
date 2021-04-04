@@ -38,7 +38,7 @@ final case class ConditionalLogger[F[_]: Clock] private (
     F.tailRecM(Vector.empty[LoggerMessage]) { acc =>
       queue.tryTake.map {
         case Some(value) => Left(acc :+ value)
-        case None => Right(acc)
+        case None        => Right(acc)
       }
     }
 

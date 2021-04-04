@@ -10,21 +10,23 @@ import cats.effect.{IO, Resource}
 import io.odin.config._
 import io.odin.formatter.Formatter
 import io.odin.util.ListDirectory
-import io.odin.{Level, LoggerMessage, OdinSpec, asyncRollingFileLogger}
+import io.odin.{asyncRollingFileLogger, Level, LoggerMessage, OdinSpec}
 
 import scala.concurrent.duration._
 
 class RollingFileLoggerSpec extends OdinSpec {
 
-  private implicit val ioRuntime: IORuntime = IORuntime.global
+  implicit private val ioRuntime: IORuntime = IORuntime.global
 
   private val fileResource = Resource.make[IO, Path] {
     IO.delay(Files.createTempDirectory(UUID.randomUUID().toString))
   } { file =>
     IO.delay {
-      ListDirectory(file).filter(_.isFile).foreach(_.delete())
-      Files.delete(file)
-    }.attempt.void
+        ListDirectory(file).filter(_.isFile).foreach(_.delete())
+        Files.delete(file)
+      }
+      .attempt
+      .void
   }
 
   {
