@@ -5,17 +5,16 @@ import java.time.format.DateTimeFormatter
 import java.time.{Instant, LocalDateTime}
 import java.util.{TimeZone, UUID}
 
-import cats.effect.testkit.TestInstances
 import cats.effect.unsafe.IORuntime
 import cats.effect.{IO, Resource}
 import io.odin.config._
 import io.odin.formatter.Formatter
 import io.odin.util.ListDirectory
-import io.odin.{Level, LoggerMessage, OdinSpec}
+import io.odin.{Level, LoggerMessage, OdinSpec, asyncRollingFileLogger}
 
 import scala.concurrent.duration._
 
-class RollingFileLoggerSpec extends OdinSpec with TestInstances {
+class RollingFileLoggerSpec extends OdinSpec {
 
   private implicit val ioRuntime: IORuntime = IORuntime.global
 
@@ -73,11 +72,9 @@ class RollingFileLoggerSpec extends OdinSpec with TestInstances {
       }
     }
 
-    /*it should "write in async mode" in {
+    it should "write in async mode" in {
       forAll { (loggerMessage: List[LoggerMessage], formatter: Formatter) =>
-        //implicit val ticker: Ticker = Ticker(TestContext())
-
-        val io = for {
+        (for {
           path <- fileResource
           filePrefix = path.toString
           logger <- asyncRollingFileLogger[IO](
@@ -85,22 +82,20 @@ class RollingFileLoggerSpec extends OdinSpec with TestInstances {
             rolloverInterval = None,
             maxFileSizeInBytes = None,
             formatter = formatter,
-            minLevel = Level.Trace
+            minLevel = Level.Trace,
+            timeWindow = 10.millis
           )
           _ <- Resource.eval(logger.withMinimalLevel(Level.Trace).log(loggerMessage))
-          _ <- Resource.eval(IO.sleep(1200.millis)) // ticker.ctx.tick(2.seconds)
+          _ <- Resource.eval(IO.sleep(30.millis))
         } yield {
           val logFile = ListDirectory(path).filter(_.isFile).head.toPath
-          new String(Files.readAllBytes(logFile))
-        }
-
-        val expected = loggerMessage
-          .map(formatter.format)
-          .mkString(lineSeparator) + (if (loggerMessage.isEmpty) "" else lineSeparator)
-
-        io.use(IO(_)).unsafeRunSync() shouldBe expected
+          new String(Files.readAllBytes(logFile)) shouldBe loggerMessage
+            .map(formatter.format)
+            .mkString(lineSeparator) + (if (loggerMessage.isEmpty) "" else lineSeparator)
+        }).use(IO(_))
+          .unsafeRunSync()
       }
-    }*/
+    }
 
     it should "log file name should match the pattern" in {
       (for {
@@ -120,7 +115,8 @@ class RollingFileLoggerSpec extends OdinSpec with TestInstances {
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss")
         val formatted = formatter.format(localDt)
         logFile.toString shouldBe s"$filePrefix/log-$formatted.log"
-      }).use(IO(_)).unsafeRunSync()
+      }).use(IO(_))
+        .unsafeRunSync()
     }
   }
 

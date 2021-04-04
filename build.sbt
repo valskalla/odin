@@ -30,7 +30,6 @@ lazy val cats = List(
 
 lazy val catsEffect = "org.typelevel" %% "cats-effect" % versions.catsEffect
 lazy val catsEffectStd = "org.typelevel" %% "cats-effect-std" % versions.catsEffect
-lazy val catsEffectTestKit = "org.typelevel" %% "cats-effect-testkit" % versions.catsEffect % Test
 
 lazy val catsMtl = "org.typelevel" %% "cats-mtl" % versions.catsMtl
 
@@ -105,7 +104,6 @@ lazy val `odin-core` = (project in file("core"))
       sourcecode,
       //monixCatnap.exclude("org.typelevel", "cats-effect_2.13"),
       perfolation,
-      catsEffectTestKit,
       monix % Test,
       catsEffect % Test
     )

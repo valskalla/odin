@@ -2,15 +2,18 @@ package io.odin.loggers
 
 import java.nio.file.{Files, Path, Paths}
 import java.util.UUID
-import cats.effect.{IO, Outcome, Resource}
-import cats.effect.testkit.{TestContext, TestInstances}
+
+import cats.effect.{IO, Resource}
+import cats.effect.unsafe.IORuntime
 import io.odin._
 import io.odin.formatter.Formatter
 import io.odin.{LoggerMessage, OdinSpec}
 
 import scala.concurrent.duration._
 
-class FileLoggerSpec extends OdinSpec with TestInstances {
+class FileLoggerSpec extends OdinSpec {
+
+  private implicit val ioRuntime: IORuntime = IORuntime.global
 
   private val fileResource = Resource.make[IO, Path] {
     IO.delay(Files.createTempFile(UUID.randomUUID().toString, ""))
@@ -20,8 +23,6 @@ class FileLoggerSpec extends OdinSpec with TestInstances {
 
   it should "write formatted message into file" in {
     forAll { (loggerMessage: LoggerMessage, formatter: Formatter) =>
-      import cats.effect.unsafe.implicits.global
-
       (for {
         path <- fileResource
         fileName = path.toString
@@ -36,8 +37,6 @@ class FileLoggerSpec extends OdinSpec with TestInstances {
 
   it should "write formatted messages into file" in {
     forAll { (loggerMessage: List[LoggerMessage], formatter: Formatter) =>
-      import cats.effect.unsafe.implicits.global
-
       (for {
         path <- fileResource
         fileName = path.toString
@@ -53,22 +52,19 @@ class FileLoggerSpec extends OdinSpec with TestInstances {
   }
 
   it should "write in async mode" in {
-    implicit val ticker: Ticker = Ticker(TestContext())
-
     forAll { (loggerMessage: List[LoggerMessage], formatter: Formatter) =>
-      val expected = loggerMessage
-        .map(formatter.format)
-        .mkString(lineSeparator) + (if (loggerMessage.isEmpty) "" else lineSeparator)
-
-      val io = for {
+      (for {
         path <- fileResource
         fileName = path.toString
         logger <- asyncFileLogger[IO](fileName, formatter)
         _ <- Resource.eval(logger.withMinimalLevel(Level.Trace).log(loggerMessage))
-        _ <- Resource.eval(IO(ticker.ctx.tick(2.seconds)))
-      } yield new String(Files.readAllBytes(Paths.get(fileName)))
-
-      unsafeRun(io.use(IO(_))) shouldBe Outcome.succeeded(Some(expected))
+        _ <- Resource.eval(IO.sleep(2.seconds))
+      } yield {
+        new String(Files.readAllBytes(Paths.get(fileName))) shouldBe loggerMessage
+          .map(formatter.format)
+          .mkString(lineSeparator) + (if (loggerMessage.isEmpty) "" else lineSeparator)
+      }).use(IO(_))
+        .unsafeRunSync()
     }
   }
 }
