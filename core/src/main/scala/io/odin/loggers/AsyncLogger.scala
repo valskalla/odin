@@ -1,6 +1,6 @@
 package io.odin.loggers
 
-import cats.effect.kernel.{Async, Fiber, Outcome, Resource}
+import cats.effect.kernel.{Async, Resource}
 import cats.effect.std.Dispatcher
 import cats.effect.std.Queue
 import cats.syntax.all._

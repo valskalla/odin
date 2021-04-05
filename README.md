@@ -170,6 +170,7 @@ import cats.effect.IO
 import cats.effect.unsafe.IORuntime
 
 //required for evaluation of IO later. IOApp provides it out of the box
+//or it can be imported by `import cats.effect.unsafe.implicits._`
 implicit val ioRuntime: IORuntime = IORuntime.global
 
 val logger: Logger[IO] = consoleLogger[IO]()
