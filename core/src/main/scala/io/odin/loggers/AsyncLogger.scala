@@ -31,15 +31,10 @@ case class AsyncLogger[F[_]](queue: Queue[F, LoggerMessage], timeWindow: FiniteD
   /**
     * Run internal loop of consuming events from the queue and push them down the chain
     */
-  def runF: F[Fiber[F, Throwable, Unit]] = {
-    def drainOnce: F[Unit] = drain >> F.sleep(timeWindow) >> F.cede
+  def runF: Resource[F, Unit] = {
+    def drainLoop: F[Unit] = F.andWait(drain, timeWindow).foreverM[Unit]
 
-    F.start(drainOnce.foreverM[Unit]).map { fiber =>
-      new Fiber[F, Throwable, Unit] {
-        override def cancel: F[Unit] = drain >> fiber.cancel
-        override def join: F[Outcome[F, Throwable, Unit]] = fiber.join
-      }
-    }
+    Resource.make(F.start(drainLoop))(fiber => drain >> fiber.cancel).void
   }
 
   def withMinimalLevel(level: Level): Logger[F] = copy(inner = inner.withMinimalLevel(level))
@@ -77,21 +72,12 @@ object AsyncLogger {
       case None =>
         Queue.unbounded[F, LoggerMessage]
     }
-    Resource
-      .make {
-        for {
-          queue <- createQueue
-          logger = AsyncLogger(queue, timeWindow, inner)
-          fiber <- logger.runF
-        } yield {
-          (fiber, logger)
-        }
-      } {
-        case (fiber, _) => fiber.cancel
-      }
-      .map {
-        case (_, logger) => logger
-      }
+
+    for {
+      queue <- Resource.eval(createQueue)
+      logger <- Resource.pure(AsyncLogger(queue, timeWindow, inner))
+      _ <- logger.runF
+    } yield logger
   }
 
   /**

@@ -113,7 +113,6 @@ object RollingFileLogger {
           _ <- F.unlessA(checkConditions(start, time, size)) {
             for {
               _ <- F.sleep(100.millis)
-              _ <- F.cede
               _ <- loop(start)
             } yield ()
           }
