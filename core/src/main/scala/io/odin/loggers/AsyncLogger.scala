@@ -1,6 +1,7 @@
 package io.odin.loggers
 
-import cats.effect.kernel.{Async, Resource}
+import cats.MonadThrow
+import cats.effect.kernel.{Async, Clock, Resource}
 import cats.effect.std.Dispatcher
 import cats.effect.std.Queue
 import cats.syntax.all._
@@ -13,29 +14,15 @@ import scala.concurrent.duration._
   *
   * Use `AsyncLogger.withAsync` to instantiate it safely
   */
-case class AsyncLogger[F[_]](queue: Queue[F, LoggerMessage], timeWindow: FiniteDuration, inner: Logger[F])(
-    implicit F: Async[F]
+case class AsyncLogger[F[_]: Clock](queue: Queue[F, LoggerMessage], timeWindow: FiniteDuration, inner: Logger[F])(
+    implicit F: MonadThrow[F]
 ) extends DefaultLogger[F](inner.minLevel) {
   def submit(msg: LoggerMessage): F[Unit] = {
     queue.tryOffer(msg).void
   }
 
-  def drain: F[Unit] = {
-    drainAll
-      .flatMap { msgs =>
-        inner.log(msgs.toList)
-      }
-      .orElse(F.unit)
-  }
-
-  /**
-    * Run internal loop of consuming events from the queue and push them down the chain
-    */
-  def runF: Resource[F, Unit] = {
-    def drainLoop: F[Unit] = F.andWait(drain, timeWindow).foreverM[Unit]
-
-    Resource.make(F.start(drainLoop))(fiber => drain >> fiber.cancel).void
-  }
+  private def drain: F[Unit] =
+    drainAll.flatMap(msgs => inner.log(msgs.toList)).orElse(F.unit)
 
   def withMinimalLevel(level: Level): Logger[F] = copy(inner = inner.withMinimalLevel(level))
 
@@ -73,10 +60,19 @@ object AsyncLogger {
         Queue.unbounded[F, LoggerMessage]
     }
 
+    /**
+      * Run internal loop of consuming events from the queue and push them down the chain
+      */
+    def backgroundConsumer(logger: AsyncLogger[F]): Resource[F, Unit] = {
+      def drainLoop: F[Unit] = F.andWait(logger.drain, timeWindow).foreverM[Unit]
+
+      Resource.make(F.start(drainLoop))(fiber => logger.drain >> fiber.cancel).void
+    }
+
     for {
       queue <- Resource.eval(createQueue)
       logger <- Resource.pure(AsyncLogger(queue, timeWindow, inner))
-      _ <- logger.runF
+      _ <- backgroundConsumer(logger)
     } yield logger
   }
 
