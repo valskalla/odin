@@ -84,11 +84,10 @@ class RollingFileLoggerSpec extends OdinSpec {
             rolloverInterval = None,
             maxFileSizeInBytes = None,
             formatter = formatter,
-            minLevel = Level.Trace,
-            timeWindow = 10.millis
+            minLevel = Level.Trace
           )
           _ <- Resource.eval(logger.withMinimalLevel(Level.Trace).log(loggerMessage))
-          _ <- Resource.eval(IO.sleep(30.millis))
+          _ <- Resource.eval(IO.sleep(2.seconds))
         } yield {
           val logFile = ListDirectory(path).filter(_.isFile).head.toPath
           new String(Files.readAllBytes(logFile)) shouldBe loggerMessage

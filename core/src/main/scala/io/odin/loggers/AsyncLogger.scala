@@ -21,7 +21,7 @@ case class AsyncLogger[F[_]: Clock](queue: Queue[F, LoggerMessage], timeWindow: 
     queue.tryOffer(msg).void
   }
 
-  private def drain: F[Unit] =
+  private[loggers] def drain: F[Unit] =
     drainAll.flatMap(msgs => inner.log(msgs.toList)).orElse(F.unit)
 
   def withMinimalLevel(level: Level): Logger[F] = copy(inner = inner.withMinimalLevel(level))
