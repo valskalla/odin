@@ -1,11 +1,15 @@
 package io.odin
 
+import java.util.concurrent.Executors
+
 import cats.Eq
 import cats.effect.IO
+import cats.effect.unsafe.IORuntime
 import io.odin.formatter.Formatter
 import org.scalacheck.Arbitrary
 
 import scala.annotation.tailrec
+import scala.concurrent.ExecutionContext
 
 trait EqInstances {
   @tailrec
@@ -46,8 +50,12 @@ trait EqInstances {
       eqF.eqv(x.error(msg, ctx, throwable), y.error(msg, ctx, throwable))
     }
 
-  implicit def eqIO[A](implicit eqA: Eq[A]): Eq[IO[A]] = Eq.instance { (ioA, ioB) =>
-    eqA.eqv(ioA.unsafeRunSync(), ioB.unsafeRunSync())
+  /**
+    * IO evaluates effects on different threads more often. Therefore `loggerMessageEq` returns `false` due to different threads.
+    * Evaluating effects on a single thread prevents such an issue.
+    */
+  implicit def eqIO[A](implicit eqA: Eq[A], ioRuntime: IORuntime): Eq[IO[A]] = Eq.instance { (ioA, ioB) =>
+    eqA.eqv(ioA.evalOn(singleThreadCtx).unsafeRunSync(), ioB.evalOn(singleThreadCtx).unsafeRunSync())
   }
 
   implicit val loggerMessageEq: Eq[LoggerMessage] = Eq.instance { (lm1, lm2) =>
@@ -67,4 +75,6 @@ trait EqInstances {
       val msg = retrySample[LoggerMessage]
       fmt1.format(msg) == fmt2.format(msg)
     }
+
+  private val singleThreadCtx: ExecutionContext = ExecutionContext.fromExecutor(Executors.newSingleThreadExecutor())
 }

@@ -1,15 +1,15 @@
 package io.odin.examples
 
-import cats.effect.{ExitCode, IO, IOApp}
+import cats.effect.{IO, IOApp}
 import io.odin._
 import io.odin.formatter.Formatter
 
 /**
   * Prints simple `Hello World` log line
   */
-object HelloWorld extends IOApp {
+object HelloWorld extends IOApp.Simple {
   val logger: Logger[IO] = consoleLogger(formatter = Formatter.colorful)
 
-  def run(args: List[String]): IO[ExitCode] =
-    logger.info("Hello world").as(ExitCode.Success)
+  def run: IO[Unit] =
+    logger.info("Hello world")
 }

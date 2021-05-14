@@ -1,9 +1,11 @@
 package io.odin
 
 import _root_.zio._
+import _root_.zio.clock.Clock
+import _root_.zio.interop.CBlocking
 import _root_.zio.interop.catz._
-import _root_.zio.interop.catz.implicits._
 import cats.arrow.FunctionK
+import cats.effect.std.Dispatcher
 import cats.~>
 import io.odin.formatter.Formatter
 
@@ -17,7 +19,7 @@ package object zio {
   def consoleLogger(
       formatter: Formatter = Formatter.default,
       minLevel: Level = Level.Trace
-  ): Logger[IO[LoggerError, *]] = {
+  )(implicit runtime: Runtime[Clock & CBlocking]): Logger[IO[LoggerError, *]] = {
     io.odin.consoleLogger[Task](formatter, minLevel).mapK(fromTask)
   }
 
@@ -28,13 +30,18 @@ package object zio {
       fileName: String,
       formatter: Formatter = Formatter.default,
       minLevel: Level = Level.Trace
-  ): Managed[LoggerError, Logger[IO[LoggerError, *]]] =
+  ): ZManaged[Clock & CBlocking, LoggerError, Logger[IO[LoggerError, *]]] =
     ZManaged
-      .fromEffect(Task.concurrentEffect)
+      .fromEffect(ZIO.runtime[Clock & CBlocking].map(rt => asyncRuntimeInstance(rt)))
       .flatMap { implicit F =>
-        io.odin.fileLogger[Task](fileName, formatter, minLevel).toManaged
+        ZManaged.fromEffect {
+          Dispatcher[Task].use { implicit dispatcher =>
+            Task(io.odin.fileLogger[Task](fileName, formatter, minLevel).toManaged)
+          }
+        }
       }
-      .mapError(LoggerError.apply)
+      .flatten
+      .mapError(error => LoggerError(error))
       .map(_.mapK(fromTask))
 
   /**
@@ -46,15 +53,20 @@ package object zio {
       timeWindow: FiniteDuration = 1.second,
       maxBufferSize: Option[Int] = None,
       minLevel: Level = Level.Trace
-  ): Managed[LoggerError, Logger[IO[LoggerError, *]]] =
+  ): ZManaged[Clock & CBlocking, LoggerError, Logger[IO[LoggerError, *]]] =
     ZManaged
-      .fromEffect(Task.concurrentEffect)
+      .fromEffect(ZIO.runtime[Clock & CBlocking].map(rt => asyncRuntimeInstance(rt)))
       .flatMap { implicit F =>
-        io.odin.asyncFileLogger[Task](fileName, formatter, timeWindow, maxBufferSize, minLevel).toManaged
+        ZManaged.fromEffect {
+          Dispatcher[Task].use { implicit dispatcher =>
+            Task(io.odin.asyncFileLogger[Task](fileName, formatter, timeWindow, maxBufferSize, minLevel).toManaged)
+          }
+        }
       }
+      .flatten
       .mapError(LoggerError.apply)
       .map(_.mapK(fromTask))
 
   private[odin] val fromTask: Task ~> IO[LoggerError, *] =
-    λ[FunctionK[Task, IO[LoggerError, *]]](_.mapError(LoggerError.apply))
+    λ[FunctionK[Task, IO[LoggerError, *]]](_.mapError(error => LoggerError(error)))
 }
