@@ -2,14 +2,14 @@ lazy val versions = new {
   val scalaTest = "3.1.3"
   val scalaTestScalaCheck = "3.2.0.0"
   val cats = "2.3.1"
-  val catsEffect = "2.3.3"
+  val catsEffect = "3.0.2"
   val catsMtl = "1.1.1"
   val sourcecode = "0.2.3"
   val monix = "3.3.0"
   val magnolia = "0.17.0"
   val scalaCheck = "1.15.2"
   val zio = "1.0.4"
-  val zioCats = "2.2.0.1"
+  val zioCats = "3.0.2.0"
   val slf4j = "1.7.30"
   val log4j = "2.14.0"
   val disruptor = "3.4.2"
@@ -29,6 +29,7 @@ lazy val cats = List(
 ).map(_.apply(versions.cats))
 
 lazy val catsEffect = "org.typelevel" %% "cats-effect" % versions.catsEffect
+lazy val catsEffectStd = "org.typelevel" %% "cats-effect-std" % versions.catsEffect
 
 lazy val catsMtl = "org.typelevel" %% "cats-mtl" % versions.catsMtl
 
@@ -97,7 +98,7 @@ lazy val sharedSettings = Seq(
 lazy val `odin-core` = (project in file("core"))
   .settings(sharedSettings)
   .settings(
-    libraryDependencies ++= (monix % Test) :: catsMtl :: sourcecode :: monixCatnap :: perfolation :: catsEffect :: cats
+    libraryDependencies ++= (catsEffect % Test) :: catsMtl :: sourcecode :: perfolation :: catsEffectStd :: cats
   )
 
 lazy val `odin-json` = (project in file("json"))
@@ -111,6 +112,7 @@ lazy val `odin-zio` = (project in file("zio"))
   .settings(sharedSettings)
   .settings(
     libraryDependencies ++= Seq(
+      catsEffect,
       "dev.zio" %% "zio" % versions.zio,
       "dev.zio" %% "zio-interop-cats" % versions.zioCats
     )
@@ -143,7 +145,7 @@ lazy val benchmarks = (project in file("benchmarks"))
   .settings(noPublish)
   .enablePlugins(JmhPlugin)
   .settings(
-    libraryDependencies ++= scribe :: log4j
+    libraryDependencies ++= catsEffect :: scribe :: log4j
   )
   .dependsOn(`odin-core`, `odin-json`)
 
@@ -154,15 +156,17 @@ lazy val docs = (project in file("odin-docs"))
     mdocVariables := Map(
       "VERSION" -> version.value
     ),
-    mdocOut := file(".")
+    mdocOut := file("."),
+    libraryDependencies += catsEffect
   )
-  .dependsOn(`odin-core`, `odin-json`, `odin-zio`, `odin-monix`, `odin-slf4j`, `odin-extras`)
+  .dependsOn(`odin-core`, `odin-json`, `odin-zio`, /*`odin-monix`,*/ `odin-slf4j`, `odin-extras`)
   .enablePlugins(MdocPlugin)
 
 lazy val examples = (project in file("examples"))
   .settings(sharedSettings)
   .settings(
-    coverageExcludedPackages := "io.odin.examples.*"
+    coverageExcludedPackages := "io.odin.examples.*",
+    libraryDependencies += catsEffect
   )
   .settings(noPublish)
   .dependsOn(`odin-core` % "compile->compile;test->test", `odin-zio`)
@@ -170,8 +174,8 @@ lazy val examples = (project in file("examples"))
 lazy val odin = (project in file("."))
   .settings(sharedSettings)
   .settings(noPublish)
-  .dependsOn(`odin-core`, `odin-json`, `odin-zio`, `odin-monix`, `odin-slf4j`, `odin-extras`)
-  .aggregate(`odin-core`, `odin-json`, `odin-zio`, `odin-monix`, `odin-slf4j`, `odin-extras`, benchmarks, examples)
+  .dependsOn(`odin-core`, `odin-json`, `odin-zio`,/* `odin-monix`,*/ `odin-slf4j`, `odin-extras`)
+  .aggregate(`odin-core`, `odin-json`, `odin-zio`,/* `odin-monix`,*/ `odin-slf4j`, `odin-extras`, benchmarks, examples)
 
 def scalacOptionsVersion(scalaVersion: String) =
   Seq(

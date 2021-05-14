@@ -1,7 +1,8 @@
 package io.odin
 
 import cats.Monad
-import cats.effect.{Clock, Concurrent, ConcurrentEffect, ContextShift, Resource, Timer}
+import cats.effect.std.Dispatcher
+import cats.effect.kernel.{Async, Clock, Resource}
 import io.odin.loggers.{AsyncLogger, ConstContextLogger, ContextualLogger, ContramapLogger, FilterLogger, WithContext}
 import io.odin.loggers._
 import io.odin.meta.Render
@@ -35,7 +36,7 @@ package object syntax {
     def withAsync(
         timeWindow: FiniteDuration = 1.millis,
         maxBufferSize: Option[Int] = None
-    )(implicit timer: Timer[F], F: Concurrent[F], contextShift: ContextShift[F]): Resource[F, Logger[F]] =
+    )(implicit F: Async[F]): Resource[F, Logger[F]] =
       AsyncLogger.withAsync(logger, timeWindow, maxBufferSize)
 
     /**
@@ -47,7 +48,7 @@ package object syntax {
     def withAsyncUnsafe(
         timeWindow: FiniteDuration = 1.millis,
         maxBufferSize: Option[Int] = None
-    )(implicit timer: Timer[F], F: ConcurrentEffect[F], contextShift: ContextShift[F]): Logger[F] =
+    )(implicit F: Async[F], dispatcher: Dispatcher[F]): Logger[F] =
       AsyncLogger.withAsyncUnsafe(logger, timeWindow, maxBufferSize)
 
     /**
@@ -87,7 +88,7 @@ package object syntax {
     def withAsync(
         timeWindow: FiniteDuration = 1.millis,
         maxBufferSize: Option[Int] = None
-    )(implicit timer: Timer[F], F: Concurrent[F], contextShift: ContextShift[F]): Resource[F, Logger[F]] =
+    )(implicit F: Async[F]): Resource[F, Logger[F]] =
       resource.flatMap(AsyncLogger.withAsync(_, timeWindow, maxBufferSize))
 
     /**

@@ -1,6 +1,6 @@
 package io.odin.examples
 
-import cats.effect.{ExitCode, IO, IOApp, Resource}
+import cats.effect.{IO, IOApp, Resource}
 import io.odin._
 import io.odin.syntax._
 
@@ -9,11 +9,11 @@ import io.odin.syntax._
   *
   * To safely allocate, release and drain this queue, async logger is wrapped in `Resource`
   */
-object AsyncHelloWorld extends IOApp {
+object AsyncHelloWorld extends IOApp.Simple {
   val loggerResource: Resource[IO, Logger[IO]] = consoleLogger[IO]().withAsync()
 
-  def run(args: List[String]): IO[ExitCode] =
+  def run: IO[Unit] =
     loggerResource
       .use(logger => logger.info("Hello world"))
-      .as(ExitCode.Success)
+
 }
