@@ -28,11 +28,11 @@ class AsyncLoggerSpec extends OdinSpec {
   it should "push logs down the chain" in {
     forAll { msgs: List[LoggerMessage] =>
       (for {
-        ref <- Resource.liftF(Ref.of[Task, List[LoggerMessage]](List.empty))
+        ref <- Resource.eval(Ref.of[Task, List[LoggerMessage]](List.empty))
         logger <- RefLogger(ref).withMinimalLevel(Level.Trace).withAsync()
-        _ <- Resource.liftF(msgs.traverse(logger.log))
+        _ <- Resource.eval(msgs.traverse(logger.log))
         _ = scheduler.tick(10.millis)
-        reported <- Resource.liftF(ref.get)
+        reported <- Resource.eval(ref.get)
       } yield {
         reported shouldBe msgs
       }).use(Task(_)).runSyncUnsafe()

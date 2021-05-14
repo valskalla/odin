@@ -41,7 +41,7 @@ class RollingFileLoggerSpec extends OdinSpec {
             formatter = formatter,
             minLevel = Level.Trace
           )
-          _ <- Resource.liftF(logger.log(loggerMessage))
+          _ <- Resource.eval(logger.log(loggerMessage))
         } yield {
           val logFile = ListDirectory(path).filter(_.isFile).head.toPath
           new String(Files.readAllBytes(logFile)) shouldBe formatter.format(loggerMessage) + lineSeparator
@@ -62,7 +62,7 @@ class RollingFileLoggerSpec extends OdinSpec {
             formatter = formatter,
             minLevel = Level.Trace
           )
-          _ <- Resource.liftF(logger.log(loggerMessage))
+          _ <- Resource.eval(logger.log(loggerMessage))
         } yield {
           val logFile = ListDirectory(path).filter(_.isFile).head.toPath
           new String(Files.readAllBytes(logFile)) shouldBe loggerMessage
@@ -85,8 +85,8 @@ class RollingFileLoggerSpec extends OdinSpec {
             formatter = formatter,
             minLevel = Level.Trace
           )
-          _ <- Resource.liftF(logger.withMinimalLevel(Level.Trace).log(loggerMessage))
-          _ <- Resource.liftF(Task(scheduler.tick(2.seconds)))
+          _ <- Resource.eval(logger.withMinimalLevel(Level.Trace).log(loggerMessage))
+          _ <- Resource.eval(Task(scheduler.tick(2.seconds)))
         } yield {
           val logFile = ListDirectory(path).filter(_.isFile).head.toPath
           new String(Files.readAllBytes(logFile)) shouldBe loggerMessage
@@ -100,7 +100,7 @@ class RollingFileLoggerSpec extends OdinSpec {
     it should "log file name should match the pattern" in {
       (for {
         path <- fileResource
-        time <- Resource.liftF(implicitly[Timer[Task]].clock.realTime(TimeUnit.MILLISECONDS))
+        time <- Resource.eval(implicitly[Timer[Task]].clock.realTime(TimeUnit.MILLISECONDS))
         filePrefix = path.toString
         _ <- RollingFileLogger[Task](
           file"$filePrefix/log-$year-$month-$day-$hour-$minute-$second.log",
@@ -135,9 +135,9 @@ class RollingFileLoggerSpec extends OdinSpec {
             formatter = formatter,
             minLevel = Level.Trace
           )
-          _ <- Resource.liftF(logger.log(lm1))
-          _ <- Resource.liftF(Task.sleep(1200.millis))
-          _ <- Resource.liftF(logger.log(lm2))
+          _ <- Resource.eval(logger.log(lm1))
+          _ <- Resource.eval(Task.sleep(1200.millis))
+          _ <- Resource.eval(logger.log(lm2))
         } yield {
           val log1 :: log2 :: Nil = ListDirectory(path).filter(_.isFile).sortBy(_.getName)
           new String(Files.readAllBytes(log1.toPath)) shouldBe formatter.format(lm1) + lineSeparator
@@ -159,10 +159,10 @@ class RollingFileLoggerSpec extends OdinSpec {
             formatter = formatter,
             minLevel = Level.Trace
           )
-          _ <- Resource.liftF(Task.sleep(1.second))
-          _ <- Resource.liftF(logger.log(lm1))
-          _ <- Resource.liftF(Task.sleep(1.second))
-          _ <- Resource.liftF(logger.log(lm2))
+          _ <- Resource.eval(Task.sleep(1.second))
+          _ <- Resource.eval(logger.log(lm1))
+          _ <- Resource.eval(Task.sleep(1.second))
+          _ <- Resource.eval(logger.log(lm2))
         } yield {
           val log1 :: log2 :: Nil = ListDirectory(path).filter(_.isFile).sortBy(_.getName)
           new String(Files.readAllBytes(log1.toPath)) shouldBe formatter.format(lm1) + lineSeparator
