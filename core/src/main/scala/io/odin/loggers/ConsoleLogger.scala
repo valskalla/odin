@@ -2,12 +2,12 @@ package io.odin.loggers
 
 import java.io.PrintStream
 
-import cats.effect.{Clock, Sync}
+import cats.effect.kernel.Sync
 import cats.syntax.all._
 import io.odin.formatter.Formatter
 import io.odin.{Level, Logger, LoggerMessage}
 
-case class ConsoleLogger[F[_]: Clock](
+case class ConsoleLogger[F[_]](
     formatter: Formatter,
     out: PrintStream,
     err: PrintStream,
@@ -28,6 +28,6 @@ case class ConsoleLogger[F[_]: Clock](
 }
 
 object ConsoleLogger {
-  def apply[F[_]: Clock: Sync](formatter: Formatter, minLevel: Level): Logger[F] =
+  def apply[F[_]: Sync](formatter: Formatter, minLevel: Level): Logger[F] =
     ConsoleLogger(formatter, scala.Console.out, scala.Console.err, minLevel)
 }

@@ -2,7 +2,7 @@ package io.odin.loggers
 
 import cats.Monad
 import cats.data.WriterT
-import cats.effect.Clock
+import cats.effect.kernel.Clock
 import io.odin.{Level, Logger, LoggerMessage}
 
 /**
