@@ -2,9 +2,7 @@ package io.odin.loggers
 
 import java.io.BufferedWriter
 import java.nio.file.{Files, OpenOption, Paths}
-
-import cats.effect.syntax.all._
-import cats.effect.{Clock, Resource, Sync}
+import cats.effect.kernel.{Resource, Sync}
 import cats.syntax.all._
 import io.odin.formatter.Formatter
 import io.odin.{Level, Logger, LoggerMessage}
@@ -12,14 +10,14 @@ import io.odin.{Level, Logger, LoggerMessage}
 /**
   * Write to given log writer with provided formatter
   */
-case class FileLogger[F[_]: Clock](buffer: BufferedWriter, formatter: Formatter, override val minLevel: Level)(
+case class FileLogger[F[_]](buffer: BufferedWriter, formatter: Formatter, override val minLevel: Level)(
     implicit F: Sync[F]
 ) extends DefaultLogger[F](minLevel) {
   def submit(msg: LoggerMessage): F[Unit] =
-    write(msg, formatter).guarantee(flush)
+    F.guarantee(write(msg, formatter), flush)
 
   override def submit(msgs: List[LoggerMessage]): F[Unit] =
-    msgs.traverse(write(_, formatter)).void.guarantee(flush)
+    F.guarantee(msgs.traverse(write(_, formatter)).void, flush)
 
   private def write(msg: LoggerMessage, formatter: Formatter): F[Unit] =
     F.delay {
@@ -32,7 +30,7 @@ case class FileLogger[F[_]: Clock](buffer: BufferedWriter, formatter: Formatter,
 }
 
 object FileLogger {
-  def apply[F[_]: Clock](
+  def apply[F[_]](
       fileName: String,
       formatter: Formatter,
       minLevel: Level,

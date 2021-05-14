@@ -1,9 +1,8 @@
 package io.odin.slf4j
 
-import java.util.concurrent.TimeUnit
-
 import cats.Eval
-import cats.effect.{Clock, Effect}
+import cats.effect.kernel.Sync
+import cats.effect.std.Dispatcher
 import cats.syntax.all._
 import io.odin.meta.Position
 import io.odin.{Level, LoggerMessage, Logger => OdinLogger}
@@ -11,36 +10,35 @@ import org.slf4j.Logger
 import org.slf4j.helpers.{FormattingTuple, MarkerIgnoringBase, MessageFormatter}
 
 case class OdinLoggerAdapter[F[_]](loggerName: String, underlying: OdinLogger[F])(
-    implicit F: Effect[F],
-    clock: Clock[F]
+    implicit F: Sync[F],
+    dispatcher: Dispatcher[F]
 ) extends MarkerIgnoringBase
     with Logger {
 
   override def getName: String = loggerName
 
   private def run(level: Level, msg: String, t: Option[Throwable] = None): Unit =
-    F.toIO(for {
-        timestamp <- clock.realTime(TimeUnit.MILLISECONDS)
-        _ <- underlying.log(
-          LoggerMessage(
-            level = level,
-            message = Eval.now(msg),
-            context = Map.empty,
-            exception = t,
-            position = Position(
-              fileName = loggerName,
-              enclosureName = loggerName,
-              packageName = loggerName,
-              line = -1
-            ),
-            threadName = Thread.currentThread().getName,
-            timestamp = timestamp
-          )
+    dispatcher.unsafeRunSync(for {
+      timestamp <- F.realTime
+      _ <- underlying.log(
+        LoggerMessage(
+          level = level,
+          message = Eval.now(msg),
+          context = Map.empty,
+          exception = t,
+          position = Position(
+            fileName = loggerName,
+            enclosureName = loggerName,
+            packageName = loggerName,
+            line = -1
+          ),
+          threadName = Thread.currentThread().getName,
+          timestamp = timestamp.toMillis
         )
-      } yield {
-        ()
-      })
-      .unsafeRunSync()
+      )
+    } yield {
+      ()
+    })
 
   private def runFormatted(level: Level, tuple: FormattingTuple): Unit =
     run(level, tuple.getMessage, Option(tuple.getThrowable))

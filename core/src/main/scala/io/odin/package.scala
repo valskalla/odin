@@ -2,8 +2,7 @@ package io
 
 import java.nio.file.OpenOption
 import java.time.LocalDateTime
-
-import cats.effect.{Clock, Concurrent, ContextShift, Resource, Sync, Timer}
+import cats.effect.kernel.{Async, Clock, Resource, Sync}
 import io.odin.formatter.Formatter
 import io.odin.loggers.{ConsoleLogger, FileLogger, RollingFileLogger}
 import io.odin.syntax._
@@ -57,7 +56,7 @@ package object odin {
     * @param formatter formatter to use
     * @param minLevel minimal level of logs to be printed
     */
-  def rollingFileLogger[F[_]: Concurrent: Timer: ContextShift](
+  def rollingFileLogger[F[_]: Async](
       fileNamePattern: LocalDateTime => String,
       rolloverInterval: Option[FiniteDuration],
       maxFileSizeInBytes: Option[Long],
@@ -76,7 +75,7 @@ package object odin {
     * @param maxBufferSize maximum buffer size
     * @param minLevel minimal level of logs to be printed
     */
-  def asyncFileLogger[F[_]: Concurrent: Timer: ContextShift](
+  def asyncFileLogger[F[_]: Async](
       fileName: String,
       formatter: Formatter = Formatter.default,
       timeWindow: FiniteDuration = 1.second,
@@ -98,7 +97,7 @@ package object odin {
     * @param formatter formatter to use
     * @param minLevel minimal level of logs to be printed
     */
-  def asyncRollingFileLogger[F[_]: Concurrent: Timer: ContextShift](
+  def asyncRollingFileLogger[F[_]: Async](
       fileNamePattern: LocalDateTime => String,
       rolloverInterval: Option[FiniteDuration],
       maxFileSizeInBytes: Option[Long],

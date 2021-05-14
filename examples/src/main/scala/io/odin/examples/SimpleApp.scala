@@ -1,7 +1,7 @@
 package io.odin.examples
 
 import cats.Applicative
-import cats.effect.{ExitCode, IO, IOApp}
+import cats.effect.{IO, IOApp}
 import cats.syntax.all._
 import io.odin._
 import io.odin.formatter.Formatter
@@ -12,7 +12,7 @@ import io.odin.formatter.Formatter
   *
   * When application runs it prints out greeting along with log of the `simpleService.greet` call.
   */
-object SimpleApp extends IOApp {
+object SimpleApp extends IOApp.Simple {
 
   private val logger: Logger[IO] = consoleLogger(formatter = Formatter.colorful)
 
@@ -20,8 +20,8 @@ object SimpleApp extends IOApp {
 
   def greetUser(name: String): IO[String] = simpleService.greet(name)
 
-  def run(args: List[String]): IO[ExitCode] = {
-    greetUser("Viking").map(println(_)).as(ExitCode.Success)
+  def run: IO[Unit] = {
+    greetUser("Viking").map(println(_))
   }
 }
 

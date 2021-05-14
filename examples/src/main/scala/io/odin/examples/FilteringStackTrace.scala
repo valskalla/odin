@@ -1,6 +1,6 @@
 package io.odin.examples
 
-import cats.effect.{ExitCode, IO, IOApp}
+import cats.effect.{IO, IOApp}
 import io.odin._
 import io.odin.formatter.Formatter
 import io.odin.formatter.options.ThrowableFormat
@@ -27,7 +27,7 @@ import io.odin.formatter.options.ThrowableFormat
   * io.odin.examples.FilteringStackTrace$.main(FilteringStackTrace.scala:30)
   * io.odin.examples.FilteringStackTrace.main(FilteringStackTrace.scala)
   */
-object FilteringStackTrace extends IOApp {
+object FilteringStackTrace extends IOApp.Simple {
   val throwableFormat: ThrowableFormat = ThrowableFormat(
     ThrowableFormat.Depth.Fixed(3),
     ThrowableFormat.Indent.NoIndent,
@@ -35,6 +35,6 @@ object FilteringStackTrace extends IOApp {
   )
   val logger: Logger[IO] = consoleLogger(formatter = Formatter.create(throwableFormat, colorful = true))
 
-  def run(args: List[String]): IO[ExitCode] =
-    logger.error("This is an exception", new RuntimeException("here")).as(ExitCode.Success)
+  def run: IO[Unit] =
+    logger.error("This is an exception", new RuntimeException("here"))
 }

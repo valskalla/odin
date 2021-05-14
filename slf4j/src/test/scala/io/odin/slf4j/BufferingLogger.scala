@@ -1,6 +1,6 @@
 package io.odin.slf4j
 
-import cats.effect.concurrent.Ref
+import cats.effect.kernel.Ref
 import cats.effect.{Clock, Sync}
 import io.odin.loggers.DefaultLogger
 import io.odin.{Level, Logger, LoggerMessage}

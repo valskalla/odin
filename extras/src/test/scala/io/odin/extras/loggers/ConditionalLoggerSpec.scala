@@ -1,8 +1,9 @@
 package io.odin.extras.loggers
 
 import cats.data.Kleisli
-import cats.effect.Sync
-import cats.effect.concurrent.Ref
+import cats.effect.{IO, Sync}
+import cats.effect.kernel.Ref
+import cats.effect.unsafe.IORuntime
 import cats.syntax.applicativeError._
 import cats.syntax.flatMap._
 import cats.syntax.order._
@@ -10,14 +11,10 @@ import io.odin.loggers.{DefaultLogger, HasContext}
 import io.odin.syntax._
 import io.odin.extras.syntax._
 import io.odin.{Level, Logger, LoggerMessage, OdinSpec}
-import monix.eval.Task
-import monix.execution.schedulers.TestScheduler
 
 class ConditionalLoggerSpec extends OdinSpec {
 
-  implicit private val scheduler: TestScheduler = TestScheduler()
-
-  type F[A] = Kleisli[Task, Map[String, String], A]
+  type F[A] = Kleisli[IO, Map[String, String], A]
 
   case class RefLogger(ref: Ref[F, List[LoggerMessage]], override val minLevel: Level = Level.Trace)
       extends DefaultLogger[F](minLevel) {
@@ -25,6 +22,7 @@ class ConditionalLoggerSpec extends OdinSpec {
     def withMinimalLevel(level: Level): Logger[F] = copy(minLevel = level)
   }
 
+  implicit private val ioRuntime: IORuntime = IORuntime.global
   implicit private val hasContext: HasContext[Map[String, String]] = (env: Map[String, String]) => env
 
   it should "use log level of the inner logger in case of success" in {
@@ -41,7 +39,7 @@ class ConditionalLoggerSpec extends OdinSpec {
           written <- ref.get
         } yield written
 
-      val written = fa.run(ctx).runSyncUnsafe()
+      val written = fa.run(ctx).unsafeRunSync()
       val expected = messages.filter(_.level >= Level.Info).map(m => m.copy(context = m.context ++ ctx))
 
       written shouldBe expected
@@ -65,7 +63,7 @@ class ConditionalLoggerSpec extends OdinSpec {
           written <- ref.get
         } yield (attempt, written)
 
-      val (attempt, written) = fa.run(ctx).runSyncUnsafe()
+      val (attempt, written) = fa.run(ctx).unsafeRunSync()
       val expected = messages.filter(_.level >= Level.Debug).map(m => m.copy(context = m.context ++ ctx))
 
       attempt shouldBe Left(error)

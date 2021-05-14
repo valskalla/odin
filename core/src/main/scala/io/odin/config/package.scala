@@ -3,7 +3,7 @@ package io.odin
 import java.time.LocalDateTime
 
 import cats.Monad
-import cats.effect.Clock
+import cats.effect.kernel.Clock
 import cats.syntax.all._
 import io.odin.internal.StringContextLength
 import io.odin.loggers.DefaultLogger

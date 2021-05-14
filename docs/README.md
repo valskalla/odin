@@ -43,15 +43,15 @@ Example
 
 Using `IOApp`:
 ```scala mdoc
-import cats.effect.{ExitCode, IO, IOApp}
+import cats.effect.{IO, IOApp}
 import io.odin._
 
-object Simple extends IOApp {
+object Simple extends IOApp.Simple {
 
   val logger: Logger[IO] = consoleLogger()
 
-  def run(args: List[String]): IO[ExitCode] = {
-    logger.info("Hello world").as(ExitCode.Success)
+  def run: IO[Unit] = {
+    logger.info("Hello world")
   }
 }
 ```
@@ -166,14 +166,11 @@ The most common logger to use:
 
 ```scala mdoc:silent
 import io.odin._
-import cats.effect.{ContextShift, IO}
-import cats.effect.Clock
+import cats.effect.IO
+import cats.effect.unsafe.IORuntime
 
-//required to derive Concurrent/ConcurrentEffect for async operations with IO later. IOApp provides it out of the box
-implicit val contextShiftIO: ContextShift[IO] = IO.contextShift(scala.concurrent.ExecutionContext.global)
-
-//required for log timestamps. IOApp provides it out of the box
-implicit val clock: Clock[IO] = Clock.create
+//required for evaluation of IO later. IOApp provides it out of the box
+implicit val ioRuntime: IORuntime = IORuntime.global
 
 val logger: Logger[IO] = consoleLogger[IO]()
 ```
@@ -194,7 +191,7 @@ All messages of level `WARN` and higher are routed to the _STDERR_ while message
 `consoleLogger` has the following definition:
 
 ```scala
-def consoleLogger[F[_]: Sync: Clock](
+def consoleLogger[F[_]: Sync](
       formatter: Formatter = Formatter.default,
       minLevel: Level = Level.Trace
   ): Logger[F]
@@ -329,7 +326,7 @@ Beside the basic file logger, Odin provides a rolling one to rollover log files.
 a configured log file size and/or timer, whichever happens first if set:
 
 ```scala
-def rollingFileLogger[F[_]: Concurrent: Timer: ContextShift](
+def rollingFileLogger[F[_]: Async](
       fileNamePattern: LocalDateTime => String,
       rolloverInterval: Option[FiniteDuration],
       maxFileSizeInBytes: Option[Long],
@@ -377,12 +374,8 @@ It uses `ConcurrentQueue[F]` from Monix as the buffer that is asynchronously flu
 Conversion of any logger into async one is straightforward:
 
 ```scala mdoc:silent
-import cats.effect.{Resource, Timer}
+import cats.effect.Resource
 import io.odin.syntax._ //to enable additional implicit methods
-
-//timer is required to run async version of logger
-//provided by IOApp out of the box
-implicit val timer: Timer[IO] = IO.timer(scala.concurrent.ExecutionContext.global)
 
 val asyncLoggerResource: Resource[IO, Logger[IO]] = consoleLogger[IO]().withAsync()
 ```
@@ -405,7 +398,7 @@ Definition of `withAsync` is following:
 def withAsync(
         timeWindow: FiniteDuration = 1.millis,
         maxBufferSize: Option[Int] = None
-    )(implicit timer: Timer[F], F: Concurrent[F], contextShift: ContextShift[F]): Resource[F, Logger[F]]
+    )(implicit F: Async[F]): Resource[F, Logger[F]]
 ```
 
 Following parameters are configurable if default ones don't fit:
@@ -617,13 +610,13 @@ For example, the default log level can be `Info`, but once an error is raised, p
 Example:
 
 ```scala mdoc
-import cats.effect.Concurrent
+import cats.effect.Async
 import io.odin.Logger
 import io.odin.extras.syntax._
 
 case class User(id: String)
 
-class UserService[F[_]: Clock: ContextShift](logger: Logger[F])(implicit F: Concurrent[F]) {
+class UserService[F[_]](logger: Logger[F])(implicit F: Async[F]) {
 
   import cats.syntax.functor._
   import cats.syntax.flatMap._
@@ -722,7 +715,9 @@ libraryDependencies += "com.github.valskalla" %% "odin-slf4j" % "@VERSION@"
 ```
 - Create Scala class `ExternalLogger` somewhere in the project:
 ```scala mdoc:reset
-import cats.effect.{Clock, Effect, IO}
+import cats.effect.{Sync, IO}
+import cats.effect.std.Dispatcher
+import cats.effect.unsafe.implicits.global
 import io.odin._
 import io.odin.slf4j.OdinLoggerBinder
 
@@ -730,8 +725,8 @@ import io.odin.slf4j.OdinLoggerBinder
 //log line will be recorded right after the call with no suspension
 class ExternalLogger extends OdinLoggerBinder[IO] {
 
-  implicit val F: Effect[IO] = IO.ioEffect
-  implicit val clock: Clock[IO] = Clock.create
+  implicit val F: Sync[IO] = IO.asyncForIO
+  implicit val dispatcher: Dispatcher[IO] = Dispatcher[IO].allocated.unsafeRunSync()._1
     
   val loggers: PartialFunction[String, Logger[IO]] = {
     case "some.external.package.SpecificClass" =>
