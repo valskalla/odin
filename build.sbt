@@ -18,7 +18,7 @@ lazy val versions = new {
   val circe = "0.13.0"
 }
 
-lazy val scalaVersions = List("2.13.2", "2.12.11")
+lazy val scalaVersions = List("2.13.6", "2.12.11")
 
 lazy val scalaTest = "org.scalatest" %% "scalatest" % versions.scalaTest % Test
 lazy val scalaTestScalaCheck = "org.scalatestplus" %% "scalacheck-1-14" % versions.scalaTestScalaCheck % Test
@@ -61,7 +61,7 @@ lazy val noPublish = Seq(
 )
 
 lazy val sharedSettings = Seq(
-  scalaVersion := "2.13.2",
+  scalaVersion := "2.13.6",
   organization := "com.github.valskalla",
   libraryDependencies ++= scalaTestScalaCheck :: scalaCheck :: scalaTest :: Nil,
   addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.11.3" cross CrossVersion.full),
