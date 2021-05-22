@@ -19,7 +19,7 @@ lazy val versions = new {
   val circe = "0.14.0-M7"
 }
 
-lazy val scalaVersions = List("3.0.0", "2.13.6", "2.12.13")
+lazy val scalaVersions = List("2.13.6", "2.12.13", "3.0.0")
 
 lazy val scalaTest = "org.scalatest" %% "scalatest" % versions.scalaTest % Test
 lazy val scalaTestScalaCheck = "org.scalatestplus" %% "scalacheck-1-15" % versions.scalaTestScalaCheck % Test
@@ -66,7 +66,7 @@ lazy val noPublish = Seq(
 )
 
 lazy val sharedSettings = Seq(
-  scalaVersion := "3.0.0",
+  scalaVersion := "2.13.6",
   organization := "com.github.valskalla",
   libraryDependencies ++= scalaTestScalaCheck :: scalaCheck :: scalaTest :: Nil,
   crossScalaVersions := scalaVersions,
@@ -217,7 +217,6 @@ lazy val scalac2Options = Seq(
   "-Xlint:inaccessible", // Warn about inaccessible types in method signatures.
   "-Xlint:infer-any", // Warn when a type argument is inferred to be `Any`.
   "-Xlint:missing-interpolator", // A string literal appears to be missing an interpolator id.
-  "-Xlint:nullary-override", // Warn when non-nullary `def f()' overrides nullary `def f'.
   "-Xlint:nullary-unit", // Warn when nullary methods return Unit.
   "-Xlint:option-implicit", // Option.apply used implicit view.
   "-Xlint:package-object-classes", // Class or object defined in package object.
@@ -239,7 +238,7 @@ lazy val scalac212Options = Seq(
   "-Ywarn-nullary-override", // Warn when non-nullary `def f()' overrides nullary `def f'.
   "-Ywarn-dead-code", // Warn when dead code is identified.
   "-Ywarn-extra-implicit", // Warn when more than one implicit parameter section is defined.
-  "-Ywarn-nullary-unit", // Warn when nullary methods return Unit.
+  "-Xlint:nullary-override", // Warn when non-nullary `def f()' overrides nullary `def f'.
   "-Ywarn-unused:implicits", // Warn if an implicit parameter is unused.
   "-Ywarn-unused:imports", // Warn if an import selector is not referenced.
   "-Ywarn-unused:locals", // Warn if a local definition is unused.
