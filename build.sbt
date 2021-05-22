@@ -147,9 +147,13 @@ lazy val `odin-slf4j` = (project in file("slf4j"))
 lazy val `odin-extras` = (project in file("extras"))
   .settings(sharedSettings)
   .settings(
-    libraryDependencies += (CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((3, _)) => magnoliaScala3
-      case _            => magnoliaScala2
+    libraryDependencies ++= (CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((3, _)) => List(magnoliaScala3)
+      case _ =>
+        List(
+          magnoliaScala2,
+          "org.scala-lang" % "scala-reflect" % scalaVersion.value
+        )
     })
   )
   .dependsOn(`odin-core` % "compile->compile;test->test")
@@ -238,7 +242,7 @@ lazy val scalac212Options = Seq(
   "-Ywarn-nullary-override", // Warn when non-nullary `def f()' overrides nullary `def f'.
   "-Ywarn-dead-code", // Warn when dead code is identified.
   "-Ywarn-extra-implicit", // Warn when more than one implicit parameter section is defined.
-  "-Xlint:nullary-override", // Warn when non-nullary `def f()' overrides nullary `def f'.
+  "-Ywarn-nullary-unit", // Warn when nullary methods return Unit.
   "-Ywarn-unused:implicits", // Warn if an implicit parameter is unused.
   "-Ywarn-unused:imports", // Warn if an import selector is not referenced.
   "-Ywarn-unused:locals", // Warn if a local definition is unused.
