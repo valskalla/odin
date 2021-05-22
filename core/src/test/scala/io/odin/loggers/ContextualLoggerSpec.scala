@@ -2,7 +2,6 @@ package io.odin.loggers
 
 import java.util.concurrent.Executors
 
-import cats.arrow.FunctionK
 import cats.data.{ReaderT, WriterT}
 import cats.effect.unsafe.IORuntime
 import cats.effect.{Clock, IO}
@@ -19,7 +18,7 @@ class ContextualLoggerSpec extends OdinSpec {
   implicit val clock: Clock[IO] = zeroClock
   implicit val ioRuntime: IORuntime = IORuntime.global
   private val singleThreadCtx: ExecutionContext = ExecutionContext.fromExecutor(Executors.newSingleThreadExecutor())
-  private val logger = new WriterTLogger[IO].mapK(λ[FunctionK[W, F]](ReaderT.liftF(_))).withContext
+  private val logger = new WriterTLogger[IO].mapK(ReaderT.liftK[W, Map[String, String]]).withContext
 
   checkAll(
     "ContContextLogger",

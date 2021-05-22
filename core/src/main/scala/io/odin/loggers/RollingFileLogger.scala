@@ -71,15 +71,15 @@ object RollingFileLogger {
 
     def mk: Resource[F, Logger[F]] =
       for {
-        (hs, (logger, rolloverSignal)) <- Hotswap[F, (Logger[F], RolloverSignal)](allocate)
+        hotswap <- Hotswap[F, (Logger[F], RolloverSignal)](allocate)
+        (hs, (logger, rolloverSignal)) = hotswap
         refLogger <- Resource.eval(Ref.of(logger))
         _ <- F.background(rollingLoop(hs, rolloverSignal, refLogger))
       } yield RefLogger(refLogger, minLevel)
 
     private def now: F[Long] = F.realTime.map(_.toMillis)
 
-    /**
-      * Create file logger along with the file watcher
+    /** Create file logger along with the file watcher
       */
     private def allocate: Resource[F, (Logger[F], RolloverSignal)] =
       Resource.suspend(localDateTimeNow.map { localTime =>
@@ -87,8 +87,7 @@ object RollingFileLogger {
         underlyingLogger(fileName, formatter, minLevel, openOptions).product(fileWatcher(Paths.get(fileName)))
       })
 
-    /**
-      * Create resource with fiber that's cancelled on resource release.
+    /** Create resource with fiber that's cancelled on resource release.
       *
       * Fiber itself is a file watcher that checks if rollover interval or size are not exceeded and finishes it work
       * the moment at least one of those conditions is met.
@@ -113,11 +112,12 @@ object RollingFileLogger {
 
       def loop(start: Long): F[Unit] = {
         for {
-          size <- if (maxFileSizeInBytes.isDefined) {
-            F.delay(fileSizeCheck(filePath))
-          } else {
-            F.pure(0L)
-          }
+          size <-
+            if (maxFileSizeInBytes.isDefined) {
+              F.delay(fileSizeCheck(filePath))
+            } else {
+              F.pure(0L)
+            }
           time <- now
           _ <- F.unlessA(checkConditions(start, time, size)) {
             for {
@@ -134,9 +134,8 @@ object RollingFileLogger {
       } yield rolloverSignal
     }
 
-    /**
-      * Once rollover signal is sent, it means that it's triggered and current logger's file exceeded TTL or allowed size.
-      * At this moment new logger, new watcher and new release values shall be allocated to replace the old ones.
+    /** Once rollover signal is sent, it means that it's triggered and current logger's file exceeded TTL or allowed
+      * size. At this moment new logger, new watcher and new release values shall be allocated to replace the old ones.
       *
       * Once new values are allocated and corresponding references are updated, run the old release and loop the whole
       * function using new watcher
@@ -147,11 +146,9 @@ object RollingFileLogger {
         logger: Ref[F, Logger[F]]
     ): F[Unit] =
       F.tailRecM[RolloverSignal, Unit](rolloverSignal) { signal =>
-        for {
-          _ <- signal.get
-          (newLogger, newSignal) <- hs.swap(allocate)
-          _ <- logger.set(newLogger)
-        } yield Left(newSignal)
+        signal.get >> hs.swap(allocate).flatMap { case (newLogger, newSignal) =>
+          logger.set(newLogger).as(newSignal.asLeft[Unit])
+        }
       }
 
   }

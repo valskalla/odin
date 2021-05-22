@@ -12,20 +12,20 @@ object ThrowableFormat {
 
   sealed trait Depth
   object Depth {
-    final case object Full extends Depth
-    final case class Fixed(size: Int) extends Depth
+    case object Full extends Depth
+    case class Fixed(size: Int) extends Depth
   }
 
   sealed trait Indent
   object Indent {
-    final case object NoIndent extends Indent
-    final case class Fixed(size: Int) extends Indent
+    case object NoIndent extends Indent
+    case class Fixed(size: Int) extends Indent
   }
 
   sealed trait Filter
   object Filter {
-    final case object NoFilter extends Filter
-    final case class Excluding(prefixes: Set[String]) extends Filter
+    case object NoFilter extends Filter
+    case class Excluding(prefixes: Set[String]) extends Filter
 
     object Excluding {
       def apply(prefixes: String*): Excluding = new Excluding(prefixes.toSet)

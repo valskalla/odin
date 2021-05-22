@@ -13,8 +13,7 @@ import scala.concurrent.duration._
 
 package object zio {
 
-  /**
-    * See `io.odin.consoleLogger`
+  /** See `io.odin.consoleLogger`
     */
   def consoleLogger(
       formatter: Formatter = Formatter.default,
@@ -23,8 +22,7 @@ package object zio {
     io.odin.consoleLogger[Task](formatter, minLevel).mapK(fromTask)
   }
 
-  /**
-    * See `io.odin.fileLogger`
+  /** See `io.odin.fileLogger`
     */
   def fileLogger(
       fileName: String,
@@ -44,8 +42,7 @@ package object zio {
       .mapError(error => LoggerError(error))
       .map(_.mapK(fromTask))
 
-  /**
-    * See `io.odin.asyncFileLogger`
+  /** See `io.odin.asyncFileLogger`
     */
   def asyncFileLogger(
       fileName: String,
@@ -67,6 +64,8 @@ package object zio {
       .mapError(LoggerError.apply)
       .map(_.mapK(fromTask))
 
-  private[odin] val fromTask: Task ~> IO[LoggerError, *] =
-    λ[FunctionK[Task, IO[LoggerError, *]]](_.mapError(error => LoggerError(error)))
+  private[odin] val fromTask: Task ~> IO[LoggerError, *] = new FunctionK[Task, IO[LoggerError, *]] {
+    def apply[A](fa: Task[A]): IO[LoggerError, A] =
+      fa.mapError(error => LoggerError(error))
+  }
 }

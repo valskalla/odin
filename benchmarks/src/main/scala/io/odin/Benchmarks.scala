@@ -17,10 +17,10 @@ import io.odin.json.{Formatter => JsonFormatter}
 import io.odin.meta.Position
 import org.openjdk.jmh.annotations._
 import org.apache.logging.log4j.LogManager
-import scribe.handler.AsynchronousLogHandler
-import scribe.writer.FileWriter
-import scribe.writer.file.LogPath
-import scribe.{MDC, Logger => ScribeLogger}
+import scribe.data.MDC
+import scribe.file._
+import scribe.handler._
+import scribe.{Logger => ScribeLogger}
 
 // $COVERAGE-OFF$
 @BenchmarkMode(Array(Mode.AverageTime))
@@ -134,8 +134,8 @@ class Log4jBenchmark extends OdinBenchmarks {
 
 @State(Scope.Benchmark)
 class ScribeBenchmark extends OdinBenchmarks {
-  private val writer = FileWriter().path(LogPath.simple("scribe.log"))
-  private val asyncWriter = FileWriter().path(LogPath.simple("scribe-async.log"))
+  private val writer = FileWriter("scribe.log")
+  private val asyncWriter = FileWriter("scribe-async.log")
 
   private val logger =
     ScribeLogger.empty.orphan().withHandler(writer = writer)

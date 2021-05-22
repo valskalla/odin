@@ -26,13 +26,16 @@ object Formatter {
   def create(throwableFormat: ThrowableFormat, colorful: Boolean): Formatter =
     create(throwableFormat, PositionFormat.Full, colorful, printCtx = true)
 
-  /**
-    * Creates new formatter with provided options
+  /** Creates new formatter with provided options
     *
-    * @param throwableFormat @see [[formatThrowable]]
-    * @param positionFormat @see [[formatPosition]]
-    * @param colorful use different color for thread name, level, position and throwable
-    * @param printCtx whether the context is printed in the log
+    * @param throwableFormat
+    *   @see [[formatThrowable]]
+    * @param positionFormat
+    *   @see [[formatPosition]]
+    * @param colorful
+    *   use different color for thread name, level, position and throwable
+    * @param printCtx
+    *   whether the context is printed in the log
     */
   def create(
       throwableFormat: ThrowableFormat,
@@ -42,7 +45,7 @@ object Formatter {
   ): Formatter = {
 
     @inline def withColor(color: String, message: String): String =
-      if (colorful) p"$color$message$RESET" else message
+      if (colorful) s"$color$message$RESET" else message
 
     (msg: LoggerMessage) => {
       val ctx = if (printCtx) withColor(MAGENTA, formatCtx(msg.context)) else ""
@@ -53,12 +56,12 @@ object Formatter {
 
       val throwable = msg.exception match {
         case Some(t) =>
-          withColor(RED, p"${System.lineSeparator()}${formatThrowable(t, throwableFormat)}")
+          withColor(RED, s"${System.lineSeparator()}${formatThrowable(t, throwableFormat)}")
         case None =>
           ""
       }
 
-      p"$timestamp [$threadName] $level $position - ${msg.message.value}$ctx$throwable"
+      s"$timestamp [$threadName] $level $position - ${msg.message.value}$ctx$throwable"
     }
   }
 
@@ -70,31 +73,29 @@ object Formatter {
       val iterator = context.iterator
       while (iterator.hasNext) {
         val (key, value) = iterator.next()
-        builder.append(p"$key: $value")
+        builder.append(s"$key: $value")
         if (iterator.hasNext) builder.append(", ")
       }
       builder.toString()
     }
 
-  /**
-    * Formats timestamp using the following format: yyyy-MM-ddTHH:mm:ss,SSS
+  /** Formats timestamp using the following format: yyyy-MM-ddTHH:mm:ss,SSS
     */
   def formatTimestamp(timestamp: Long): String = {
     val date = timestamp.t
-    p"${date.F}T${date.T},${date.milliOfSecond}"
+    s"${date.F}T${date.T},${date.milliOfSecond}"
   }
 
-  /**
-    * The result differs depending on the format:
+  /** The result differs depending on the format:
     *
-    * `PositionFormat.Full` - prints full position
-    * 'io.odin.formatter.Formatter formatPosition:75' formatted as 'io.odin.formatter.Formatter formatPosition:75'
+    * `PositionFormat.Full` - prints full position 'io.odin.formatter.Formatter formatPosition:75' formatted as
+    * 'io.odin.formatter.Formatter formatPosition:75'
     *
-    * `PositionFormat.AbbreviatePackage` - prints abbreviated package and full enclosing
-    * 'io.odin.formatter.Formatter formatPosition:75' formatted as 'i.o.f.Formatter formatPosition:75'
+    * `PositionFormat.AbbreviatePackage` - prints abbreviated package and full enclosing 'io.odin.formatter.Formatter
+    * formatPosition:75' formatted as 'i.o.f.Formatter formatPosition:75'
     */
   def formatPosition(position: Position, format: PositionFormat): String = {
-    val lineNumber = if (position.line >= 0) p":${position.line}" else ""
+    val lineNumber = if (position.line >= 0) s":${position.line}" else ""
 
     val enclosure = format match {
       case PositionFormat.Full              => position.enclosureName
@@ -102,17 +103,15 @@ object Formatter {
 
     }
 
-    p"$enclosure$lineNumber"
+    s"$enclosure$lineNumber"
   }
 
-  /**
-    * Default Throwable printer is twice as slow. This method was borrowed from scribe library.
+  /** Default Throwable printer is twice as slow. This method was borrowed from scribe library.
     *
-    * The result differs depending on the format:
-    * `ThrowableFormat.Depth.Full` - prints all elements of a stack trace
-    * `ThrowableFormat.Depth.Fixed` - prints N elements of a stack trace
-    * `ThrowableFormat.Indent.NoIndent` - prints a stack trace without indentation
-    * `ThrowableFormat.Indent.Fixed` - prints a stack trace prepending every line with N spaces
+    * The result differs depending on the format: `ThrowableFormat.Depth.Full` - prints all elements of a stack trace
+    * `ThrowableFormat.Depth.Fixed` - prints N elements of a stack trace `ThrowableFormat.Indent.NoIndent` - prints a
+    * stack trace without indentation `ThrowableFormat.Indent.Fixed` - prints a stack trace prepending every line with N
+    * spaces
     */
   def formatThrowable(t: Throwable, format: ThrowableFormat): String = {
     val indent = format.indent match {

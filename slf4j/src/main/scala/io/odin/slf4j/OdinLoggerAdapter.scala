@@ -9,11 +9,12 @@ import io.odin.{Level, LoggerMessage, Logger => OdinLogger}
 import org.slf4j.Logger
 import org.slf4j.helpers.{FormattingTuple, MarkerIgnoringBase, MessageFormatter}
 
-case class OdinLoggerAdapter[F[_]](loggerName: String, underlying: OdinLogger[F])(
-    implicit F: Sync[F],
+case class OdinLoggerAdapter[F[_]](loggerName: String, underlying: OdinLogger[F])(implicit
+    F: Sync[F],
     dispatcher: Dispatcher[F]
 ) extends MarkerIgnoringBase
-    with Logger {
+    with Logger
+    with OdinLoggerVarargsAdapter[F] {
 
   override def getName: String = loggerName
 
@@ -40,7 +41,7 @@ case class OdinLoggerAdapter[F[_]](loggerName: String, underlying: OdinLogger[F]
       ()
     })
 
-  private def runFormatted(level: Level, tuple: FormattingTuple): Unit =
+  private[slf4j] def runFormatted(level: Level, tuple: FormattingTuple): Unit =
     run(level, tuple.getMessage, Option(tuple.getThrowable))
 
   def isTraceEnabled: Boolean = underlying.minLevel <= Level.Trace
@@ -51,9 +52,6 @@ case class OdinLoggerAdapter[F[_]](loggerName: String, underlying: OdinLogger[F]
 
   def trace(format: String, arg1: Any, arg2: Any): Unit =
     runFormatted(Level.Trace, MessageFormatter.format(format, arg1, arg2))
-
-  def trace(format: String, arguments: AnyRef*): Unit =
-    runFormatted(Level.Trace, MessageFormatter.arrayFormat(format, arguments.toArray))
 
   def trace(msg: String, t: Throwable): Unit =
     run(Level.Trace, msg, Option(t))
@@ -67,9 +65,6 @@ case class OdinLoggerAdapter[F[_]](loggerName: String, underlying: OdinLogger[F]
   def debug(format: String, arg1: Any, arg2: Any): Unit =
     runFormatted(Level.Debug, MessageFormatter.format(format, arg1, arg2))
 
-  def debug(format: String, arguments: AnyRef*): Unit =
-    runFormatted(Level.Debug, MessageFormatter.arrayFormat(format, arguments.toArray))
-
   def debug(msg: String, t: Throwable): Unit =
     run(Level.Debug, msg, Option(t))
 
@@ -81,9 +76,6 @@ case class OdinLoggerAdapter[F[_]](loggerName: String, underlying: OdinLogger[F]
 
   def info(format: String, arg1: Any, arg2: Any): Unit =
     runFormatted(Level.Info, MessageFormatter.format(format, arg1, arg2))
-
-  def info(format: String, arguments: AnyRef*): Unit =
-    runFormatted(Level.Info, MessageFormatter.arrayFormat(format, arguments.toArray))
 
   def info(msg: String, t: Throwable): Unit =
     run(Level.Info, msg, Option(t))
@@ -97,9 +89,6 @@ case class OdinLoggerAdapter[F[_]](loggerName: String, underlying: OdinLogger[F]
   def warn(format: String, arg1: Any, arg2: Any): Unit =
     runFormatted(Level.Warn, MessageFormatter.format(format, arg1, arg2))
 
-  def warn(format: String, arguments: AnyRef*): Unit =
-    runFormatted(Level.Warn, MessageFormatter.arrayFormat(format, arguments.toArray))
-
   def warn(msg: String, t: Throwable): Unit =
     run(Level.Warn, msg, Option(t))
 
@@ -111,9 +100,6 @@ case class OdinLoggerAdapter[F[_]](loggerName: String, underlying: OdinLogger[F]
 
   def error(format: String, arg1: Any, arg2: Any): Unit =
     runFormatted(Level.Error, MessageFormatter.format(format, arg1, arg2))
-
-  def error(format: String, arguments: AnyRef*): Unit =
-    runFormatted(Level.Error, MessageFormatter.arrayFormat(format, arguments.toArray))
 
   def error(msg: String, t: Throwable): Unit =
     run(Level.Error, msg, Option(t))

@@ -1,27 +1,28 @@
 lazy val versions = new {
-  val scalaTest = "3.1.3"
-  val scalaTestScalaCheck = "3.2.0.0"
-  val cats = "2.3.1"
-  val catsEffect = "3.0.2"
-  val catsMtl = "1.1.1"
-  val sourcecode = "0.2.3"
-  val monix = "3.3.0"
-  val magnolia = "0.17.0"
-  val scalaCheck = "1.15.2"
-  val zio = "1.0.4"
-  val zioCats = "3.0.2.0"
+  val scalaTest = "3.2.9"
+  val scalaTestScalaCheck = "3.2.9.0"
+  val cats = "2.6.1"
+  val catsEffect = "3.1.1"
+  val catsMtl = "1.2.1"
+  val sourcecode = "0.2.7"
+  val monix = "3.4.0"
+  val magnoliaScala2 = "0.17.0"
+  val magnoliaScala3 = "2.0.0-M4"
+  val scalaCheck = "1.15.4"
+  val zio = "1.0.8"
+  val zioCats = "3.1.1.0"
   val slf4j = "1.7.30"
-  val log4j = "2.14.0"
-  val disruptor = "3.4.2"
-  val scribe = "2.7.12"
-  val perfolation = "1.1.7"
-  val circe = "0.13.0"
+  val log4j = "2.14.1"
+  val disruptor = "3.4.4"
+  val scribe = "3.5.5"
+  val perfolation = "1.2.8"
+  val circe = "0.14.0-M7"
 }
 
-lazy val scalaVersions = List("2.13.2", "2.12.11")
+lazy val scalaVersions = List("3.0.0", "2.13.6", "2.12.13")
 
 lazy val scalaTest = "org.scalatest" %% "scalatest" % versions.scalaTest % Test
-lazy val scalaTestScalaCheck = "org.scalatestplus" %% "scalacheck-1-14" % versions.scalaTestScalaCheck % Test
+lazy val scalaTestScalaCheck = "org.scalatestplus" %% "scalacheck-1-15" % versions.scalaTestScalaCheck % Test
 
 lazy val cats = List(
   (version: String) => "org.typelevel" %% "cats-core" % version,
@@ -41,7 +42,8 @@ lazy val scalaCheck = "org.scalacheck" %% "scalacheck" % versions.scalaCheck % T
 
 lazy val monix = "io.monix" %% "monix" % versions.monix
 
-lazy val magnolia = "com.propensive" %% "magnolia" % versions.magnolia
+lazy val magnoliaScala2 = "com.propensive" %% "magnolia" % versions.magnoliaScala2
+lazy val magnoliaScala3 = "com.softwaremill.magnolia" %% "magnolia-core" % versions.magnoliaScala3
 
 lazy val perfolation = "com.outr" %% "perfolation" % versions.perfolation
 
@@ -54,21 +56,23 @@ lazy val log4j = ("com.lmax" % "disruptor" % versions.disruptor) :: List(
   "org.apache.logging.log4j" % "log4j-core"
 ).map(_ % versions.log4j)
 
-lazy val scribe = "com.outr" %% "scribe" % versions.scribe
+lazy val scribe = List(
+  "com.outr" %% "scribe" % versions.scribe,
+  "com.outr" %% "scribe-file" % versions.scribe
+)
 
 lazy val noPublish = Seq(
-  skip in publish := true
+  publish / skip := true
 )
 
 lazy val sharedSettings = Seq(
-  scalaVersion := "2.13.2",
+  scalaVersion := "3.0.0",
   organization := "com.github.valskalla",
   libraryDependencies ++= scalaTestScalaCheck :: scalaCheck :: scalaTest :: Nil,
-  addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.11.3" cross CrossVersion.full),
   crossScalaVersions := scalaVersions,
   classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.ScalaLibrary,
   scalacOptions := scalacOptionsVersion(scalaVersion.value),
-  scalacOptions in (Compile, console) ~= (_.filterNot(
+  Compile / console / scalacOptions ~= (_.filterNot(
     Set(
       "-Ywarn-unused:imports",
       "-Xfatal-warnings",
@@ -92,7 +96,14 @@ lazy val sharedSettings = Seq(
       url("https://github.com/Doikor")
     )
   ),
-  addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
+  libraryDependencies ++= (CrossVersion.partialVersion(scalaVersion.value) match {
+    case Some((2, _)) =>
+      List(
+        compilerPlugin("org.typelevel" %% "kind-projector" % "0.13.0" cross CrossVersion.full),
+        compilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
+      )
+    case _ => Nil
+  })
 )
 
 lazy val `odin-core` = (project in file("core"))
@@ -136,7 +147,10 @@ lazy val `odin-slf4j` = (project in file("slf4j"))
 lazy val `odin-extras` = (project in file("extras"))
   .settings(sharedSettings)
   .settings(
-    libraryDependencies += magnolia
+    libraryDependencies += (CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((3, _)) => magnoliaScala3
+      case _            => magnoliaScala2
+    })
   )
   .dependsOn(`odin-core` % "compile->compile;test->test")
 
@@ -145,7 +159,7 @@ lazy val benchmarks = (project in file("benchmarks"))
   .settings(noPublish)
   .enablePlugins(JmhPlugin)
   .settings(
-    libraryDependencies ++= catsEffect :: scribe :: log4j
+    libraryDependencies ++= catsEffect :: scribe ::: log4j
   )
   .dependsOn(`odin-core`, `odin-json`)
 
@@ -174,42 +188,44 @@ lazy val examples = (project in file("examples"))
 lazy val odin = (project in file("."))
   .settings(sharedSettings)
   .settings(noPublish)
-  .dependsOn(`odin-core`, `odin-json`, `odin-zio`,/* `odin-monix`,*/ `odin-slf4j`, `odin-extras`)
-  .aggregate(`odin-core`, `odin-json`, `odin-zio`,/* `odin-monix`,*/ `odin-slf4j`, `odin-extras`, benchmarks, examples)
+  .dependsOn(`odin-core`, `odin-json`, `odin-zio`, /* `odin-monix`,*/ `odin-slf4j`, `odin-extras`)
+  .aggregate(`odin-core`, `odin-json`, `odin-zio`, /* `odin-monix`,*/ `odin-slf4j`, `odin-extras`, benchmarks, examples)
 
-def scalacOptionsVersion(scalaVersion: String) =
-  Seq(
-    "-deprecation", // Emit warning and location for usages of deprecated APIs.
-    "-encoding",
-    "utf-8", // Specify character encoding used by source files.
-    "-explaintypes", // Explain type errors in more detail.
-    "-feature", // Emit warning and location for usages of features that should be imported explicitly.
-    "-language:existentials", // Existential types (besides wildcard types) can be written and inferred
-    "-language:experimental.macros", // Allow macro definition (besides implementation and application)
-    "-language:higherKinds", // Allow higher-kinded types
-    "-language:implicitConversions", // Allow definition of implicit functions called views
-    "-language:postfixOps", // Allow postfix operators
-    "-unchecked", // Enable additional warnings where generated code depends on assumptions.
-    "-Xcheckinit", // Wrap field accessors to throw an exception on uninitialized access.
-    "-Xlint:adapted-args", // Warn if an argument list is modified to match the receiver.
-    "-Xlint:constant", // Evaluation of a constant arithmetic expression results in an error.
-    "-Xlint:delayedinit-select", // Selecting member of DelayedInit.
-    "-Xlint:doc-detached", // A Scaladoc comment appears to be detached from its element.
-    "-Xlint:inaccessible", // Warn about inaccessible types in method signatures.
-    "-Xlint:infer-any", // Warn when a type argument is inferred to be `Any`.
-    "-Xlint:missing-interpolator", // A string literal appears to be missing an interpolator id.
-    "-Xlint:nullary-override", // Warn when non-nullary `def f()' overrides nullary `def f'.
-    "-Xlint:nullary-unit", // Warn when nullary methods return Unit.
-    "-Xlint:option-implicit", // Option.apply used implicit view.
-    "-Xlint:package-object-classes", // Class or object defined in package object.
-    "-Xlint:poly-implicit-overload", // Parameterized overloaded implicit methods are not visible as view bounds.
-    "-Xlint:private-shadow", // A private field (or class parameter) shadows a superclass field.
-    "-Xlint:stars-align", // Pattern sequence wildcard must align with sequence component.
-    "-Xlint:type-parameter-shadow" // A local type parameter shadows a type already in scope.
-  ) ++ (CrossVersion.partialVersion(scalaVersion) match {
-    case Some((2, scalaMajor)) if scalaMajor == 12 => scalac212Options
-    case Some((2, scalaMajor)) if scalaMajor == 13 => scalac213Options
-  })
+def scalacOptionsVersion(scalaVersion: String) = CrossVersion.partialVersion(scalaVersion) match {
+  case Some((2, scalaMajor)) if scalaMajor == 12 => scalac2Options ++ scalac212Options
+  case Some((2, scalaMajor)) if scalaMajor == 13 => scalac2Options ++ scalac213Options
+  case Some((3, _))                              => scalac3Options
+}
+
+lazy val scalac2Options = Seq(
+  "-deprecation", // Emit warning and location for usages of deprecated APIs.
+  "-encoding",
+  "utf-8", // Specify character encoding used by source files.
+  "-explaintypes", // Explain type errors in more detail.
+  "-feature", // Emit warning and location for usages of features that should be imported explicitly.
+  "-language:existentials", // Existential types (besides wildcard types) can be written and inferred
+  "-language:experimental.macros", // Allow macro definition (besides implementation and application)
+  "-language:higherKinds", // Allow higher-kinded types
+  "-language:implicitConversions", // Allow definition of implicit functions called views
+  "-language:postfixOps", // Allow postfix operators
+  "-unchecked", // Enable additional warnings where generated code depends on assumptions.
+  "-Xcheckinit", // Wrap field accessors to throw an exception on uninitialized access.
+  "-Xlint:adapted-args", // Warn if an argument list is modified to match the receiver.
+  "-Xlint:constant", // Evaluation of a constant arithmetic expression results in an error.
+  "-Xlint:delayedinit-select", // Selecting member of DelayedInit.
+  "-Xlint:doc-detached", // A Scaladoc comment appears to be detached from its element.
+  "-Xlint:inaccessible", // Warn about inaccessible types in method signatures.
+  "-Xlint:infer-any", // Warn when a type argument is inferred to be `Any`.
+  "-Xlint:missing-interpolator", // A string literal appears to be missing an interpolator id.
+  "-Xlint:nullary-override", // Warn when non-nullary `def f()' overrides nullary `def f'.
+  "-Xlint:nullary-unit", // Warn when nullary methods return Unit.
+  "-Xlint:option-implicit", // Option.apply used implicit view.
+  "-Xlint:package-object-classes", // Class or object defined in package object.
+  "-Xlint:poly-implicit-overload", // Parameterized overloaded implicit methods are not visible as view bounds.
+  "-Xlint:private-shadow", // A private field (or class parameter) shadows a superclass field.
+  "-Xlint:stars-align", // Pattern sequence wildcard must align with sequence component.
+  "-Xlint:type-parameter-shadow" // A local type parameter shadows a type already in scope.
+)
 
 lazy val scalac212Options = Seq(
   "-Xfuture", // Turn on future language features.
@@ -241,4 +257,17 @@ lazy val scalac213Options = Seq(
   "-Wunused:patvars",
   "-Wunused:privates",
   "-Wunused:params"
+)
+
+lazy val scalac3Options = Seq(
+  "-Ykind-projector",
+  "-deprecation", // Emit warning and location for usages of deprecated APIs.
+  "-encoding",
+  "utf-8", // Specify character encoding used by source files.
+  "-feature", // Emit warning and location for usages of features that should be imported explicitly.
+  "-language:existentials", // Existential types (besides wildcard types) can be written and inferred
+  "-language:higherKinds", // Allow higher-kinded types
+  "-language:implicitConversions", // Allow definition of implicit functions called views
+  "-language:postfixOps", // Allow postfix operators
+  "-unchecked" // Enable additional warnings where generated code depends on assumptions.
 )

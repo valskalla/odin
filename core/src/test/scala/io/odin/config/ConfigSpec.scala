@@ -21,7 +21,7 @@ class ConfigSpec extends OdinSpec {
   }
 
   it should "route based on the package" in {
-    forAll { ls: List[LoggerMessage] =>
+    forAll { (ls: List[LoggerMessage]) =>
       val withEnclosure = ls.groupBy(_.position.enclosureName)
       val routerLogger =
         enclosureRouting[F](
@@ -73,7 +73,7 @@ class ConfigSpec extends OdinSpec {
   }
 
   it should "fallback to provided logger" in {
-    forAll { ls: List[LoggerMessage] =>
+    forAll { (ls: List[LoggerMessage]) =>
       val fallback = TestLogger("fallback")
       val routerLogger = enclosureRouting[F]().withFallback(fallback).withMinimalLevel(Level.Trace)
 
