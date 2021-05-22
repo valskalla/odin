@@ -19,7 +19,6 @@ import org.openjdk.jmh.annotations._
 import org.apache.logging.log4j.LogManager
 import scribe.data.MDC
 import scribe.file._
-import scribe.handler._
 import scribe.{Logger => ScribeLogger}
 
 // $COVERAGE-OFF$
@@ -140,9 +139,7 @@ class ScribeBenchmark extends OdinBenchmarks {
   private val logger =
     ScribeLogger.empty.orphan().withHandler(writer = writer)
 
-  private val asyncLogger = ScribeLogger.empty.orphan().withHandler {
-    AsynchronousLogHandler(scribe.format.Formatter.default, asyncWriter)
-  }
+  private val asyncLogger = ScribeLogger.empty.orphan().withHandler(scribe.format.Formatter.default, asyncWriter)
 
   @Benchmark
   @OperationsPerInvocation(1000)
