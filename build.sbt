@@ -152,7 +152,9 @@ lazy val `odin-extras` = (project in file("extras"))
       case _ =>
         List(
           magnoliaScala2,
-          "org.scala-lang" % "scala-reflect" % scalaVersion.value
+          // only in provided scope so that users of extras not relying on magnolia don't get it on their classpaths
+          // see extras section In Readme
+          "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided"
         )
     })
   )
