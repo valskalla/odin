@@ -15,7 +15,7 @@ lazy val versions = new {
   val disruptor = "3.4.2"
   val scribe = "2.7.12"
   val perfolation = "1.1.7"
-  val circe = "0.13.0"
+  val circe = "0.14.1"
 }
 
 lazy val scalaVersions = List("2.13.2", "2.12.11")
