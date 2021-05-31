@@ -1,16 +1,18 @@
 package io.odin.loggers
 
-import java.util.UUID
-
 import cats.data.WriterT
+import cats.effect.unsafe.IORuntime
 import cats.effect.{Clock, IO}
 import cats.kernel.laws.discipline.MonoidTests
 import cats.syntax.all._
 import io.odin.{Level, Logger, LoggerMessage, OdinSpec}
 import org.scalacheck.{Arbitrary, Gen}
 
+import java.util.UUID
+
 class LoggerMonoidSpec extends OdinSpec {
   type F[A] = WriterT[IO, List[(UUID, LoggerMessage)], A]
+  implicit val ioRuntime: IORuntime = IORuntime.global
 
   checkAll("Logger", MonoidTests[Logger[F]].monoid)
 

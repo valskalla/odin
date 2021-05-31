@@ -1,20 +1,27 @@
 package io.odin.loggers
 
+import java.util.concurrent.Executors
+
 import cats.data.WriterT
+import cats.effect.unsafe.IORuntime
 import cats.effect.{Clock, IO}
 import io.odin.syntax._
 import io.odin.{LoggerMessage, OdinSpec}
+
+import scala.concurrent.ExecutionContext
 
 class ConstContextLoggerSpec extends OdinSpec {
   type F[A] = WriterT[IO, List[LoggerMessage], A]
 
   implicit val clock: Clock[IO] = zeroClock
+  implicit val ioRuntime: IORuntime = IORuntime.global
+  private val singleThreadCtx: ExecutionContext = ExecutionContext.fromExecutor(Executors.newSingleThreadExecutor())
 
   checkAll(
     "ContextualLogger",
     LoggerTests[F](
       new WriterTLogger[IO].withConstContext(Map.empty),
-      _.written.unsafeRunSync()
+      _.written.evalOn(singleThreadCtx).unsafeRunSync()
     ).all
   )
 

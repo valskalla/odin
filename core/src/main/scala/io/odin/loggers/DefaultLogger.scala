@@ -1,9 +1,7 @@
 package io.odin.loggers
 
-import java.util.concurrent.TimeUnit
-
 import cats.{Eval, Monad}
-import cats.effect.Clock
+import cats.effect.kernel.Clock
 import cats.syntax.all._
 import io.odin.meta.{Position, Render, ToThrowable}
 import io.odin.{Level, Logger, LoggerMessage}
@@ -19,7 +17,7 @@ abstract class DefaultLogger[F[_]](val minLevel: Level)(implicit clock: Clock[F]
       position: Position
   ): F[Unit] =
     for {
-      timestamp <- clock.realTime(TimeUnit.MILLISECONDS)
+      timestamp <- clock.realTime
       _ <- log(
         LoggerMessage(
           level = level,
@@ -28,7 +26,7 @@ abstract class DefaultLogger[F[_]](val minLevel: Level)(implicit clock: Clock[F]
           exception = t,
           position = position,
           threadName = Thread.currentThread().getName,
-          timestamp = timestamp
+          timestamp = timestamp.toMillis
         )
       )
     } yield {

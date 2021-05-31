@@ -2,14 +2,16 @@ package io.odin.loggers
 
 import java.io.{ByteArrayOutputStream, PrintStream}
 
-import cats.effect.{IO, Timer}
+import cats.effect.IO
+import cats.effect.unsafe.IORuntime
 import cats.syntax.all._
 import io.odin.Level._
 import io.odin.formatter.Formatter
 import io.odin.{Level, LoggerMessage, OdinSpec}
 
 class ConsoleLoggerSpec extends OdinSpec {
-  implicit val timer: Timer[IO] = IO.timer(scala.concurrent.ExecutionContext.global)
+
+  implicit private val ioRuntime: IORuntime = IORuntime.global
 
   it should "route all messages with level <= INFO to stdout" in {
     forAll { (loggerMessage: LoggerMessage, formatter: Formatter) =>

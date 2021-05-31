@@ -6,11 +6,14 @@ import cats.effect.Clock
 import cats.syntax.all._
 import io.odin.{Level, Logger, LoggerMessage, OdinSpec}
 
+import scala.concurrent.duration.FiniteDuration
+
 class DefaultLoggerSpec extends OdinSpec {
   type F[A] = Writer[List[LoggerMessage], A]
 
   it should "correctly construct LoggerMessage" in {
-    forAll { (msg: String, ctx: Map[String, String], throwable: Throwable, timestamp: Long) =>
+    forAll { (msg: String, ctx: Map[String, String], throwable: Throwable, ts: FiniteDuration) =>
+      val timestamp = ts.toMillis
       implicit val clk: Clock[Id] = fixedClock(timestamp)
       val log = logger().withMinimalLevel(Level.Trace)
       check(log.trace(msg))(Level.Trace, msg, timestamp)

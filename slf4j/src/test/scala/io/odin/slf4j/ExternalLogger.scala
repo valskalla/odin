@@ -1,11 +1,14 @@
 package io.odin.slf4j
 
-import cats.effect.{Clock, Effect, IO}
+import cats.effect.IO
+import cats.effect.kernel.Sync
+import cats.effect.std.Dispatcher
+import cats.effect.unsafe.implicits.global
 import io.odin.{Level, Logger}
 
 class ExternalLogger extends OdinLoggerBinder[IO] {
-  implicit val F: Effect[IO] = IO.ioEffect
-  implicit val clock: Clock[IO] = Clock.create
+  implicit val F: Sync[IO] = IO.asyncForIO
+  implicit val dispatcher: Dispatcher[IO] = Dispatcher[IO].allocated.unsafeRunSync()._1
 
   val loggers: PartialFunction[String, Logger[IO]] = {
     case Level.Trace.toString => new BufferingLogger[IO](Level.Trace)
