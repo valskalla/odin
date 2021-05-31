@@ -11,8 +11,9 @@ import scala.annotation.tailrec
 private[config] class EnclosureRouting[F[_]: Clock](fallback: Logger[F], router: List[(String, Logger[F])])(
     implicit F: Monad[F]
 ) extends DefaultLogger(Level.Trace) {
-  private val indexedRouter = router.mapWithIndex { case ((packageName, logger), idx) =>
-    (packageName, (idx, logger))
+  private val indexedRouter = router.mapWithIndex {
+    case ((packageName, logger), idx) =>
+      (packageName, (idx, logger))
   }
 
   def submit(msg: LoggerMessage): F[Unit] = recLog(indexedRouter, msg)
@@ -26,12 +27,14 @@ private[config] class EnclosureRouting[F[_]: Clock](fallback: Logger[F], router:
           }
           .getOrElse(-1 -> fallback) -> List(msg)
       }
-      .foldLeft(Map.empty[(Int, Logger[F]), List[LoggerMessage]]) { case (map, kv) =>
-        map |+| Map(kv)
+      .foldLeft(Map.empty[(Int, Logger[F]), List[LoggerMessage]]) {
+        case (map, kv) =>
+          map |+| Map(kv)
       }
       .toList
-      .traverse_ { case ((_, logger), ms) =>
-        logger.log(ms.filter(_.level >= logger.minLevel))
+      .traverse_ {
+        case ((_, logger), ms) =>
+          logger.log(ms.filter(_.level >= logger.minLevel))
       }
   }
 
@@ -48,8 +51,9 @@ private[config] class EnclosureRouting[F[_]: Clock](fallback: Logger[F], router:
   def withMinimalLevel(level: Level): Logger[F] =
     new EnclosureRouting[F](
       fallback.withMinimalLevel(level),
-      router.map { case (route, logger) =>
-        route -> logger.withMinimalLevel(level)
+      router.map {
+        case (route, logger) =>
+          route -> logger.withMinimalLevel(level)
       }
     )
 }

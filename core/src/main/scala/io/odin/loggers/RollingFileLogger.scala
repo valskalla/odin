@@ -149,8 +149,9 @@ object RollingFileLogger {
         logger: Ref[F, Logger[F]]
     ): F[Unit] =
       F.tailRecM[RolloverSignal, Unit](rolloverSignal) { signal =>
-        signal.get >> hs.swap(allocate).flatMap { case (newLogger, newSignal) =>
-          logger.set(newLogger).as(newSignal.asLeft[Unit])
+        signal.get >> hs.swap(allocate).flatMap {
+          case (newLogger, newSignal) =>
+            logger.set(newLogger).as(newSignal.asLeft[Unit])
         }
       }
 

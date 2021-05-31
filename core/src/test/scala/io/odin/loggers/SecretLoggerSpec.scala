@@ -37,8 +37,9 @@ class SecretLoggerSpec extends OdinSpec {
         val msgsWithContext = msgs.filter(_.context.nonEmpty)
         val logger = new WriterTLogger[Id].withSecretContext(keys.head, keys.tail: _*)
         val written = logger.log(msgsWithContext).written
-        msgsWithContext.zip(written).map { case (origin, result) =>
-          checkHashedResult(origin, result)
+        msgsWithContext.zip(written).map {
+          case (origin, result) =>
+            checkHashedResult(origin, result)
         }
       }
     }

@@ -80,8 +80,9 @@ private object RenderUtils {
 
   @inline def includeMemberNames[A](ctx: CaseClass[Render, A]): Boolean =
     ctx.annotations
-      .collectFirst { case rendered(v) =>
-        v
+      .collectFirst {
+        case rendered(v) =>
+          v
       }
       .getOrElse(true)
 
@@ -118,8 +119,9 @@ private object RenderUtils {
 
   object hasLengthLimit {
     def unapply[A](arg: Param[Render, A]): Option[(Param[Render, A], Int)] =
-      arg.annotations.collectFirst { case length(limit) =>
-        (arg, limit)
+      arg.annotations.collectFirst {
+        case length(limit) =>
+          (arg, limit)
       }
   }
 

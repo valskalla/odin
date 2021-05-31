@@ -30,8 +30,9 @@ package object config extends FileNamePatternSyntax {
     new DefaultBuilder[F](
       new EnclosureRouting(
         _,
-        router.toList.map { case (cls, logger) =>
-          cls.getName -> logger
+        router.toList.map {
+          case (cls, logger) =>
+            cls.getName -> logger
         }
       )
     )
@@ -47,14 +48,16 @@ package object config extends FileNamePatternSyntax {
         def submit(msg: LoggerMessage): F[Unit] = router.getOrElse(msg.level, default).log(msg)
 
         override def submit(msgs: List[LoggerMessage]): F[Unit] = {
-          msgs.groupBy(_.level).toList.traverse_ { case (level, msgs) =>
-            router.getOrElse(level, default).log(msgs)
+          msgs.groupBy(_.level).toList.traverse_ {
+            case (level, msgs) =>
+              router.getOrElse(level, default).log(msgs)
           }
         }
 
         def withMinimalLevel(level: Level): Logger[F] =
-          levelRouting(router.map { case (level, logger) =>
-            level -> logger.withMinimalLevel(level)
+          levelRouting(router.map {
+            case (level, logger) =>
+              level -> logger.withMinimalLevel(level)
           }).withDefault(default.withMinimalLevel(level))
       }
     })
