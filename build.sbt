@@ -8,14 +8,14 @@ lazy val versions = new {
   val monix = "3.3.0"
   val magnolia = "0.17.0"
   val scalaCheck = "1.15.2"
-  val zio = "1.0.8"
-  val zioCats = "3.0.2.0"
+  val zio = "1.0.4"
+  val zioCats = "3.1.1.0"
   val slf4j = "1.7.30"
   val log4j = "2.14.0"
   val disruptor = "3.4.2"
   val scribe = "2.7.12"
   val perfolation = "1.1.7"
-  val circe = "0.13.0"
+  val circe = "0.14.1"
 }
 
 lazy val scalaVersions = List("2.13.2", "2.12.11")
