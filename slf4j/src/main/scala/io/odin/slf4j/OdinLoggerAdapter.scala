@@ -9,8 +9,8 @@ import io.odin.{Level, LoggerMessage, Logger => OdinLogger}
 import org.slf4j.Logger
 import org.slf4j.helpers.{FormattingTuple, MarkerIgnoringBase, MessageFormatter}
 
-case class OdinLoggerAdapter[F[_]](loggerName: String, underlying: OdinLogger[F])(implicit
-    F: Sync[F],
+case class OdinLoggerAdapter[F[_]](loggerName: String, underlying: OdinLogger[F])(
+    implicit F: Sync[F],
     dispatcher: Dispatcher[F]
 ) extends MarkerIgnoringBase
     with Logger

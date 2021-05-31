@@ -134,8 +134,8 @@ class FormatterSpec extends OdinSpec {
       whenever(msg.context.nonEmpty) {
         val formatted = Formatter.default.format(msg)
         val lookup = msg.context
-          .map {
-            case (key, value) => s"$key: $value"
+          .map { case (key, value) =>
+            s"$key: $value"
           }
           .mkString(", ")
         formatted should include(lookup)
@@ -149,8 +149,8 @@ class FormatterSpec extends OdinSpec {
         .create(ThrowableFormat.Default, PositionFormat.Full, colorful = false, printCtx = false)
         .format(msg)
       val lookup = msg.context
-        .map {
-          case (key, value) => s"$key: $value"
+        .map { case (key, value) =>
+          s"$key: $value"
         }
         .mkString(", ")
       formatted should not include lookup

@@ -11,7 +11,8 @@ import scala.concurrent.duration._
 
 package object odin {
 
-  /** Basic console logger that prints to STDOUT & STDERR
+  /**
+    * Basic console logger that prints to STDOUT & STDERR
     * @param formatter
     *   formatter to use for log messages
     * @param minLevel
@@ -23,7 +24,8 @@ package object odin {
   ): Logger[F] =
     ConsoleLogger(formatter, minLevel)
 
-  /** Create logger with safe log file allocation suspended inside of `Resource`
+  /**
+    * Create logger with safe log file allocation suspended inside of `Resource`
     * @param fileName
     *   name of log file to append to
     * @param formatter
@@ -40,7 +42,8 @@ package object odin {
     FileLogger(fileName, formatter, minLevel, openOptions)
   }
 
-  /** Create logger with safe log files allocation suspended inside of `Resource`
+  /**
+    * Create logger with safe log files allocation suspended inside of `Resource`
     *
     * Log files are rotated according to `rolloverInterval` and `maxFileSizeInBytes` parameters. Whenever a log file
     * satisfies at least one of the set requirements, next file is created.
@@ -72,7 +75,8 @@ package object odin {
     RollingFileLogger(fileNamePattern, maxFileSizeInBytes, rolloverInterval, formatter, minLevel, openOptions)
   }
 
-  /** Create async logger with safe log file allocation and intermediate async buffer
+  /**
+    * Create async logger with safe log file allocation and intermediate async buffer
     * @param fileName
     *   name of log file to append to
     * @param formatter
@@ -94,7 +98,8 @@ package object odin {
   ): Resource[F, Logger[F]] =
     fileLogger[F](fileName, formatter, minLevel, openOptions).withAsync(timeWindow, maxBufferSize)
 
-  /** Same as [[rollingFileLogger]] but with intermediate async buffer
+  /**
+    * Same as [[rollingFileLogger]] but with intermediate async buffer
     * @param fileNamePattern
     *   function that provides a path to a log file given a current local datetime
     * @param rolloverInterval

@@ -12,14 +12,16 @@ import scala.annotation.tailrec
 
 package object config extends FileNamePatternSyntax {
 
-  /** Route logs to specific logger based on the fully qualified package name. Beware of O(n) complexity due to the
-    * partial matching done during the logging
+  /**
+    * Route logs to specific logger based on the fully qualified package name.
+    * Beware of O(n) complexity due to the partial matching done during the logging
     */
   def enclosureRouting[F[_]: Clock: Monad](router: (String, Logger[F])*): DefaultBuilder[F] = {
     new DefaultBuilder[F](new EnclosureRouting(_, router.toList))
   }
 
-  /** Route logs to specific logger based on `Class[_]` instance. Beware of O(n) complexity due to the partial matching
+  /**
+    * Route logs to specific logger based on `Class[_]` instance. Beware of O(n) complexity due to the partial matching
     * done during the logging
     */
   def classRouting[F[_]: Clock: Monad](
@@ -34,7 +36,8 @@ package object config extends FileNamePatternSyntax {
       )
     )
 
-  /** Route logs based on their level
+  /**
+    * Route logs based on their level
     *
     * Complexity should be roughly constant
     */

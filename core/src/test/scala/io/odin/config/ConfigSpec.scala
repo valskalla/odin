@@ -25,8 +25,8 @@ class ConfigSpec extends OdinSpec {
       val withEnclosure = ls.groupBy(_.position.enclosureName)
       val routerLogger =
         enclosureRouting[F](
-          withEnclosure.toList.map {
-            case (key, _) => key -> TestLogger(key)
+          withEnclosure.toList.map { case (key, _) =>
+            key -> TestLogger(key)
           }: _*
         ).withNoopFallback.withMinimalLevel(Level.Trace)
 
@@ -59,8 +59,8 @@ class ConfigSpec extends OdinSpec {
     forAll { (ls: List[LoggerMessage]) =>
       val withLevels = ls.groupBy(_.level)
       val routerLogger = levelRouting[F](
-        withLevels.map {
-          case (key, _) => key -> TestLogger(key.show)
+        withLevels.map { case (key, _) =>
+          key -> TestLogger(key.show)
         }
       ).withNoopFallback.withMinimalLevel(Level.Trace)
 
