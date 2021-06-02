@@ -9,14 +9,14 @@ lazy val versions = new {
   val magnoliaScala2 = "0.17.0"
   val magnoliaScala3 = "2.0.0-M4"
   val scalaCheck = "1.15.4"
-  val zio = "1.0.8"
+  val zio = "1.0.9"
   val zioCats = "3.1.1.0"
   val slf4j = "1.7.30"
   val log4j = "2.14.1"
   val disruptor = "3.4.4"
   val scribe = "3.5.5"
   val perfolation = "1.2.8"
-  val circe = "0.14.0-M7"
+  val circe = "0.14.1"
 }
 
 lazy val scalaVersions = List("2.13.6", "2.12.13", "3.0.0")
