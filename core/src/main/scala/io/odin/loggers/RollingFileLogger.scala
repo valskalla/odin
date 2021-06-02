@@ -1,19 +1,16 @@
 package io.odin.loggers
 
 import java.nio.file.{Files, OpenOption, Path, Paths}
-import java.time.{Instant, LocalDateTime}
-import java.time.format.DateTimeFormatter
+import java.time.LocalDateTime
 import java.util.TimeZone
-import java.util.concurrent.TimeUnit
-
-import cats.Monad
-import cats.effect.concurrent.Ref
-import cats.effect.{Clock, Concurrent, ContextShift, Fiber, Resource, Timer}
+import cats.effect.kernel._
+import cats.effect.std.Hotswap
 import cats.syntax.all._
+import cats.{Functor, Monad}
 import io.odin.formatter.Formatter
 import io.odin.{Level, Logger, LoggerMessage}
 
-import scala.concurrent.duration.{FiniteDuration, _}
+import scala.concurrent.duration._
 
 object RollingFileLogger {
 
@@ -24,16 +21,27 @@ object RollingFileLogger {
       formatter: Formatter,
       minLevel: Level,
       openOptions: Seq[OpenOption] = Seq.empty
-  )(implicit F: Concurrent[F], timer: Timer[F], cs: ContextShift[F]): Resource[F, Logger[F]] = {
-    new RollingFileLoggerFactory(
-      fileNamePattern,
-      maxFileSizeInBytes,
-      rolloverInterval,
-      formatter,
-      minLevel,
-      FileLogger.apply[F],
-      openOptions = openOptions
-    ).mk
+  )(implicit F: Async[F]): Resource[F, Logger[F]] = {
+
+    def rollingLogger =
+      new RollingFileLoggerFactory(
+        fileNamePattern,
+        maxFileSizeInBytes,
+        rolloverInterval,
+        formatter,
+        minLevel,
+        FileLogger.apply[F],
+        openOptions = openOptions
+      ).mk
+
+    def fileLogger =
+      Resource.suspend {
+        for {
+          localTime <- localDateTimeNow
+        } yield FileLogger[F](fileNamePattern(localTime), formatter, minLevel, openOptions)
+      }
+
+    Resource.pure[F, Boolean](maxFileSizeInBytes.isDefined || rolloverInterval.isDefined).ifM(rollingLogger, fileLogger)
   }
 
   private[odin] case class RefLogger[F[_]: Clock: Monad](
@@ -57,34 +65,26 @@ object RollingFileLogger {
       underlyingLogger: (String, Formatter, Level, Seq[OpenOption]) => Resource[F, Logger[F]],
       fileSizeCheck: Path => Long = Files.size,
       openOptions: Seq[OpenOption]
-  )(implicit F: Concurrent[F], timer: Timer[F], cs: ContextShift[F]) {
+  )(implicit F: Async[F]) {
 
-    val df: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss")
+    private type RolloverSignal = Deferred[F, Unit]
 
-    def mk: Resource[F, Logger[F]] = {
-      val logger = for {
-        ((logger, watcherFiber), release) <- allocate.allocated
-        refLogger <- Ref.of(logger)
-        refRelease <- Ref.of(release)
-        _ <- F.start(rollingLoop(watcherFiber, refLogger, refRelease))
-      } yield {
-        (new RefLogger(refLogger, minLevel), refRelease)
-      }
-      Resource.make(logger)(_._2.get.flatten).map {
-        case (logger, _) => logger
-      }
-    }
+    def mk: Resource[F, Logger[F]] =
+      for {
+        (hs, (logger, rolloverSignal)) <- Hotswap[F, (Logger[F], RolloverSignal)](allocate)
+        refLogger <- Resource.eval(Ref.of(logger))
+        _ <- F.background(rollingLoop(hs, rolloverSignal, refLogger))
+      } yield RefLogger(refLogger, minLevel)
 
-    def now: F[Long] = timer.clock.realTime(TimeUnit.MILLISECONDS)
+    private def now: F[Long] = F.realTime.map(_.toMillis)
 
     /**
       * Create file logger along with the file watcher
       */
-    def allocate: Resource[F, (Logger[F], Fiber[F, Unit])] =
-      Resource.suspend(now.map { time =>
-        val localTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(time), TimeZone.getDefault.toZoneId)
+    private def allocate: Resource[F, (Logger[F], RolloverSignal)] =
+      Resource.suspend(localDateTimeNow.map { localTime =>
         val fileName = fileNamePattern(localTime)
-        underlyingLogger(fileName, formatter, minLevel, openOptions).product(fileWatcher(fileName))
+        underlyingLogger(fileName, formatter, minLevel, openOptions).product(fileWatcher(Paths.get(fileName)))
       })
 
     /**
@@ -93,57 +93,72 @@ object RollingFileLogger {
       * Fiber itself is a file watcher that checks if rollover interval or size are not exceeded and finishes it work
       * the moment at least one of those conditions is met.
       */
-    def fileWatcher(fileName: String): Resource[F, Fiber[F, Unit]] = {
-      def checkConditions(start: Long, now: Long, fileSize: Long): Boolean = {
-        (maxFileSizeInBytes match {
-          case Some(max) => fileSize >= max
-          case _         => false
-        }) || (rolloverInterval match {
+    private def fileWatcher(filePath: Path): Resource[F, RolloverSignal] = {
+      val checkFileSize: Long => Boolean =
+        maxFileSizeInBytes match {
+          case Some(max) => fileSize => fileSize >= max
+          case _         => _ => false
+        }
+
+      val checkRolloverInterval: (Long, Long) => Boolean =
+        rolloverInterval match {
           case Some(finite: FiniteDuration) =>
-            start + finite.toMillis <= now
-          case _ => false
-        })
-      }
+            (start, now) => start + finite.toMillis <= now
+          case _ =>
+            (_, _) => false
+        }
+
+      def checkConditions(start: Long, now: Long, fileSize: Long): Boolean =
+        checkFileSize(fileSize) || checkRolloverInterval(start, now)
 
       def loop(start: Long): F[Unit] = {
         for {
           size <- if (maxFileSizeInBytes.isDefined) {
-            F.delay(fileSizeCheck(Paths.get(fileName)))
+            F.delay(fileSizeCheck(filePath))
           } else {
             F.pure(0L)
           }
           time <- now
           _ <- F.unlessA(checkConditions(start, time, size)) {
             for {
-              _ <- timer.sleep(100.millis)
-              _ <- cs.shift
+              _ <- F.sleep(100.millis)
               _ <- loop(start)
             } yield ()
           }
         } yield ()
       }
 
-      Resource.make[F, Fiber[F, Unit]](F.start(now >>= loop))(_.cancel)
+      for {
+        rolloverSignal <- Resource.eval(Deferred[F, Unit])
+        _ <- F.background(now >>= loop >>= rolloverSignal.complete)
+      } yield rolloverSignal
     }
 
     /**
-      * Once watcher fiber is joined, it means that it's triggered and current logger's file exceeded TTL or allowed size.
+      * Once rollover signal is sent, it means that it's triggered and current logger's file exceeded TTL or allowed size.
       * At this moment new logger, new watcher and new release values shall be allocated to replace the old ones.
       *
       * Once new values are allocated and corresponding references are updated, run the old release and loop the whole
       * function using new watcher
       */
-    def rollingLoop(watcher: Fiber[F, Unit], logger: Ref[F, Logger[F]], release: Ref[F, F[Unit]]): F[Unit] =
-      for {
-        _ <- watcher.join
-        oldRelease <- release.get
-        ((newLogger, newWatcher), newRelease) <- allocate.allocated
-        _ <- logger.set(newLogger)
-        _ <- release.set(newRelease)
-        _ <- oldRelease
-        _ <- rollingLoop(newWatcher, logger, release)
-      } yield ()
+    private def rollingLoop(
+        hs: Hotswap[F, (Logger[F], RolloverSignal)],
+        rolloverSignal: RolloverSignal,
+        logger: Ref[F, Logger[F]]
+    ): F[Unit] =
+      F.tailRecM[RolloverSignal, Unit](rolloverSignal) { signal =>
+        for {
+          _ <- signal.get
+          (newLogger, newSignal) <- hs.swap(allocate)
+          _ <- logger.set(newLogger)
+        } yield Left(newSignal)
+      }
 
   }
+
+  private def localDateTimeNow[F[_]: Functor](implicit clock: Clock[F]): F[LocalDateTime] =
+    for {
+      time <- clock.realTimeInstant
+    } yield LocalDateTime.ofInstant(time, TimeZone.getDefault.toZoneId)
 
 }

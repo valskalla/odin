@@ -1,7 +1,7 @@
 package io.odin.examples
 
 import cats.data.ReaderT
-import cats.effect.{ExitCode, IO, IOApp}
+import cats.effect.{IO, IOApp}
 import io.odin._
 import io.odin.formatter.Formatter
 import io.odin.loggers.HasContext
@@ -14,7 +14,7 @@ import io.odin.syntax._
   * environment `Env` defined, `withContext` will automatically derive required type classes for adding the context to
   * the log
   */
-object WithContextual extends IOApp {
+object WithContextual extends IOApp.Simple {
 
   /**
     * Simple Reader monad with environment being context `Map[String, String]`
@@ -32,6 +32,6 @@ object WithContextual extends IOApp {
     */
   val logger: Logger[F] = consoleLogger[F](formatter = Formatter.colorful).withContext
 
-  def run(args: List[String]): IO[ExitCode] =
-    logger.info("Hello world").run(Map("this is" -> "context")).as(ExitCode.Success)
+  def run: IO[Unit] =
+    logger.info("Hello world").run(Map("this is" -> "context"))
 }

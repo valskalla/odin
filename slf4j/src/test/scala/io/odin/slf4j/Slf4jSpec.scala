@@ -2,13 +2,16 @@ package io.odin.slf4j
 
 import cats.syntax.all._
 import cats.effect.IO
-import cats.effect.concurrent.Ref
+import cats.effect.kernel.Ref
+import cats.effect.unsafe.IORuntime
 import io.odin.{Level, LoggerMessage, OdinSpec}
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.immutable.Queue
 
 class Slf4jSpec extends OdinSpec {
+
+  implicit private val ioRuntime: IORuntime = IORuntime.global
 
   it should "log with correct level" in {
     forAll { msgs: List[LoggerMessage] =>
