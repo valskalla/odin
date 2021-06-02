@@ -1,10 +1,11 @@
 package io.odin.loggers
 
-import cats.effect.{Concurrent, ConcurrentEffect, ContextShift, Fiber, Resource, Timer}
+import cats.MonadThrow
+import cats.effect.kernel.{Async, Clock, Resource}
+import cats.effect.std.Dispatcher
+import cats.effect.std.Queue
 import cats.syntax.all._
 import io.odin.{Level, Logger, LoggerMessage}
-import monix.catnap.ConcurrentQueue
-import monix.execution.{BufferCapacity, ChannelType}
 
 import scala.concurrent.duration._
 
@@ -13,39 +14,25 @@ import scala.concurrent.duration._
   *
   * Use `AsyncLogger.withAsync` to instantiate it safely
   */
-case class AsyncLogger[F[_]](queue: ConcurrentQueue[F, LoggerMessage], timeWindow: FiniteDuration, inner: Logger[F])(
-    implicit F: Concurrent[F],
-    timer: Timer[F],
-    contextShift: ContextShift[F]
+case class AsyncLogger[F[_]: Clock](queue: Queue[F, LoggerMessage], timeWindow: FiniteDuration, inner: Logger[F])(
+    implicit F: MonadThrow[F]
 ) extends DefaultLogger[F](inner.minLevel) {
   def submit(msg: LoggerMessage): F[Unit] = {
     queue.tryOffer(msg).void
   }
 
-  def drain: F[Unit] = {
-    queue
-      .drain(0, Int.MaxValue)
-      .flatMap { msgs =>
-        inner.log(msgs.toList)
-      }
-      .void
-      .handleErrorWith { _ =>
-        F.unit
-      }
-  }
-
-  /**
-    * Run internal loop of consuming events from the queue and push them down the chain
-    */
-  def runF: F[Fiber[F, Unit]] = {
-    def recDrain: F[Unit] =
-      drain >> timer.sleep(timeWindow) >> contextShift.shift >> recDrain
-    F.start(recDrain).map { fiber =>
-      Fiber(fiber.join, drain >> fiber.cancel)
-    }
-  }
+  private[loggers] def drain: F[Unit] =
+    drainAll.flatMap(msgs => inner.log(msgs.toList)).orElse(F.unit)
 
   def withMinimalLevel(level: Level): Logger[F] = copy(inner = inner.withMinimalLevel(level))
+
+  private def drainAll: F[Vector[LoggerMessage]] =
+    F.tailRecM(Vector.empty[LoggerMessage]) { acc =>
+      queue.tryTake.map {
+        case Some(value) => Left(acc :+ value)
+        case None        => Right(acc)
+      }
+    }
 }
 
 object AsyncLogger {
@@ -59,34 +46,34 @@ object AsyncLogger {
     * @param maxBufferSize If `maxBufferSize` is set to some value and buffer size grows to that value,
     *                      any new events might be dropped until there is a space in the buffer.
     */
-  def withAsync[F[_]: Timer: ContextShift](
+  def withAsync[F[_]](
       inner: Logger[F],
       timeWindow: FiniteDuration,
       maxBufferSize: Option[Int]
   )(
-      implicit F: Concurrent[F]
+      implicit F: Async[F]
   ): Resource[F, Logger[F]] = {
-    val queueCapacity = maxBufferSize match {
+    val createQueue = maxBufferSize match {
       case Some(value) =>
-        BufferCapacity.Bounded(value)
+        Queue.bounded[F, LoggerMessage](value)
       case None =>
-        BufferCapacity.Unbounded()
+        Queue.unbounded[F, LoggerMessage]
     }
-    Resource
-      .make {
-        for {
-          queue <- ConcurrentQueue.withConfig[F, LoggerMessage](queueCapacity, ChannelType.MPSC)
-          logger = AsyncLogger(queue, timeWindow, inner)
-          fiber <- logger.runF
-        } yield {
-          (fiber, logger)
-        }
-      } {
-        case (fiber, _) => fiber.cancel
-      }
-      .map {
-        case (_, logger) => logger
-      }
+
+    /**
+      * Run internal loop of consuming events from the queue and push them down the chain
+      */
+    def backgroundConsumer(logger: AsyncLogger[F]): Resource[F, Unit] = {
+      def drainLoop: F[Unit] = F.andWait(logger.drain, timeWindow).foreverM[Unit]
+
+      Resource.make(F.start(drainLoop))(fiber => logger.drain >> fiber.cancel).void
+    }
+
+    for {
+      queue <- Resource.eval(createQueue)
+      logger <- Resource.pure(AsyncLogger(queue, timeWindow, inner))
+      _ <- backgroundConsumer(logger)
+    } yield logger
   }
 
   /**
@@ -94,11 +81,12 @@ object AsyncLogger {
     * @param maxBufferSize If `maxBufferSize` is set to some value and buffer size grows to that value,
     *                      any new events will be dropped until there is a space in the buffer.
     */
-  def withAsyncUnsafe[F[_]: Timer: ContextShift](
+  def withAsyncUnsafe[F[_]](
       inner: Logger[F],
       timeWindow: FiniteDuration,
       maxBufferSize: Option[Int]
   )(
-      implicit F: ConcurrentEffect[F]
-  ): Logger[F] = F.toIO(withAsync(inner, timeWindow, maxBufferSize).allocated).unsafeRunSync()._1
+      implicit F: Async[F],
+      dispatcher: Dispatcher[F]
+  ): Logger[F] = dispatcher.unsafeRunSync(withAsync(inner, timeWindow, maxBufferSize).allocated)._1
 }

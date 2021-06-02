@@ -1,7 +1,8 @@
 package io.odin.examples
 
 import cats.data.WriterT
-import cats.effect.{IO, Timer}
+import cats.effect.IO
+import cats.effect.unsafe.IORuntime
 import io.odin.{Logger, LoggerMessage, OdinSpec}
 import io.odin.loggers.WriterTLogger
 
@@ -12,7 +13,7 @@ class SimpleAppSpec extends OdinSpec {
 
   //definition of test monad. It keeps all the incoming `LoggerMessage` inside of the list
   type WT[A] = WriterT[IO, List[LoggerMessage], A]
-  implicit val timer: Timer[IO] = IO.timer(scala.concurrent.ExecutionContext.global)
+  implicit val ioRuntime: IORuntime = IORuntime.global
 
   "HelloSimpleService" should "log greeting call" in {
     //logger that writes messages as a log of WriterT monad

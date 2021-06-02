@@ -1,10 +1,15 @@
 package io.odin.loggers
 
+import java.util.concurrent.Executors
+
 import cats.arrow.FunctionK
 import cats.data.{ReaderT, WriterT}
+import cats.effect.unsafe.IORuntime
 import cats.effect.{Clock, IO}
 import io.odin.syntax._
 import io.odin.{LoggerMessage, OdinSpec}
+
+import scala.concurrent.ExecutionContext
 
 class ContextualLoggerSpec extends OdinSpec {
   type W[A] = WriterT[IO, List[LoggerMessage], A]
@@ -12,10 +17,14 @@ class ContextualLoggerSpec extends OdinSpec {
 
   implicit val hasContext: HasContext[Map[String, String]] = (env: Map[String, String]) => env
   implicit val clock: Clock[IO] = zeroClock
-
+  implicit val ioRuntime: IORuntime = IORuntime.global
+  private val singleThreadCtx: ExecutionContext = ExecutionContext.fromExecutor(Executors.newSingleThreadExecutor())
   private val logger = new WriterTLogger[IO].mapK(λ[FunctionK[W, F]](ReaderT.liftF(_))).withContext
 
-  checkAll("ContContextLogger", LoggerTests[F](logger, reader => reader.run(Map()).written.unsafeRunSync()).all)
+  checkAll(
+    "ContContextLogger",
+    LoggerTests[F](logger, reader => reader.run(Map()).written.evalOn(singleThreadCtx).unsafeRunSync()).all
+  )
 
   it should "pick up context from F[_]" in {
     forAll { (loggerMessage: LoggerMessage, ctx: Map[String, String]) =>
