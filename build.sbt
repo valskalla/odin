@@ -13,7 +13,7 @@ lazy val versions = new {
   val slf4j = "1.7.30"
   val log4j = "2.14.0"
   val disruptor = "3.4.2"
-  val scribe = "2.7.12"
+  val scribe = "2.7.13"
   val perfolation = "1.1.7"
   val circe = "0.14.1"
 }
