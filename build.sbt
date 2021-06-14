@@ -19,7 +19,11 @@ lazy val versions = new {
   val circe = "0.14.1"
 }
 
-lazy val scalaVersions = List("2.13.6", "2.12.13", "3.0.0")
+lazy val onlyScala2 = Option(System.getenv("ONLY_SCALA_2")).contains("true")
+lazy val onlyScala3 = Option(System.getenv("ONLY_SCALA_3")).contains("true")
+lazy val scala3 = if (onlyScala2) List() else List("3.0.0")
+lazy val scala2 = if (onlyScala3) List() else List("2.13.6", "2.12.13")
+lazy val scalaVersions = scala2 ::: scala3
 
 lazy val scalaTest = "org.scalatest" %% "scalatest" % versions.scalaTest % Test
 lazy val scalaTestScalaCheck = "org.scalatestplus" %% "scalacheck-1-15" % versions.scalaTestScalaCheck % Test
