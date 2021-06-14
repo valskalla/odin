@@ -26,7 +26,7 @@ class FileLoggerSpec extends OdinSpec {
       (for {
         path <- fileResource
         fileName = path.toString
-        logger <- FileLogger[IO](fileName, formatter, Level.Trace)
+        logger <- FileLogger[IO](fileName, formatter, Level.Trace, Nil)
         _ <- Resource.eval(logger.log(loggerMessage))
       } yield {
         new String(Files.readAllBytes(Paths.get(fileName))) shouldBe formatter.format(loggerMessage) + lineSeparator
@@ -40,7 +40,7 @@ class FileLoggerSpec extends OdinSpec {
       (for {
         path <- fileResource
         fileName = path.toString
-        logger <- FileLogger[IO](fileName, formatter, Level.Trace)
+        logger <- FileLogger[IO](fileName, formatter, Level.Trace, Nil)
         _ <- Resource.eval(logger.log(loggerMessage))
       } yield {
         new String(Files.readAllBytes(Paths.get(fileName))) shouldBe loggerMessage

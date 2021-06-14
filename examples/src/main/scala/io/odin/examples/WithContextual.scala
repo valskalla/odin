@@ -10,7 +10,7 @@ import io.odin.syntax._
 /**
   * Prints `Hello World` log line with some context picked up from the environment of `F[_]`
   *
-  * In cases when there is `Ask[F, Env]` available in scope, and there is type class [[HasContext]] for
+  * In cases when there is `Ask[F, Env]` available in scope, and there is type class `io.odin.loggers.HasContext` for
   * environment `Env` defined, `withContext` will automatically derive required type classes for adding the context to
   * the log
   */

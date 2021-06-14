@@ -42,7 +42,7 @@ object Formatter {
   ): Formatter = {
 
     @inline def withColor(color: String, message: String): String =
-      if (colorful) p"$color$message$RESET" else message
+      if (colorful) s"$color$message$RESET" else message
 
     (msg: LoggerMessage) => {
       val ctx = if (printCtx) withColor(MAGENTA, formatCtx(msg.context)) else ""
@@ -53,12 +53,12 @@ object Formatter {
 
       val throwable = msg.exception match {
         case Some(t) =>
-          withColor(RED, p"${System.lineSeparator()}${formatThrowable(t, throwableFormat)}")
+          withColor(RED, s"${System.lineSeparator()}${formatThrowable(t, throwableFormat)}")
         case None =>
           ""
       }
 
-      p"$timestamp [$threadName] $level $position - ${msg.message.value}$ctx$throwable"
+      s"$timestamp [$threadName] $level $position - ${msg.message.value}$ctx$throwable"
     }
   }
 
@@ -70,7 +70,7 @@ object Formatter {
       val iterator = context.iterator
       while (iterator.hasNext) {
         val (key, value) = iterator.next()
-        builder.append(p"$key: $value")
+        builder.append(s"$key: $value")
         if (iterator.hasNext) builder.append(", ")
       }
       builder.toString()
@@ -81,7 +81,7 @@ object Formatter {
     */
   def formatTimestamp(timestamp: Long): String = {
     val date = timestamp.t
-    p"${date.F}T${date.T},${date.milliOfSecond}"
+    s"${date.F}T${date.T},${date.milliOfSecond}"
   }
 
   /**
@@ -94,7 +94,7 @@ object Formatter {
     * 'io.odin.formatter.Formatter formatPosition:75' formatted as 'i.o.f.Formatter formatPosition:75'
     */
   def formatPosition(position: Position, format: PositionFormat): String = {
-    val lineNumber = if (position.line >= 0) p":${position.line}" else ""
+    val lineNumber = if (position.line >= 0) s":${position.line}" else ""
 
     val enclosure = format match {
       case PositionFormat.Full              => position.enclosureName
@@ -102,7 +102,7 @@ object Formatter {
 
     }
 
-    p"$enclosure$lineNumber"
+    s"$enclosure$lineNumber"
   }
 
   /**

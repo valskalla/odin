@@ -14,14 +14,14 @@ import scala.reflect.ClassTag
 class RenderSpec extends OdinSpec {
   it should "derive Render instance from cats.Show" in {
     val renderer = Render[Foo]
-    forAll { foo: Foo =>
+    forAll { (foo: Foo) =>
       renderer.render(foo) shouldBe foo.show
     }
   }
 
   it should "use .toString" in {
     val renderer = Render.fromToString[Foo]
-    forAll { foo: Foo =>
+    forAll { (foo: Foo) =>
       renderer.render(foo) shouldBe foo.toString
     }
   }
@@ -66,7 +66,7 @@ class RenderSpec extends OdinSpec {
 
   def renderBehavior[A: Render: ClassTag: Arbitrary](expected: A => String): Unit =
     it should s"render ${implicitly[ClassTag[A]].runtimeClass.getSimpleName}" in {
-      forAll { a: A =>
+      forAll { (a: A) =>
         Render[A].render(a) shouldBe expected(a)
       }
     }

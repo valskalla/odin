@@ -1,6 +1,7 @@
 package io.odin.loggers
 
 import cats.Id
+import cats.catsInstancesForId
 import cats.data.Writer
 import cats.effect.Clock
 import cats.syntax.all._
@@ -14,7 +15,7 @@ class DefaultLoggerSpec extends OdinSpec {
   it should "correctly construct LoggerMessage" in {
     forAll { (msg: String, ctx: Map[String, String], throwable: Throwable, ts: FiniteDuration) =>
       val timestamp = ts.toMillis
-      implicit val clk: Clock[Id] = fixedClock(timestamp)
+      implicit val clk: Clock[Id] = fixedClock[Id](timestamp)
       val log = logger().withMinimalLevel(Level.Trace)
       check(log.trace(msg))(Level.Trace, msg, timestamp)
       check(log.trace(msg, throwable))(Level.Trace, msg, timestamp, throwable = Some(throwable))
@@ -44,7 +45,7 @@ class DefaultLoggerSpec extends OdinSpec {
   }
 
   it should "write multiple messages" in {
-    forAll { msgs: List[LoggerMessage] =>
+    forAll { (msgs: List[LoggerMessage]) =>
       implicit val clk: Clock[Id] = zeroClock
       logger().withMinimalLevel(Level.Trace).log(msgs).written shouldBe msgs
     }

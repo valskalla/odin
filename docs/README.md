@@ -652,7 +652,12 @@ service.findAndVerify("bad-user").attempt.unsafeRunSync()
 
 ### Extras. Derivation
 
-`io.odin.extras.derivation.render` provides a Magnolia-based derivation of the `Render` type class.
+`io.odin.extras.derivation.render` provides a Magnolia-based derivation of the `Render` type class. If you're on Scala 2, please make sure to have `scala-reflect` in your dependencies, for example using:
+```scala
+libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value
+```
+
+On Scala 3, Magnolia is based on `scala.deriving.Mirror` and hence doesn't need any additional dependency.
 
 The derivation can be configured via annotations: 
 * @rendered(includeMemberName = false)
@@ -703,6 +708,8 @@ val config = ApiConfig("https://localhost:8080", "api-key", "api-secret", List("
 
 println(render"API config $config")
 ```
+
+Please note that by differences of magnolia itself, the derivation on Scala 2 and Scala 3 might yield slightly different results. One known difference is that for Scala 3, value classes are currently not unwrapped as they're on Scala 2.
 
 ## SLF4J bridge
 

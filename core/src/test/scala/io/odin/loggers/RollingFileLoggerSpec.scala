@@ -22,10 +22,9 @@ class RollingFileLoggerSpec extends OdinSpec {
     IO.delay(Files.createTempDirectory(UUID.randomUUID().toString))
   } { file =>
     IO.delay {
-        ListDirectory(file).filter(_.isFile).foreach(_.delete())
-        Files.delete(file)
-      }
-      .attempt
+      ListDirectory(file).filter(_.isFile).foreach(_.delete())
+      Files.delete(file)
+    }.attempt
       .void
   }
 

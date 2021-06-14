@@ -67,6 +67,8 @@ package object zio {
       .mapError(LoggerError.apply)
       .map(_.mapK(fromTask))
 
-  private[odin] val fromTask: Task ~> IO[LoggerError, *] =
-    λ[FunctionK[Task, IO[LoggerError, *]]](_.mapError(error => LoggerError(error)))
+  private[odin] val fromTask: Task ~> IO[LoggerError, *] = new FunctionK[Task, IO[LoggerError, *]] {
+    def apply[A](fa: Task[A]): IO[LoggerError, A] =
+      fa.mapError(error => LoggerError(error))
+  }
 }

@@ -24,7 +24,7 @@ class ContramapLoggerSpec extends OdinSpec {
 
   it should "contramap(identity).log(msg) <-> log(msg)" in {
     val logger = new WriterTLogger[IO].contramap(identity)
-    forAll { msgs: List[LoggerMessage] =>
+    forAll { (msgs: List[LoggerMessage]) =>
       val written = msgs.traverse(logger.log).written.unsafeRunSync()
       val batchWritten = logger.log(msgs).written.unsafeRunSync()
 

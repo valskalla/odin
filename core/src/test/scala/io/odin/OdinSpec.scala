@@ -55,7 +55,7 @@ trait OdinSpec extends AnyFlatSpec with Matchers with Checkers with ScalaCheckDr
       exception <- Gen.option(Arbitrary.arbitrary[Throwable])
       position <- positionGen
       threadName <- nonEmptyStringGen
-      timestamp <- Gen.choose(0, startTime)
+      timestamp <- Gen.choose(0L, startTime)
     } yield {
       LoggerMessage(
         level = level,

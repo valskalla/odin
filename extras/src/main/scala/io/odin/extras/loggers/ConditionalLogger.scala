@@ -60,7 +60,6 @@ object ConditionalLogger {
     * If evaluation completed with an error, the messages with `level >= Level.Debug` will be sent to an inner logger.
     * If evaluation completed successfully, the messages with `level >= Level.Info` will be sent to an inner logger.
     *
-    *
     * '''Important:''' nothing is logged until the resource is released.
     * Example:
     * {{{
