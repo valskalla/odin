@@ -183,15 +183,15 @@ logger.info("Hello?")
 // res0: IO[Unit] = Map(
 //   ioe = FlatMap(
 //     ioe = IO(...),
-//     f = io.odin.loggers.DefaultLogger$$Lambda$10483/2016546778@56d29d14
+//     f = io.odin.loggers.DefaultLogger$$Lambda$10457/1119004429@53c4012f
 //   ),
-//   f = cats.effect.IO$$Lambda$10484/1570900233@43bd7b51
+//   f = cats.effect.IO$$Lambda$10458/419660657@3f7ad108
 // )
 
 //prints "Hello world" to the STDOUT.
 //Although, don't use `unsafeRunSync` in production unless you know what you're doing
 logger.info("Hello world").unsafeRunSync()
-// 2021-06-14T16:37:06,150 [io-compute-1] INFO repl.MdocSession.App#res1:62 - Hello world
+// 2021-06-14T17:02:59,261 [io-compute-0] INFO repl.MdocSession.App#res1:62 - Hello world
 ```
 
 All messages of level `WARN` and higher are routed to the _STDERR_ while messages with level `INFO` and below go to the _STDOUT_.
@@ -230,8 +230,8 @@ _odin-core_ provides the `Formatter.default` and `Formatter.colorful` that print
 
 ```scala
 (logger.info("No context") *> logger.info("Some context", Map("key" -> "value"))).unsafeRunSync()
-// 2021-06-14T16:37:06,190 [io-compute-1] INFO repl.MdocSession.App#res2:68 - No context
-// 2021-06-14T16:37:06,191 [io-compute-1] INFO repl.MdocSession.App#res2:68 - Some context - key: value
+// 2021-06-14T17:02:59,296 [io-compute-0] INFO repl.MdocSession.App#res2:68 - No context
+// 2021-06-14T17:02:59,296 [io-compute-0] INFO repl.MdocSession.App#res2:68 - Some context - key: value
 ```
 
 The latter adds a bit of colors to the default formatter:
@@ -252,7 +252,7 @@ Now messages printed with this logger will be encoded as JSON string using circe
 
 ```scala
 jsonLogger.info("This is JSON").unsafeRunSync()
-// {"level":"INFO","message":"This is JSON","context":{},"exception":null,"position":"repl.MdocSession.App#res3:83","thread_name":"io-compute-0","timestamp":"2021-06-14T16:37:06,216"}
+// {"level":"INFO","message":"This is JSON","context":{},"exception":null,"position":"repl.MdocSession.App#res3:83","thread_name":"io-compute-1","timestamp":"2021-06-14T17:02:59,320"}
 ```
 
 ### Customized formatter
@@ -357,9 +357,9 @@ import io.odin.config._
 import java.time.LocalDateTime
 
 val fileNamePattern = file"/var/log/$year-$month-$day-$hour-$minute-$second.log"
-// fileNamePattern: LocalDateTime => String = io.odin.config.package$FileNamePatternInterpolator$$$Lambda$10511/1090939729@43b3982f
+// fileNamePattern: LocalDateTime => String = io.odin.config.package$FileNamePatternInterpolator$$$Lambda$10485/2065583069@6018ad42
 val fileName = fileNamePattern(LocalDateTime.now)
-// fileName: String = "/var/log/2021-06-14-16-37-06.log"
+// fileName: String = "/var/log/2021-06-14-17-02-59.log"
 ```
 
 Interpolator placeholders used above are provided with `io.odin.config` package as well:
@@ -369,11 +369,11 @@ year.extract(LocalDateTime.now)
 month.extract(LocalDateTime.now)
 // res7: String = "06"
 hour.extract(LocalDateTime.now)
-// res8: String = "16"
+// res8: String = "17"
 minute.extract(LocalDateTime.now)
-// res9: String = "37"
+// res9: String = "02"
 second.extract(LocalDateTime.now)
-// res10: String = "06"
+// res10: String = "59"
 ```
 
 All the placeholders are padded with `0` to contain at least two digits. It's also possible to include any string
@@ -403,7 +403,7 @@ async logger shall be done inside of `Resource.use` block:
 ```scala
 //queue will be flushed on release even if flushing timer didn't hit the mark yet
 asyncLoggerResource.use(logger => logger.info("Async info")).unsafeRunSync()
-// 2021-06-14T16:37:06,420 [io-compute-1] INFO repl.MdocSession.App#res11:166 - Async info
+// 2021-06-14T17:02:59,533 [io-compute-0] INFO repl.MdocSession.App#res11:166 - Async info
 ```
 
 Package `io.odin.syntax._` also pimps the `Resource[F, Logger[F]]` type with the same `.withAsync` method to use
@@ -494,7 +494,7 @@ import io.odin.syntax._
 consoleLogger[IO]()
     .withConstContext(Map("predefined" -> "context"))
     .info("Hello world").unsafeRunSync()
-// 2021-06-14T16:37:06,682 [io-compute-1] INFO repl.MdocSession.App#res12:230 - Hello world - predefined: context
+// 2021-06-14T17:02:59,799 [io-compute-1] INFO repl.MdocSession.App#res12:230 - Hello world - predefined: context
 ```
 
 ## Contextual effects
@@ -524,7 +524,7 @@ consoleLogger[M]()
     .info("Hello world")
     .run(Env(Map("env" -> "ctx")))
     .unsafeRunSync()
-// 2021-06-14T16:37:06,730 [io-compute-1] INFO repl.MdocSession.App#res13:258 - Hello world - env: ctx
+// 2021-06-14T17:02:59,848 [io-compute-1] INFO repl.MdocSession.App#res13:258 - Hello world - env: ctx
 ```
 
 Odin automatically derives required type classes for each type `F[_]` that has `Ask[F, E]` defined, or in other words
@@ -555,7 +555,7 @@ consoleLogger[IO]()
     .withSecretContext("password")
     .info("Hello, username", Map("password" -> "qwerty"))
     .unsafeRunSync() //rendered context contains first 6 symbols of SHA-1 hash of password
-// 2021-06-14T16:37:06,735 [io-compute-1] INFO repl.MdocSession.App#res14:271 - Hello, username - password: secret:b1b377
+// 2021-06-14T17:02:59,853 [io-compute-1] INFO repl.MdocSession.App#res14:271 - Hello, username - password: secret:b1b377
 ```
 
 ## Contramap and filter
@@ -569,7 +569,7 @@ consoleLogger[IO]()
     .contramap(msg => msg.copy(message = msg.message.map(_ + " World")))
     .info("Hello")
     .unsafeRunSync()
-// 2021-06-14T16:37:06,740 [io-compute-1] INFO repl.MdocSession.App#res15:283 - Hello World
+// 2021-06-14T17:02:59,858 [io-compute-0] INFO repl.MdocSession.App#res15:283 - Hello World
 
 consoleLogger[IO]()
     .filter(msg => msg.message.value.size < 10)
@@ -667,14 +667,14 @@ class UserService[F[_]](logger: Logger[F])(implicit F: Async[F]) {
 }
 
 val service = new UserService[IO](consoleLogger[IO](minLevel = Level.Info))
-// service: UserService[IO] = repl.MdocSession$App$UserService@6d3dc6f9
+// service: UserService[IO] = repl.MdocSession$App$UserService@535ba40e
 
 service.findAndVerify("good-user").attempt.unsafeRunSync()
-// 2021-06-14T16:37:06,767 [io-compute-1] INFO repl.MdocSession.App#UserService#findAndVerify:322 - User found and verified User(my-user-good-user)
+// 2021-06-14T17:02:59,885 [io-compute-0] INFO repl.MdocSession.App#UserService#findAndVerify:322 - User found and verified User(my-user-good-user)
 // res17: Either[Throwable, Unit] = Right(value = ())
 service.findAndVerify("bad-user").attempt.unsafeRunSync()
-// 2021-06-14T16:37:06,771 [io-compute-0] DEBUG repl.MdocSession.App#UserService#findAndVerify:318 - Looking for user by id [bad-user]
-// 2021-06-14T16:37:06,771 [io-compute-0] DEBUG repl.MdocSession.App#UserService#findAndVerify:320 - Found user User(my-user-bad-user)
+// 2021-06-14T17:02:59,889 [io-compute-1] DEBUG repl.MdocSession.App#UserService#findAndVerify:318 - Looking for user by id [bad-user]
+// 2021-06-14T17:02:59,889 [io-compute-1] DEBUG repl.MdocSession.App#UserService#findAndVerify:320 - Found user User(my-user-bad-user)
 // res18: Either[Throwable, Unit] = Left(
 //   value = java.lang.RuntimeException: Bad User
 // )
