@@ -35,7 +35,7 @@ libraryDependencies ++= Seq(
   "com.github.valskalla" %% "odin-core",
   "com.github.valskalla" %% "odin-json", //to enable JSON formatter if needed
   "com.github.valskalla" %% "odin-extras" //to enable additional features if needed (see docs)
-).map(_ % "0.11.0+3-19c38e47+20210402-1813-SNAPSHOT")
+).map(_ % "0.12.0")
 ```
 
 Example
@@ -70,9 +70,9 @@ Some time could be saved by using the effect-predefined variants of Odin. There 
 
 ```scala
 //ZIO
-libraryDependencies += "com.github.valskalla" %% "odin-zio" % "0.11.0+3-19c38e47+20210402-1813-SNAPSHOT"
+libraryDependencies += "com.github.valskalla" %% "odin-zio" % "0.12.0"
 //or Monix
-libraryDependencies += "com.github.valskalla" %% "odin-monix" % "0.11.0+3-19c38e47+20210402-1813-SNAPSHOT"
+libraryDependencies += "com.github.valskalla" %% "odin-monix" % "0.12.0"
 ```
 
 Use corresponding import to get an access to the loggers:
@@ -170,7 +170,6 @@ import cats.effect.IO
 import cats.effect.unsafe.IORuntime
 
 //required for evaluation of IO later. IOApp provides it out of the box
-//or it can be imported by `import cats.effect.unsafe.implicits._`
 implicit val ioRuntime: IORuntime = IORuntime.global
 
 val logger: Logger[IO] = consoleLogger[IO]()
@@ -184,15 +183,15 @@ logger.info("Hello?")
 // res0: IO[Unit] = Map(
 //   ioe = FlatMap(
 //     ioe = IO(...),
-//     f = io.odin.loggers.DefaultLogger$$Lambda$29616/0x0000000846b7e840@6b931e0b
+//     f = io.odin.loggers.DefaultLogger$$Lambda$10483/2016546778@56d29d14
 //   ),
-//   f = cats.effect.IO$$Lambda$29617/0x0000000846b7d840@5195a0ec
+//   f = cats.effect.IO$$Lambda$10484/1570900233@43bd7b51
 // )
 
 //prints "Hello world" to the STDOUT.
 //Although, don't use `unsafeRunSync` in production unless you know what you're doing
 logger.info("Hello world").unsafeRunSync()
-// 2021-04-02T18:25:41,133 [io-compute-3] INFO repl.MdocSession.App#res1:62 - Hello world
+// 2021-06-14T16:37:06,150 [io-compute-1] INFO repl.MdocSession.App#res1:62 - Hello world
 ```
 
 All messages of level `WARN` and higher are routed to the _STDERR_ while messages with level `INFO` and below go to the _STDOUT_.
@@ -231,8 +230,8 @@ _odin-core_ provides the `Formatter.default` and `Formatter.colorful` that print
 
 ```scala
 (logger.info("No context") *> logger.info("Some context", Map("key" -> "value"))).unsafeRunSync()
-// 2021-04-02T18:25:41,268 [io-compute-2] INFO repl.MdocSession.App#res2:68 - No context
-// 2021-04-02T18:25:41,269 [io-compute-2] INFO repl.MdocSession.App#res2:68 - Some context - key: value
+// 2021-06-14T16:37:06,190 [io-compute-1] INFO repl.MdocSession.App#res2:68 - No context
+// 2021-06-14T16:37:06,191 [io-compute-1] INFO repl.MdocSession.App#res2:68 - Some context - key: value
 ```
 
 The latter adds a bit of colors to the default formatter:
@@ -253,7 +252,7 @@ Now messages printed with this logger will be encoded as JSON string using circe
 
 ```scala
 jsonLogger.info("This is JSON").unsafeRunSync()
-// {"level":"INFO","message":"This is JSON","context":{},"exception":null,"position":"repl.MdocSession.App#res3:83","thread_name":"io-compute-3","timestamp":"2021-04-02T18:25:41,325"}
+// {"level":"INFO","message":"This is JSON","context":{},"exception":null,"position":"repl.MdocSession.App#res3:83","thread_name":"io-compute-0","timestamp":"2021-06-14T16:37:06,216"}
 ```
 
 ### Customized formatter
@@ -358,9 +357,9 @@ import io.odin.config._
 import java.time.LocalDateTime
 
 val fileNamePattern = file"/var/log/$year-$month-$day-$hour-$minute-$second.log"
-// fileNamePattern: LocalDateTime => String = io.odin.config.package$FileNamePatternInterpolator$$$Lambda$29645/0x0000000846bbd840@3651f574
+// fileNamePattern: LocalDateTime => String = io.odin.config.package$FileNamePatternInterpolator$$$Lambda$10511/1090939729@43b3982f
 val fileName = fileNamePattern(LocalDateTime.now)
-// fileName: String = "/var/log/2021-04-02-18-25-41.log"
+// fileName: String = "/var/log/2021-06-14-16-37-06.log"
 ```
 
 Interpolator placeholders used above are provided with `io.odin.config` package as well:
@@ -368,13 +367,13 @@ Interpolator placeholders used above are provided with `io.odin.config` package 
 year.extract(LocalDateTime.now)
 // res6: String = "2021"
 month.extract(LocalDateTime.now)
-// res7: String = "04"
+// res7: String = "06"
 hour.extract(LocalDateTime.now)
-// res8: String = "18"
+// res8: String = "16"
 minute.extract(LocalDateTime.now)
-// res9: String = "25"
+// res9: String = "37"
 second.extract(LocalDateTime.now)
-// res10: String = "41"
+// res10: String = "06"
 ```
 
 All the placeholders are padded with `0` to contain at least two digits. It's also possible to include any string
@@ -404,7 +403,7 @@ async logger shall be done inside of `Resource.use` block:
 ```scala
 //queue will be flushed on release even if flushing timer didn't hit the mark yet
 asyncLoggerResource.use(logger => logger.info("Async info")).unsafeRunSync()
-// 2021-04-02T18:25:41,597 [io-compute-2] INFO repl.MdocSession.App#res11:166 - Async info
+// 2021-06-14T16:37:06,420 [io-compute-1] INFO repl.MdocSession.App#res11:166 - Async info
 ```
 
 Package `io.odin.syntax._` also pimps the `Resource[F, Logger[F]]` type with the same `.withAsync` method to use
@@ -495,7 +494,7 @@ import io.odin.syntax._
 consoleLogger[IO]()
     .withConstContext(Map("predefined" -> "context"))
     .info("Hello world").unsafeRunSync()
-// 2021-04-02T18:25:42,146 [io-compute-1] INFO repl.MdocSession.App#res12:230 - Hello world - predefined: context
+// 2021-06-14T16:37:06,682 [io-compute-1] INFO repl.MdocSession.App#res12:230 - Hello world - predefined: context
 ```
 
 ## Contextual effects
@@ -525,7 +524,7 @@ consoleLogger[M]()
     .info("Hello world")
     .run(Env(Map("env" -> "ctx")))
     .unsafeRunSync()
-// 2021-04-02T18:25:42,265 [io-compute-5] INFO repl.MdocSession.App#res13:258 - Hello world - env: ctx
+// 2021-06-14T16:37:06,730 [io-compute-1] INFO repl.MdocSession.App#res13:258 - Hello world - env: ctx
 ```
 
 Odin automatically derives required type classes for each type `F[_]` that has `Ask[F, E]` defined, or in other words
@@ -556,7 +555,7 @@ consoleLogger[IO]()
     .withSecretContext("password")
     .info("Hello, username", Map("password" -> "qwerty"))
     .unsafeRunSync() //rendered context contains first 6 symbols of SHA-1 hash of password
-// 2021-04-02T18:25:42,272 [io-compute-0] INFO repl.MdocSession.App#res14:271 - Hello, username - password: secret:b1b377
+// 2021-06-14T16:37:06,735 [io-compute-1] INFO repl.MdocSession.App#res14:271 - Hello, username - password: secret:b1b377
 ```
 
 ## Contramap and filter
@@ -570,7 +569,7 @@ consoleLogger[IO]()
     .contramap(msg => msg.copy(message = msg.message.map(_ + " World")))
     .info("Hello")
     .unsafeRunSync()
-// 2021-04-02T18:25:42,277 [io-compute-5] INFO repl.MdocSession.App#res15:283 - Hello World
+// 2021-06-14T16:37:06,740 [io-compute-1] INFO repl.MdocSession.App#res15:283 - Hello World
 
 consoleLogger[IO]()
     .filter(msg => msg.message.value.size < 10)
@@ -622,7 +621,7 @@ The `odin-extras` module provides additional functionality: ConditionalLogger, R
 - Add following dependency to your build:
 
 ```scala
-libraryDependencies += "com.github.valskalla" %% "odin-extras" % "0.11.0+3-19c38e47+20210402-1813-SNAPSHOT"
+libraryDependencies += "com.github.valskalla" %% "odin-extras" % "0.12.0"
 ```
 
 ### Extras. Conditional logging
@@ -668,14 +667,14 @@ class UserService[F[_]](logger: Logger[F])(implicit F: Async[F]) {
 }
 
 val service = new UserService[IO](consoleLogger[IO](minLevel = Level.Info))
-// service: UserService[IO] = repl.MdocSession$App$UserService@26f706b3
+// service: UserService[IO] = repl.MdocSession$App$UserService@6d3dc6f9
 
 service.findAndVerify("good-user").attempt.unsafeRunSync()
-// 2021-04-02T18:25:42,343 [io-compute-1] INFO repl.MdocSession.App#UserService#findAndVerify:322 - User found and verified User(my-user-good-user)
+// 2021-06-14T16:37:06,767 [io-compute-1] INFO repl.MdocSession.App#UserService#findAndVerify:322 - User found and verified User(my-user-good-user)
 // res17: Either[Throwable, Unit] = Right(value = ())
 service.findAndVerify("bad-user").attempt.unsafeRunSync()
-// 2021-04-02T18:25:42,348 [io-compute-3] DEBUG repl.MdocSession.App#UserService#findAndVerify:318 - Looking for user by id [bad-user]
-// 2021-04-02T18:25:42,348 [io-compute-3] DEBUG repl.MdocSession.App#UserService#findAndVerify:320 - Found user User(my-user-bad-user)
+// 2021-06-14T16:37:06,771 [io-compute-0] DEBUG repl.MdocSession.App#UserService#findAndVerify:318 - Looking for user by id [bad-user]
+// 2021-06-14T16:37:06,771 [io-compute-0] DEBUG repl.MdocSession.App#UserService#findAndVerify:320 - Found user User(my-user-bad-user)
 // res18: Either[Throwable, Unit] = Left(
 //   value = java.lang.RuntimeException: Bad User
 // )
@@ -683,7 +682,12 @@ service.findAndVerify("bad-user").attempt.unsafeRunSync()
 
 ### Extras. Derivation
 
-`io.odin.extras.derivation.render` provides a Magnolia-based derivation of the `Render` type class.
+`io.odin.extras.derivation.render` provides a Magnolia-based derivation of the `Render` type class. If you're on Scala 2, please make sure to have `scala-reflect` in your dependencies, for example using:
+```scala
+libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value
+```
+
+On Scala 3, Magnolia is based on `scala.deriving.Mirror` and hence doesn't need any additional dependency.
 
 The derivation can be configured via annotations: 
 * @rendered(includeMemberName = false)
@@ -742,6 +746,8 @@ println(render"API config $config")
 // API config ApiConfig(uri = https://localhost:8080, apiSecret = <secret>, environments = List(test, dev)(2 more))
 ```
 
+Please note that by differences of magnolia itself, the derivation on Scala 2 and Scala 3 might yield slightly different results. One known difference is that for Scala 3, value classes are currently not unwrapped as they're on Scala 2.
+
 ## SLF4J bridge
 
 In case if some dependencies in the project use SL4J as a logging API, it's possible to provide Odin logger as a backend.
@@ -749,7 +755,7 @@ It requires a two-step setup:
 
 - Add following dependency to your build:
 ```scala
-libraryDependencies += "com.github.valskalla" %% "odin-slf4j" % "0.11.0+3-19c38e47+20210402-1813-SNAPSHOT"
+libraryDependencies += "com.github.valskalla" %% "odin-slf4j" % "0.12.0"
 ```
 - Create Scala class `ExternalLogger` somewhere in the project:
 ```scala
