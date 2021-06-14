@@ -60,9 +60,7 @@ object AsyncLogger {
         Queue.unbounded[F, LoggerMessage]
     }
 
-    /**
-      * Run internal loop of consuming events from the queue and push them down the chain
-      */
+    //Run internal loop of consuming events from the queue and push them down the chain
     def backgroundConsumer(logger: AsyncLogger[F]): Resource[F, Unit] = {
       def drainLoop: F[Unit] = F.andWait(logger.drain, timeWindow).foreverM[Unit]
 
