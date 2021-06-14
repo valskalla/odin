@@ -71,7 +71,8 @@ object RollingFileLogger {
 
     def mk: Resource[F, Logger[F]] =
       for {
-        (hs, (logger, rolloverSignal)) <- Hotswap[F, (Logger[F], RolloverSignal)](allocate)
+        hotswap <- Hotswap[F, (Logger[F], RolloverSignal)](allocate)
+        (hs, (logger, rolloverSignal)) = hotswap
         refLogger <- Resource.eval(Ref.of(logger))
         _ <- F.background(rollingLoop(hs, rolloverSignal, refLogger))
       } yield RefLogger(refLogger, minLevel)
@@ -113,11 +114,12 @@ object RollingFileLogger {
 
       def loop(start: Long): F[Unit] = {
         for {
-          size <- if (maxFileSizeInBytes.isDefined) {
-            F.delay(fileSizeCheck(filePath))
-          } else {
-            F.pure(0L)
-          }
+          size <-
+            if (maxFileSizeInBytes.isDefined) {
+              F.delay(fileSizeCheck(filePath))
+            } else {
+              F.pure(0L)
+            }
           time <- now
           _ <- F.unlessA(checkConditions(start, time, size)) {
             for {
@@ -135,8 +137,8 @@ object RollingFileLogger {
     }
 
     /**
-      * Once rollover signal is sent, it means that it's triggered and current logger's file exceeded TTL or allowed size.
-      * At this moment new logger, new watcher and new release values shall be allocated to replace the old ones.
+      * Once rollover signal is sent, it means that it's triggered and current logger's file exceeded TTL or allowed
+      * size. At this moment new logger, new watcher and new release values shall be allocated to replace the old ones.
       *
       * Once new values are allocated and corresponding references are updated, run the old release and loop the whole
       * function using new watcher
@@ -147,11 +149,10 @@ object RollingFileLogger {
         logger: Ref[F, Logger[F]]
     ): F[Unit] =
       F.tailRecM[RolloverSignal, Unit](rolloverSignal) { signal =>
-        for {
-          _ <- signal.get
-          (newLogger, newSignal) <- hs.swap(allocate)
-          _ <- logger.set(newLogger)
-        } yield Left(newSignal)
+        signal.get >> hs.swap(allocate).flatMap {
+          case (newLogger, newSignal) =>
+            logger.set(newLogger).as(newSignal.asLeft[Unit])
+        }
       }
 
   }

@@ -14,7 +14,7 @@ class Slf4jSpec extends OdinSpec {
   implicit private val ioRuntime: IORuntime = IORuntime.global
 
   it should "log with correct level" in {
-    forAll { msgs: List[LoggerMessage] =>
+    forAll { (msgs: List[LoggerMessage]) =>
       val (logger, buffer) = getLogger
       msgs.foreach { msg =>
         msg.level match {
@@ -69,7 +69,7 @@ class Slf4jSpec extends OdinSpec {
   }
 
   it should "format logs" in {
-    forAll { msgs: List[LoggerMessage] =>
+    forAll { (msgs: List[LoggerMessage]) =>
       val (logger, buffer) = getLogger
       msgs.foreach { msg =>
         msg.level match {

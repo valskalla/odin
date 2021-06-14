@@ -51,8 +51,8 @@ trait EqInstances {
     }
 
   /**
-    * IO evaluates effects on different threads more often. Therefore `loggerMessageEq` returns `false` due to different threads.
-    * Evaluating effects on a single thread prevents such an issue.
+    * IO evaluates effects on different threads more often. Therefore `loggerMessageEq` returns `false` due to different
+    * threads. Evaluating effects on a single thread prevents such an issue.
     */
   implicit def eqIO[A](implicit eqA: Eq[A], ioRuntime: IORuntime): Eq[IO[A]] = Eq.instance { (ioA, ioB) =>
     eqA.eqv(ioA.evalOn(singleThreadCtx).unsafeRunSync(), ioB.evalOn(singleThreadCtx).unsafeRunSync())

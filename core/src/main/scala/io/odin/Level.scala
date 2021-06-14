@@ -33,7 +33,6 @@ object Level {
 
   implicit val order: Order[Level] with LowerBounded[Level] with UpperBounded[Level] =
     new Order[Level] with LowerBounded[Level] with UpperBounded[Level] { self =>
-
       private def f: Level => Int = {
         case Error => 4
         case Warn  => 3

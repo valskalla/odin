@@ -47,7 +47,7 @@ class RenderDerivationSpec extends OdinSpec {
     Render[WithLengthLimit[String, String]].render(instance) shouldBe expected
   }
 
-  it should "derive a type class respecting annotations" in forAll { bar: Bar =>
+  it should "derive a type class respecting annotations" in forAll { (bar: Bar) =>
     def renderFoo(foo: Foo): String =
       s"Foo(GenericClass(field = ${foo.field.field.value}, secret = <secret>, lengthLimited = ${foo.field.lengthLimited}))"
 

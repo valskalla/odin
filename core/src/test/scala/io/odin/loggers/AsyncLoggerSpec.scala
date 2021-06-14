@@ -25,7 +25,7 @@ class AsyncLoggerSpec extends OdinSpec {
   }
 
   it should "push logs down the chain" in {
-    forAll { msgs: List[LoggerMessage] =>
+    forAll { (msgs: List[LoggerMessage]) =>
       (for {
         ref <- Resource.eval(Ref.of[IO, List[LoggerMessage]](List.empty))
         logger <- RefLogger(ref).withMinimalLevel(Level.Trace).withAsync()
@@ -39,7 +39,7 @@ class AsyncLoggerSpec extends OdinSpec {
   }
 
   it should "push logs to the queue" in {
-    forAll { msgs: List[LoggerMessage] =>
+    forAll { (msgs: List[LoggerMessage]) =>
       (for {
         queue <- Queue.unbounded[IO, LoggerMessage]
         logger = AsyncLogger(queue, 1.millis, Logger.noop[IO]).withMinimalLevel(Level.Trace)
@@ -57,7 +57,7 @@ class AsyncLoggerSpec extends OdinSpec {
 
       def withMinimalLevel(level: Level): Logger[IO] = this
     }
-    forAll { msgs: List[LoggerMessage] =>
+    forAll { (msgs: List[LoggerMessage]) =>
       (for {
         queue <- Queue.unbounded[IO, LoggerMessage]
         logger = AsyncLogger(queue, 1.millis, errorLogger)

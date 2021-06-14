@@ -1,21 +1,21 @@
 package io.odin.extras.derivation
 
 import io.odin.meta.Render
-import magnolia.{CaseClass, Magnolia, Param, SealedTrait}
+import magnolia.*
 import java.security.MessageDigest
 import java.math.BigInteger
 
-object render {
+object render extends Derivation[Render] {
 
   type Typeclass[A] = Render[A]
 
-  def combine[A](ctx: CaseClass[Typeclass, A]): Typeclass[A] = value => {
+  def join[A](ctx: CaseClass[Typeclass, A]): Typeclass[A] = value => {
     if (ctx.isValueClass) {
-      ctx.parameters.headOption.fold("")(param => param.typeclass.render(param.dereference(value)))
+      ctx.params.headOption.fold("")(param => param.typeclass.render(param.deref(value)))
     } else {
       val includeMemberNames = RenderUtils.includeMemberNames(ctx)
 
-      val params = ctx.parameters
+      val params = ctx.params
         .filterNot(RenderUtils.isHidden)
         .collect {
           case param if RenderUtils.isSecret(param) =>
@@ -23,65 +23,40 @@ object render {
 
           case param if RenderUtils.shouldBeHashed(param) =>
             val label = s"${param.label} (sha256 hash)"
-            val plaintext = param.typeclass.render(param.dereference(value))
+            val plaintext = param.typeclass.render(param.deref(value))
             RenderUtils.renderParam(label, RenderUtils.sha256(plaintext), includeMemberNames)
 
           case RenderUtils.hasLengthLimit(param, limit) =>
             RenderUtils.renderWithLimit(param, value, limit, includeMemberNames)
 
           case p =>
-            RenderUtils.renderParam(p.label, p.typeclass.render(p.dereference(value)), includeMemberNames)
+            RenderUtils.renderParam(p.label, p.typeclass.render(p.deref(value)), includeMemberNames)
         }
 
-      s"${ctx.typeName.short}(${params.mkString(", ")})"
+      s"${ctx.typeInfo.short}(${params.mkString(", ")})"
     }
   }
 
-  def dispatch[A](ctx: SealedTrait[Typeclass, A]): Typeclass[A] = value => {
-    ctx.dispatch(value)(sub => sub.typeclass.render(sub.cast(value)))
+  def split[A](ctx: SealedTrait[Typeclass, A]): Typeclass[A] = value => {
+    ctx.choose(value)(sub => sub.typeclass.render(sub.cast(value)))
   }
 
-  /**
-    * Creates an instance for a concrete type. Does not generate instances for underlying types.
-    *
-    * Example:
-    * {{{
-    *   import io.odin.extras.derivation.render
-    *
-    *   case class A(field: String)
-    *   case class B(field: A)
-    *
-    *   val instanceA: Render[A] = render.instance[A] // compiles
-    *   val instanceB: Render[B] = render.instance[B] // does not compile
-    * }}}
-    */
-  def instance[A]: Typeclass[A] = macro Magnolia.gen[A]
-
-  /**
-    * Creates an instance for a concrete type. Recursively generate instances for underlying types.
-    *
-    * Example:
-    * {{{
-    *   import io.odin.extras.derivation.render
-    *
-    *   case class A(field: String)
-    *   case class B(field: A)
-    *
-    *   val instanceB: Render[B] = render.derive[B]
-    * }}}
-    */
-  implicit def derive[A]: Typeclass[A] = macro Magnolia.gen[A]
+  extension(r: Render.type) {
+    inline def derived[A: scala.deriving.Mirror.Of]: Render[A] = render.derived[A]
+  }
 
 }
 
 private object RenderUtils {
 
+  import magnolia.CaseClass.Param
+
   val SecretPlaceholder = "<secret>"
 
   @inline def includeMemberNames[A](ctx: CaseClass[Render, A]): Boolean =
     ctx.annotations
-      .collectFirst {
-        case rendered(v) => v
+      .collectFirst { case rendered(v) =>
+        v
       }
       .getOrElse(true)
 
@@ -98,7 +73,7 @@ private object RenderUtils {
     if (includeMemberName) s"$label = $value" else value
 
   def renderWithLimit[A](param: Param[Render, A], value: A, limit: Int, includeMemberNames: Boolean): String =
-    param.dereference(value) match {
+    param.deref(value) match {
       case c: Iterable[_] =>
         val diff = c.iterator.length - limit
         val suffix = if (diff > 0) s"($diff more)" else ""
@@ -118,8 +93,8 @@ private object RenderUtils {
 
   object hasLengthLimit {
     def unapply[A](arg: Param[Render, A]): Option[(Param[Render, A], Int)] =
-      arg.annotations.collectFirst {
-        case length(limit) => (arg, limit)
+      arg.annotations.collectFirst { case length(limit) =>
+        (arg, limit)
       }
   }
 
