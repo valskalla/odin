@@ -43,8 +43,8 @@ private[config] class EnclosureRouting[F[_]: Clock](fallback: Logger[F], router:
     case Nil =>
       if (msg.level >= fallback.minLevel) fallback.log(msg)
       else F.unit
-    case (key, (_, logger)) :: _ if msg.position.enclosureName.startsWith(key) && msg.level >= logger.minLevel =>
-      logger.log(msg)
+    case (key, (_, logger)) :: _ if msg.position.enclosureName.startsWith(key) =>
+      F.whenA(msg.level >= logger.minLevel)(logger.log(msg))
     case _ :: tail => recLog(tail, msg)
   }
 
