@@ -87,6 +87,24 @@ class ConfigSpec extends OdinSpec {
     }
   }
 
+  it should "not fallback to provided logger when message level does not match mapped logger level" in {
+    forAll { (head: LoggerMessage, ls: List[LoggerMessage]) =>
+      val infoHead = head.copy(level = Level.Info)
+      val enclosure = infoHead.position.enclosureName
+
+      val fallback = TestLogger("fallback")
+      val routed = TestLogger("underlying").withMinimalLevel(Level.Error)
+      val routerLogger =
+        enclosureRouting[F](enclosure -> routed).withFallback(fallback)
+
+      val written = (infoHead :: ls).traverse(routerLogger.log).written.unsafeRunSync()
+      val batchWritten = routerLogger.log(infoHead :: ls).written.unsafeRunSync()
+
+      written shouldBe ls.map(msg => "fallback" -> msg)
+      batchWritten should contain theSameElementsAs written
+    }
+  }
+
   it should "check underlying min level" in {
     forAll { (minLevel: Level, ls: List[LoggerMessage]) =>
       val underlying = TestLogger("underlying").withMinimalLevel(minLevel)
