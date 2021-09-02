@@ -28,6 +28,8 @@ lazy val scalaVersions = scala2 ::: scala3
 lazy val scalaTest = "org.scalatest" %% "scalatest" % versions.scalaTest % Test
 lazy val scalaTestScalaCheck = "org.scalatestplus" %% "scalacheck-1-15" % versions.scalaTestScalaCheck % Test
 
+lazy val alleycats = "org.typelevel" %% "alleycats-core" % versions.cats
+
 lazy val cats = List(
   (version: String) => "org.typelevel" %% "cats-core" % version,
   (version: String) => "org.typelevel" %% "cats-laws" % version % Test
@@ -113,7 +115,7 @@ lazy val sharedSettings = Seq(
 lazy val `odin-core` = (project in file("core"))
   .settings(sharedSettings)
   .settings(
-    libraryDependencies ++= (catsEffect % Test) :: catsMtl :: sourcecode :: perfolation :: catsEffectStd :: cats
+    libraryDependencies ++= (catsEffect % Test) :: catsMtl :: sourcecode :: perfolation :: catsEffectStd :: alleycats :: cats
   )
 
 lazy val `odin-json` = (project in file("json"))
