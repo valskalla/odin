@@ -5,7 +5,7 @@ import cats.effect.kernel.Sync
 import cats.effect.std.Dispatcher
 import cats.syntax.all._
 import io.odin.meta.Position
-import io.odin.{Level, LoggerMessage, Logger => OdinLogger}
+import io.odin.{Level, Logger => OdinLogger, LoggerMessage}
 import org.slf4j.Logger
 import org.slf4j.helpers.{FormattingTuple, MarkerIgnoringBase, MessageFormatter}
 
