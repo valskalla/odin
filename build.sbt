@@ -2,7 +2,7 @@ lazy val versions = new {
   val scalaTest = "3.2.9"
   val scalaTestScalaCheck = "3.2.9.0"
   val cats = "2.6.1"
-  val catsEffect = "3.1.1"
+  val catsEffect = "3.2.7"
   val catsMtl = "1.2.1"
   val sourcecode = "0.2.7"
   val monix = "3.4.0"
@@ -11,7 +11,7 @@ lazy val versions = new {
   val scalaCheck = "1.15.4"
   val zio = "1.0.9"
   val zioCats = "3.1.1.0"
-  val slf4j = "1.7.30"
+  val slf4j = "1.7.32"
   val log4j = "2.14.1"
   val disruptor = "3.4.4"
   val scribe = "3.5.5"
@@ -21,7 +21,7 @@ lazy val versions = new {
 
 lazy val onlyScala2 = Option(System.getenv("ONLY_SCALA_2")).contains("true")
 lazy val onlyScala3 = Option(System.getenv("ONLY_SCALA_3")).contains("true")
-lazy val scala3 = if (onlyScala2) List() else List("3.0.0")
+lazy val scala3 = if (onlyScala2) List() else List("3.0.2")
 lazy val scala2 = if (onlyScala3) List() else List("2.13.6", "2.12.13")
 lazy val scalaVersions = scala2 ::: scala3
 
@@ -103,7 +103,7 @@ lazy val sharedSettings = Seq(
   libraryDependencies ++= (CrossVersion.partialVersion(scalaVersion.value) match {
     case Some((2, _)) =>
       List(
-        compilerPlugin("org.typelevel" %% "kind-projector" % "0.13.0" cross CrossVersion.full),
+        compilerPlugin("org.typelevel" %% "kind-projector" % "0.13.2" cross CrossVersion.full),
         compilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
       )
     case _ => Nil
