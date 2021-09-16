@@ -4,7 +4,6 @@ import cats.syntax.all._
 import cats.effect.IO
 import cats.effect.kernel.Ref
 import cats.effect.unsafe.IORuntime
-import io.odin.formatter.Formatter
 import io.odin.{Level, LoggerMessage, OdinSpec}
 import org.scalacheck.Gen
 import org.slf4j.event.SubstituteLoggingEvent
@@ -156,7 +155,7 @@ class Slf4jSpec extends OdinSpec {
   it should "support Slf4J loggers" in {
     val logQueue = new LinkedBlockingQueue[SubstituteLoggingEvent]
     val subLogger = new SubstituteLogger("subLogger", logQueue, false)
-    val testSlf4JLogger = new Slf4jLogger[IO](subLogger, Level.Info, Formatter.default)
+    val testSlf4JLogger = Slf4jLogger[IO](subLogger)
     testSlf4JLogger.info("test message").unsafeRunSync()
     assert(logQueue.size() == 1)
     val sentLog: SubstituteLoggingEvent = logQueue.take()
@@ -167,7 +166,7 @@ class Slf4jSpec extends OdinSpec {
   it should "respect minLevel in the Slf4J logger" in {
     val logQueue = new LinkedBlockingQueue[SubstituteLoggingEvent]
     val subLogger = new SubstituteLogger("subLogger", logQueue, false)
-    val errorSlf4JLogger = new Slf4jLogger[IO](subLogger, Level.Error, Formatter.default)
+    val errorSlf4JLogger = Slf4jLogger[IO](subLogger, Level.Error)
     val noErrorLogGen: Gen[LoggerMessage] = loggerMessageGen.filter(_.level < Level.Error)
     forAll(noErrorLogGen) { msg =>
       errorSlf4JLogger.submit(msg).unsafeRunSync()

@@ -25,8 +25,9 @@ final class Slf4jLogger[F[_]: Sync](logger: JLogger, level: Level, formatter: Fo
 }
 
 object Slf4jLogger {
-  def default[F[_]: Sync]: Slf4jLogger[F] =
-    new Slf4jLogger[F](LoggerFactory.getLogger("OdinSlf4jLogger"), Level.Info, Formatter.default)
-  def defaultFromSlf4j[F[_]: Sync](logger: JLogger): Slf4jLogger[F] =
-    new Slf4jLogger[F](logger, Level.Info, Formatter.default)
+  def apply[F[_]: Sync](
+      logger: JLogger = LoggerFactory.getLogger("OdinSlf4jLogger"),
+      level: Level = Level.Info,
+      formatter: Formatter = Formatter.default
+  ) = new Slf4jLogger[F](logger, level, formatter)
 }
