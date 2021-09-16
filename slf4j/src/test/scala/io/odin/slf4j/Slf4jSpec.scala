@@ -163,10 +163,10 @@ class Slf4jSpec extends OdinSpec {
   it should "respect minLevel in the Slf4J logger" in {
     val logQueue = new LinkedBlockingQueue[SubstituteLoggingEvent]
     val subLogger = new SubstituteLogger("subLogger", logQueue, false)
-    val rootSlf4JLogger = new Slf4jLogger[IO](subLogger, Level.Error, Formatter.default)
-    val infoLogGen: Gen[LoggerMessage] = loggerMessageGen.filter(_.level == Level.Info)
-    forAll(infoLogGen) { msg =>
-      rootSlf4JLogger.submit(msg).unsafeRunSync()
+    val errorSlf4JLogger = new Slf4jLogger[IO](subLogger, Level.Error, Formatter.default)
+    val noErrorLogGen: Gen[LoggerMessage] = loggerMessageGen.filter(_.level < Level.Error)
+    forAll(noErrorLogGen) { msg =>
+      errorSlf4JLogger.submit(msg).unsafeRunSync()
       assert(logQueue.isEmpty)
     }
   }
