@@ -1,5 +1,6 @@
 package io.odin.config
 
+import alleycats.std.iterable._
 import cats.Monad
 import cats.effect.kernel.Clock
 import cats.syntax.all._
@@ -19,23 +20,22 @@ private[config] class EnclosureRouting[F[_]: Clock](fallback: Logger[F], router:
   def submit(msg: LoggerMessage): F[Unit] = recLog(indexedRouter, msg)
 
   override def submit(msgs: List[LoggerMessage]): F[Unit] = {
-    msgs
-      .map { msg =>
-        indexedRouter
-          .collectFirst {
-            case (key, indexedLogger) if msg.position.enclosureName.startsWith(key) => indexedLogger
-          }
-          .getOrElse(-1 -> fallback) -> List(msg)
-      }
+    val grouped: Iterable[((Int, Logger[F]), List[LoggerMessage])] = msgs
       .foldLeft(Map.empty[(Int, Logger[F]), List[LoggerMessage]]) {
-        case (map, kv) =>
+        case (map, msg) =>
+          val kv = indexedRouter
+            .collectFirst {
+              case (key, indexedLogger) if msg.position.enclosureName.startsWith(key) => indexedLogger
+            }
+            .getOrElse(-1 -> fallback) -> List(msg)
+
           map |+| Map(kv)
       }
-      .toList
-      .traverse_ {
-        case ((_, logger), ms) =>
-          logger.log(ms.filter(_.level >= logger.minLevel))
-      }
+
+    grouped.traverse_ {
+      case ((_, logger), ms) =>
+        logger.log(ms.filter(_.level >= logger.minLevel))
+    }
   }
 
   @tailrec
@@ -43,8 +43,8 @@ private[config] class EnclosureRouting[F[_]: Clock](fallback: Logger[F], router:
     case Nil =>
       if (msg.level >= fallback.minLevel) fallback.log(msg)
       else F.unit
-    case (key, (_, logger)) :: _ if msg.position.enclosureName.startsWith(key) && msg.level >= logger.minLevel =>
-      logger.log(msg)
+    case (key, (_, logger)) :: _ if msg.position.enclosureName.startsWith(key) =>
+      F.whenA(msg.level >= logger.minLevel)(logger.log(msg))
     case _ :: tail => recLog(tail, msg)
   }
 
