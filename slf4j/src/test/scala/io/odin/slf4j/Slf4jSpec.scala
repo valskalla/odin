@@ -10,6 +10,7 @@ import org.scalacheck.Gen
 import org.slf4j.event.SubstituteLoggingEvent
 import org.slf4j.helpers.SubstituteLogger
 import org.slf4j.{Logger, LoggerFactory}
+import org.slf4j.event.{Level => JLevel}
 
 import java.util.concurrent.LinkedBlockingQueue
 import scala.collection.immutable.Queue
@@ -157,7 +158,10 @@ class Slf4jSpec extends OdinSpec {
     val subLogger = new SubstituteLogger("subLogger", logQueue, false)
     val testSlf4JLogger = new Slf4jLogger[IO](subLogger, Level.Info, Formatter.default)
     testSlf4JLogger.info("test message").unsafeRunSync()
-    assert(!logQueue.isEmpty)
+    assert(logQueue.size() == 1)
+    val sentLog: SubstituteLoggingEvent = logQueue.take()
+    assert(sentLog.getMessage.contains("test message"))
+    assert(sentLog.getLevel == JLevel.INFO)
   }
 
   it should "respect minLevel in the Slf4J logger" in {
