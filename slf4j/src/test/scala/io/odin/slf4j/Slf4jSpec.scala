@@ -4,9 +4,14 @@ import cats.syntax.all._
 import cats.effect.IO
 import cats.effect.kernel.Ref
 import cats.effect.unsafe.IORuntime
+import io.odin.formatter.Formatter
 import io.odin.{Level, LoggerMessage, OdinSpec}
+import org.scalacheck.Gen
+import org.slf4j.event.SubstituteLoggingEvent
+import org.slf4j.helpers.SubstituteLogger
 import org.slf4j.{Logger, LoggerFactory}
 
+import java.util.concurrent.LinkedBlockingQueue
 import scala.collection.immutable.Queue
 
 class Slf4jSpec extends OdinSpec {
@@ -144,6 +149,25 @@ class Slf4jSpec extends OdinSpec {
       }
 
       buffer.get.unsafeRunSync().size shouldBe expected.size
+    }
+  }
+
+  it should "support Slf4J loggers" in {
+    val logQueue = new LinkedBlockingQueue[SubstituteLoggingEvent]
+    val subLogger = new SubstituteLogger("subLogger", logQueue, false)
+    val testSlf4JLogger = new Slf4jLogger[IO](subLogger, Level.Info, Formatter.default)
+    testSlf4JLogger.info("test message").unsafeRunSync()
+    assert(!logQueue.isEmpty)
+  }
+
+  it should "respect minLevel in the Slf4J logger" in {
+    val logQueue = new LinkedBlockingQueue[SubstituteLoggingEvent]
+    val subLogger = new SubstituteLogger("subLogger", logQueue, false)
+    val rootSlf4JLogger = new Slf4jLogger[IO](subLogger, Level.Error, Formatter.default)
+    val infoLogGen: Gen[LoggerMessage] = loggerMessageGen.filter(_.level == Level.Info)
+    forAll(infoLogGen) { msg =>
+      rootSlf4JLogger.submit(msg).unsafeRunSync()
+      assert(logQueue.isEmpty)
     }
   }
 
