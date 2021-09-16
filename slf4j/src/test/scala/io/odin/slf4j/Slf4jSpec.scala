@@ -160,8 +160,8 @@ class Slf4jSpec extends OdinSpec {
     testSlf4JLogger.info("test message").unsafeRunSync()
     assert(logQueue.size() == 1)
     val sentLog: SubstituteLoggingEvent = logQueue.take()
-    assert(sentLog.getMessage.contains("test message"))
-    assert(sentLog.getLevel == JLevel.INFO)
+    sentLog.getMessage.contains("test message") shouldBe true
+    sentLog.getLevel shouldEqual JLevel.INFO
   }
 
   it should "respect minLevel in the Slf4J logger" in {
@@ -171,7 +171,7 @@ class Slf4jSpec extends OdinSpec {
     val noErrorLogGen: Gen[LoggerMessage] = loggerMessageGen.filter(_.level < Level.Error)
     forAll(noErrorLogGen) { msg =>
       errorSlf4JLogger.submit(msg).unsafeRunSync()
-      assert(logQueue.isEmpty)
+      logQueue.isEmpty shouldBe true
     }
   }
 
