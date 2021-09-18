@@ -20,7 +20,7 @@ top priorities.
 - Position tracing implemented with macro instead of reflection considerably boosts the performance
 - Own performant logger backends for console and log files
 - Composable loggers to bring different loggers together with `Monoid[Logger[F]]`
-- Backend for SLF4J API
+- Interop with SLF4J
 
 Standing on the shoulders of `cats-effect` type classes, Odin abstracts away from concrete effect types, allowing
 users to decide what they feel comfortable with: `IO`, `ZIO`, `monix.Task`, `ReaderT` etc. The choice is yours.
@@ -711,7 +711,9 @@ println(render"API config $config")
 
 Please note that by differences of magnolia itself, the derivation on Scala 2 and Scala 3 might yield slightly different results. One known difference is that for Scala 3, value classes are currently not unwrapped as they're on Scala 2.
 
-## SLF4J bridge
+## SLF4J Interop
+
+### SLF4J bridge
 
 In case if some dependencies in the project use SL4J as a logging API, it's possible to provide Odin logger as a backend.
 It requires a two-step setup:
@@ -744,7 +746,7 @@ class ExternalLogger extends OdinLoggerBinder[IO] {
 }
 ```
 
-- Create `StaticLoggerBuilder.java` class in the package `org.slf4j.impl` with the following content:
+- Create `StaticLoggerBinder.java` class in the package `org.slf4j.impl` with the following content:
 ```java
 package org.slf4j.impl;
 
@@ -769,6 +771,28 @@ Partial function is used as a factory router to load correct logger backend. On 
 so no logs are recorded. 
 
 This bridge doesn't support MDC.
+
+### SLF4J Logger backend
+
+Since v0.13 It's possible to use SLF4J-compatible logger as the backend for Odin's `Logger[F]`.
+
+- Add following dependency to your build:
+```scala
+libraryDependencies += "com.github.valskalla" %% "odin-slf4j" % "@VERSION@"
+```
+- Construct Odin logger based on SLF4J:
+```scala mdoc:reset
+import cats.effect.IO
+import cats.effect.unsafe.implicits.global
+import io.odin._
+import io.odin.slf4j.Slf4jLogger
+import org.slf4j.LoggerFactory
+
+//feel free to load any logger that suits you
+val logger: Logger[IO] = Slf4jLogger[IO](logger = LoggerFactory.getLogger("OdinSlf4jLogger"))
+
+logger.info("Hello world").unsafeRunSync()
+```
 
 ## Benchmarks
 
