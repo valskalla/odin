@@ -134,7 +134,7 @@ class RollingFileLoggerSpec extends OdinSpec {
             minLevel = Level.Trace
           )
           _ <- Resource.eval(logger.log(lm1))
-          _ <- Resource.eval(IO.sleep(1200.millis))
+          _ <- Resource.eval(IO.sleep(1500.millis))
           _ <- Resource.eval(logger.log(lm2))
         } yield {
           val log1 :: log2 :: Nil = ListDirectory(path).filter(_.isFile).sortBy(_.getName)
