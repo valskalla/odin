@@ -21,7 +21,7 @@ lazy val versions = new {
 
 lazy val onlyScala2 = Option(System.getenv("ONLY_SCALA_2")).contains("true")
 lazy val onlyScala3 = Option(System.getenv("ONLY_SCALA_3")).contains("true")
-lazy val scala3 = if (onlyScala2) List() else List("3.0.2")
+lazy val scala3 = if (onlyScala2) List() else List("3.1.0")
 lazy val scala2 = if (onlyScala3) List() else List("2.13.6", "2.12.13")
 lazy val scalaVersions = scala2 ::: scala3
 
