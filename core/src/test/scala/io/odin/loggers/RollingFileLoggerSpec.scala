@@ -121,7 +121,7 @@ class RollingFileLoggerSpec extends OdinSpec {
   }
 
   {
-    it should "write to the next file once interval is over" in {
+    ignore should "write to the next file once interval is over" in {
       forAll { (lm1: LoggerMessage, lm2: LoggerMessage, formatter: Formatter) =>
         (for {
           path <- fileResource

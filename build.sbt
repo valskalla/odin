@@ -2,7 +2,7 @@ lazy val versions = new {
   val scalaTest = "3.2.9"
   val scalaTestScalaCheck = "3.2.9.0"
   val cats = "2.6.1"
-  val catsEffect = "3.2.7"
+  val catsEffect = "3.2.9"
   val catsMtl = "1.2.1"
   val sourcecode = "0.2.7"
   val monix = "3.4.0"
@@ -21,12 +21,14 @@ lazy val versions = new {
 
 lazy val onlyScala2 = Option(System.getenv("ONLY_SCALA_2")).contains("true")
 lazy val onlyScala3 = Option(System.getenv("ONLY_SCALA_3")).contains("true")
-lazy val scala3 = if (onlyScala2) List() else List("3.0.2")
-lazy val scala2 = if (onlyScala3) List() else List("2.13.6", "2.12.15")
+lazy val scala3 = if (onlyScala2) List() else List("3.1.0")
+lazy val scala2 = if (onlyScala3) List() else List("2.13.6", "2.12.13")
 lazy val scalaVersions = scala2 ::: scala3
 
 lazy val scalaTest = "org.scalatest" %% "scalatest" % versions.scalaTest % Test
 lazy val scalaTestScalaCheck = "org.scalatestplus" %% "scalacheck-1-15" % versions.scalaTestScalaCheck % Test
+
+lazy val alleycats = "org.typelevel" %% "alleycats-core" % versions.cats
 
 lazy val cats = List(
   (version: String) => "org.typelevel" %% "cats-core" % version,
@@ -113,7 +115,7 @@ lazy val sharedSettings = Seq(
 lazy val `odin-core` = (project in file("core"))
   .settings(sharedSettings)
   .settings(
-    libraryDependencies ++= (catsEffect % Test) :: catsMtl :: sourcecode :: perfolation :: catsEffectStd :: cats
+    libraryDependencies ++= (catsEffect % Test) :: catsMtl :: sourcecode :: perfolation :: catsEffectStd :: alleycats :: cats
   )
 
 lazy val `odin-json` = (project in file("json"))
