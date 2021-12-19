@@ -15,23 +15,23 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        java: ['adopt@1.8', 'adopt@1.11']
+        java: ['adopt:1.8.0', 'adopt:11', 'openjdk:17']
 
     runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v2
-    - name: set up sbt and java
-      uses: olafurpg/setup-scala@v10
+    - uses: coursier/cache-action@v6
+    - uses: coursier/setup-action@v1
       with:
-        java-version: ${{ matrix.java }}
+        jvm: ${{ matrix.java }}
     - name: Run tests
       shell: bash
       run: |
         JAVA_TOOL_OPTIONS=-Dfile.encoding=UTF8 ONLY_SCALA_2=true sbt coverage +test docs/mdoc
         JAVA_TOOL_OPTIONS=-Dfile.encoding=UTF8 ONLY_SCALA_3=true sbt +test docs/mdoc
         sbt coverageReport coverageAggregate
-    - uses: codecov/codecov-action@v1
+    - uses: codecov/codecov-action@v2
       if: matrix.os != 'windows-latest' #doesn't work properly on Windows
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
