@@ -12,17 +12,18 @@ lazy val versions = new {
   val zio = "1.0.9"
   val zioCats = "3.1.1.0"
   val slf4j = "1.7.32"
-  val log4j = "2.14.1"
+  val log4j = "2.17.0"
   val disruptor = "3.4.4"
   val scribe = "3.5.5"
   val perfolation = "1.2.8"
-  val circe = "0.14.1"
+  val jsoniter = "2.12.0"
+  val collectionCompat = "2.6.0"
 }
 
 lazy val onlyScala2 = Option(System.getenv("ONLY_SCALA_2")).contains("true")
 lazy val onlyScala3 = Option(System.getenv("ONLY_SCALA_3")).contains("true")
 lazy val scala3 = if (onlyScala2) List() else List("3.1.0")
-lazy val scala2 = if (onlyScala3) List() else List("2.13.6", "2.12.13")
+lazy val scala2 = if (onlyScala3) List() else List("2.13.7", "2.12.15")
 lazy val scalaVersions = scala2 ::: scala3
 
 lazy val scalaTest = "org.scalatest" %% "scalatest" % versions.scalaTest % Test
@@ -53,8 +54,6 @@ lazy val magnoliaScala3 = "com.softwaremill.magnolia" %% "magnolia-core" % versi
 
 lazy val perfolation = "com.outr" %% "perfolation" % versions.perfolation
 
-lazy val circeCore = "io.circe" %% "circe-core" % versions.circe
-
 lazy val slf4j = "org.slf4j" % "slf4j-api" % versions.slf4j
 
 lazy val log4j = ("com.lmax" % "disruptor" % versions.disruptor) :: List(
@@ -67,12 +66,16 @@ lazy val scribe = List(
   "com.outr" %% "scribe-file" % versions.scribe
 )
 
+lazy val jsoniter = "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core" % versions.jsoniter
+
+lazy val collectionCompat = "org.scala-lang.modules" %% "scala-collection-compat" % versions.collectionCompat
+
 lazy val noPublish = Seq(
   publish / skip := true
 )
 
 lazy val sharedSettings = Seq(
-  scalaVersion := "2.13.6",
+  scalaVersion := "2.13.7",
   organization := "com.github.valskalla",
   libraryDependencies ++= scalaTestScalaCheck :: scalaCheck :: scalaTest :: Nil,
   crossScalaVersions := scalaVersions,
@@ -121,9 +124,9 @@ lazy val `odin-core` = (project in file("core"))
 lazy val `odin-json` = (project in file("json"))
   .settings(sharedSettings)
   .settings(
-    libraryDependencies += circeCore
+    libraryDependencies ++= Seq(jsoniter, collectionCompat)
   )
-  .dependsOn(`odin-core`)
+  .dependsOn(`odin-core` % "compile->compile;test->test")
 
 lazy val `odin-zio` = (project in file("zio"))
   .settings(sharedSettings)
@@ -259,6 +262,8 @@ lazy val scalac212Options = Seq(
   "-Ywarn-unused:privates" // Warn if a private member is unused.
 )
 
+val silenceUnusedCollectionComat = "-Wconf:cat=unused&site=io.odin.json:s"
+
 lazy val scalac213Options = Seq(
   "-Werror",
   "-Wdead-code",
@@ -267,7 +272,8 @@ lazy val scalac213Options = Seq(
   "-Wunused:imports",
   "-Wunused:patvars",
   "-Wunused:privates",
-  "-Wunused:params"
+  "-Wunused:params",
+  silenceUnusedCollectionComat
 )
 
 lazy val scalac3Options = Seq(
@@ -280,5 +286,6 @@ lazy val scalac3Options = Seq(
   "-language:higherKinds", // Allow higher-kinded types
   "-language:implicitConversions", // Allow definition of implicit functions called views
   "-language:postfixOps", // Allow postfix operators
-  "-unchecked" // Enable additional warnings where generated code depends on assumptions.
+  "-unchecked", // Enable additional warnings where generated code depends on assumptions.
+  silenceUnusedCollectionComat
 )

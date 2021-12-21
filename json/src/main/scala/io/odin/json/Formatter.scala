@@ -1,8 +1,6 @@
 package io.odin.json
 
-import cats.syntax.show._
-import io.circe.syntax._
-import io.circe.Encoder
+import com.github.plokhotnyuk.jsoniter_scala.core._
 import io.odin.LoggerMessage
 import io.odin.formatter.{Formatter => OFormatter}
 import io.odin.formatter.Formatter._
@@ -15,22 +13,17 @@ object Formatter {
   def create(throwableFormat: ThrowableFormat): OFormatter =
     create(throwableFormat, PositionFormat.Full)
 
-  def create(throwableFormat: ThrowableFormat, positionFormat: PositionFormat): OFormatter = {
-    implicit val encoder: Encoder[LoggerMessage] = loggerMessageEncoder(throwableFormat, positionFormat)
-    (msg: LoggerMessage) => msg.asJson.noSpaces
-  }
-
-  def loggerMessageEncoder(throwableFormat: ThrowableFormat, positionFormat: PositionFormat): Encoder[LoggerMessage] =
-    Encoder.forProduct7("level", "message", "context", "exception", "position", "thread_name", "timestamp")(m =>
-      (
-        m.level.show,
-        m.message.value,
-        m.context,
-        m.exception.map(t => formatThrowable(t, throwableFormat)),
-        formatPosition(m.position, positionFormat),
-        m.threadName,
-        formatTimestamp(m.timestamp)
+  def create(throwableFormat: ThrowableFormat, positionFormat: PositionFormat): OFormatter = { (msg: LoggerMessage) =>
+    writeToString(
+      Output(
+        msg.level,
+        msg.message.value,
+        msg.context,
+        msg.exception.map(t => formatThrowable(t, throwableFormat)),
+        formatPosition(msg.position, positionFormat),
+        msg.threadName,
+        formatTimestamp(msg.timestamp)
       )
     )
-
+  }
 }
