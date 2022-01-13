@@ -23,7 +23,7 @@ lazy val versions = new {
 lazy val onlyScala2 = Option(System.getenv("ONLY_SCALA_2")).contains("true")
 lazy val onlyScala3 = Option(System.getenv("ONLY_SCALA_3")).contains("true")
 lazy val scala3 = if (onlyScala2) List() else List("3.1.0")
-lazy val scala2 = if (onlyScala3) List() else List("2.13.7", "2.12.15")
+lazy val scala2 = if (onlyScala3) List() else List("2.13.8", "2.12.15")
 lazy val scalaVersions = scala2 ::: scala3
 
 lazy val scalaTest = "org.scalatest" %% "scalatest" % versions.scalaTest % Test
@@ -75,7 +75,7 @@ lazy val noPublish = Seq(
 )
 
 lazy val sharedSettings = Seq(
-  scalaVersion := "2.13.7",
+  scalaVersion := "2.13.8",
   organization := "com.github.valskalla",
   libraryDependencies ++= scalaTestScalaCheck :: scalaCheck :: scalaTest :: Nil,
   crossScalaVersions := scalaVersions,
