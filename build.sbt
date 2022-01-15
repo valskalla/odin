@@ -16,7 +16,7 @@ lazy val versions = new {
   val disruptor = "3.4.4"
   val scribe = "3.5.5"
   val perfolation = "1.2.8"
-  val jsoniter = "2.12.0"
+  val jsoniter = "2.12.1"
   val collectionCompat = "2.6.0"
 }
 
