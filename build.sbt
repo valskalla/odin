@@ -16,14 +16,13 @@ lazy val versions = new {
   val disruptor = "3.4.4"
   val scribe = "3.5.5"
   val perfolation = "1.2.8"
-  val jsoniter = "2.12.0"
-  val collectionCompat = "2.6.0"
+  val jsoniter = "2.12.1"
 }
 
 lazy val onlyScala2 = Option(System.getenv("ONLY_SCALA_2")).contains("true")
 lazy val onlyScala3 = Option(System.getenv("ONLY_SCALA_3")).contains("true")
 lazy val scala3 = if (onlyScala2) List() else List("3.1.0")
-lazy val scala2 = if (onlyScala3) List() else List("2.13.7", "2.12.15")
+lazy val scala2 = if (onlyScala3) List() else List("2.13.8", "2.12.15")
 lazy val scalaVersions = scala2 ::: scala3
 
 lazy val scalaTest = "org.scalatest" %% "scalatest" % versions.scalaTest % Test
@@ -66,16 +65,17 @@ lazy val scribe = List(
   "com.outr" %% "scribe-file" % versions.scribe
 )
 
-lazy val jsoniter = "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core" % versions.jsoniter
-
-lazy val collectionCompat = "org.scala-lang.modules" %% "scala-collection-compat" % versions.collectionCompat
+lazy val jsoniter = List(
+  "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core" % versions.jsoniter,
+  "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % versions.jsoniter % "compile-internal"
+)
 
 lazy val noPublish = Seq(
   publish / skip := true
 )
 
 lazy val sharedSettings = Seq(
-  scalaVersion := "2.13.7",
+  scalaVersion := "2.13.8",
   organization := "com.github.valskalla",
   libraryDependencies ++= scalaTestScalaCheck :: scalaCheck :: scalaTest :: Nil,
   crossScalaVersions := scalaVersions,
@@ -124,7 +124,7 @@ lazy val `odin-core` = (project in file("core"))
 lazy val `odin-json` = (project in file("json"))
   .settings(sharedSettings)
   .settings(
-    libraryDependencies ++= Seq(jsoniter, collectionCompat)
+    libraryDependencies ++= jsoniter
   )
   .dependsOn(`odin-core` % "compile->compile;test->test")
 
@@ -262,7 +262,6 @@ lazy val scalac212Options = Seq(
   "-Ywarn-unused:privates" // Warn if a private member is unused.
 )
 
-val silenceUnusedCollectionComat = "-Wconf:cat=unused&site=io.odin.json:s"
 
 lazy val scalac213Options = Seq(
   "-Werror",
@@ -272,8 +271,7 @@ lazy val scalac213Options = Seq(
   "-Wunused:imports",
   "-Wunused:patvars",
   "-Wunused:privates",
-  "-Wunused:params",
-  silenceUnusedCollectionComat
+  "-Wunused:params"
 )
 
 lazy val scalac3Options = Seq(
@@ -286,6 +284,5 @@ lazy val scalac3Options = Seq(
   "-language:higherKinds", // Allow higher-kinded types
   "-language:implicitConversions", // Allow definition of implicit functions called views
   "-language:postfixOps", // Allow postfix operators
-  "-unchecked", // Enable additional warnings where generated code depends on assumptions.
-  silenceUnusedCollectionComat
+  "-unchecked" // Enable additional warnings where generated code depends on assumptions.
 )
