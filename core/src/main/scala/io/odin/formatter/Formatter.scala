@@ -7,15 +7,12 @@ import io.odin.meta.Position
 import perfolation._
 
 import scala.annotation.tailrec
-import scala.io.AnsiColor._
 
 trait Formatter {
   def format(msg: LoggerMessage): String
 }
 
 object Formatter {
-
-  val BRIGHT_BLACK = "\u001b[30;1m"
 
   val default: Formatter =
     Formatter.create(ThrowableFormat.Default, PositionFormat.Full, colorful = false, printCtx = true)
@@ -25,6 +22,9 @@ object Formatter {
 
   def create(throwableFormat: ThrowableFormat, colorful: Boolean): Formatter =
     create(throwableFormat, PositionFormat.Full, colorful, printCtx = true)
+
+  def create(theme: Theme): Formatter =
+    create(ThrowableFormat.Default, PositionFormat.Full, theme, colorful = true, printCtx = true)
 
   /**
     * Creates new formatter with provided options
@@ -39,21 +39,39 @@ object Formatter {
       positionFormat: PositionFormat,
       colorful: Boolean,
       printCtx: Boolean
+  ): Formatter =
+    create(throwableFormat, positionFormat, Theme.ansi, colorful, printCtx)
+
+  /**
+    * Creates new formatter with provided options
+    *
+    * @param throwableFormat @see [[formatThrowable]]
+    * @param positionFormat @see [[formatPosition]]
+    * @param theme set different colors for ctx, timestamps, thread name, level, position and throwable
+    * @param colorful whether to use the colors defined in theme or not
+    * @param printCtx whether the context is printed in the log
+    */
+  def create(
+      throwableFormat: ThrowableFormat,
+      positionFormat: PositionFormat,
+      theme: Theme,
+      colorful: Boolean,
+      printCtx: Boolean
   ): Formatter = {
 
     @inline def withColor(color: String, message: String): String =
-      if (colorful) s"$color$message$RESET" else message
+      if (colorful) s"$color$message${theme.reset}" else message
 
     (msg: LoggerMessage) => {
-      val ctx = if (printCtx) withColor(MAGENTA, formatCtx(msg.context)) else ""
-      val timestamp = formatTimestamp(msg.timestamp)
-      val threadName = withColor(GREEN, msg.threadName)
-      val level = withColor(BRIGHT_BLACK, msg.level.show)
-      val position = withColor(BLUE, formatPosition(msg.position, positionFormat))
+      val ctx = if (printCtx) withColor(theme.context, formatCtx(msg.context)) else ""
+      val timestamp = withColor(theme.timestamp, formatTimestamp(msg.timestamp))
+      val threadName = withColor(theme.threadName, msg.threadName)
+      val level = withColor(theme.level, msg.level.show)
+      val position = withColor(theme.position, formatPosition(msg.position, positionFormat))
 
       val throwable = msg.exception match {
         case Some(t) =>
-          withColor(RED, s"${System.lineSeparator()}${formatThrowable(t, throwableFormat)}")
+          withColor(theme.exception, s"${System.lineSeparator()}${formatThrowable(t, throwableFormat)}")
         case None =>
           ""
       }
