@@ -4,7 +4,6 @@ import cats.data.{Writer, WriterT}
 import cats.effect.unsafe.IORuntime
 import cats.effect.{Clock, IO}
 import cats.{~>, Id}
-import cats.catsInstancesForId
 import io.odin.{Level, Logger, LoggerMessage, OdinSpec}
 
 import scala.concurrent.duration.FiniteDuration

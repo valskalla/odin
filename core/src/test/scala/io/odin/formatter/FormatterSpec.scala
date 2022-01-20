@@ -159,6 +159,44 @@ class FormatterSpec extends OdinSpec {
     }
   }
 
+  it should "output colored messages according to the theme" in {
+    forAll { (msg: LoggerMessage) =>
+      val theme = Theme.ansi
+      val formatted = Formatter.create(theme).format(msg)
+
+      msg.threadName should not include theme.threadName
+
+      formatted should include(theme.reset)
+      formatted should include(theme.timestamp)
+      formatted should include(theme.context)
+      formatted should include(theme.threadName)
+      formatted should include(theme.level)
+      formatted should include(theme.position)
+
+      if (msg.exception.nonEmpty)
+        formatted should include(theme.exception)
+      else
+        formatted should not include theme.exception
+    }
+  }
+
+  it should "ignore theme colors when `colorful=false`" in {
+    forAll { (msg: LoggerMessage) =>
+      val theme = Theme.ansi
+      val formatted = Formatter
+        .create(ThrowableFormat.Default, PositionFormat.Full, theme, colorful = false, printCtx = false)
+        .format(msg)
+
+      formatted should not include theme.reset
+      formatted should not include theme.timestamp
+      formatted should not include theme.context
+      formatted should not include theme.threadName
+      formatted should not include theme.level
+      formatted should not include theme.position
+      formatted should not include theme.exception
+    }
+  }
+
   private lazy val indentGen: Gen[Indent] =
     Gen.oneOf(
       Gen.const(Indent.NoIndent),
