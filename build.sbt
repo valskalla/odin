@@ -4,7 +4,7 @@ lazy val versions = new {
   val cats = "2.7.0"
   val catsEffect = "3.3.4"
   val catsMtl = "1.2.1"
-  val sourcecode = "0.2.7"
+  val sourcecode = "0.2.8"
   val monix = "3.4.0"
   val magnoliaScala2 = "0.17.0"
   val magnoliaScala3 = "2.0.0-M4"
@@ -261,7 +261,6 @@ lazy val scalac212Options = Seq(
   "-Ywarn-unused:patvars", // Warn if a variable bound in a pattern is unused.
   "-Ywarn-unused:privates" // Warn if a private member is unused.
 )
-
 
 lazy val scalac213Options = Seq(
   "-Werror",
