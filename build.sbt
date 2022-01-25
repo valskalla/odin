@@ -16,7 +16,7 @@ lazy val versions = new {
   val disruptor = "3.4.4"
   val scribe = "3.5.5"
   val perfolation = "1.2.8"
-  val jsoniter = "2.12.1"
+  val jsoniter = "2.12.2"
 }
 
 lazy val onlyScala2 = Option(System.getenv("ONLY_SCALA_2")).contains("true")
@@ -261,7 +261,6 @@ lazy val scalac212Options = Seq(
   "-Ywarn-unused:patvars", // Warn if a variable bound in a pattern is unused.
   "-Ywarn-unused:privates" // Warn if a private member is unused.
 )
-
 
 lazy val scalac213Options = Seq(
   "-Werror",
