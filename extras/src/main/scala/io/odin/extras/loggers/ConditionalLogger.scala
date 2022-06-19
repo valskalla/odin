@@ -13,26 +13,27 @@ import io.odin.{Level, Logger, LoggerMessage}
 final case class ConditionalLogger[F[_]: Clock] private (
     queue: Queue[F, LoggerMessage],
     inner: Logger[F],
-    override val minLevel: Level
+    minLevelOnError: Level
 )(implicit F: MonadError[F, Throwable])
-    extends DefaultLogger[F](minLevel) {
+    extends DefaultLogger[F](minLevelOnError) {
 
   def submit(msg: LoggerMessage): F[Unit] =
     queue.tryOffer(msg).void
 
   private def drain(exitCase: ExitCase): F[Unit] = {
-    val level = exitCase match {
-      case ExitCase.Succeeded => inner.minLevel
-      case _                  => minLevel
+    val logger = exitCase match {
+      case ExitCase.Succeeded => inner
+      case _                  => inner.withMinimalLevel(minLevelOnError)
     }
 
     drainAll
-      .flatMap(msgs => inner.withMinimalLevel(level).log(msgs.toList))
+      .flatMap(msgs => logger.log(msgs.toList))
       .attempt
       .void
   }
 
-  def withMinimalLevel(level: Level): Logger[F] = copy(inner = inner.withMinimalLevel(level), minLevel = level)
+  def withMinimalLevel(level: Level): Logger[F] =
+    copy(inner = inner.withMinimalLevel(level), minLevelOnError = level)
 
   private def drainAll: F[Vector[LoggerMessage]] =
     F.tailRecM(Vector.empty[LoggerMessage]) { acc =>
@@ -48,9 +49,9 @@ object ConditionalLogger {
 
   /**
     * Create ConditionalLogger that buffers messages and sends them to the inner logger when the resource is released.
-    * If evaluation of the bracket completed with an error, the `fallbackLevel` is used as a `minLevel`.
+    * If evaluation of the bracket completed with an error, the `minLevelOnError` is used as a `minLevel`.
     *
-    * Example:
+    * @example
     * {{{
     *   consoleLogger[F](minLevel = Level.Info).withErrorLevel(Level.Debug) { logger =>
     *     logger.debug("debug message") >> trickyCode
@@ -61,11 +62,12 @@ object ConditionalLogger {
     * If evaluation completed successfully, the messages with `level >= Level.Info` will be sent to an inner logger.
     *
     * '''Important:''' nothing is logged until the resource is released.
-    * Example:
+    *
+    * @example
     * {{{
-    * consoleLogger[F](minLevel = Level.Info).withErrorLevel(Level.Debug) { logger =>
-    *   logger.info("info log") >> Timer[F].sleep(10.seconds) >> logger.debug("debug log")
-    * }
+    *   consoleLogger[F](minLevel = Level.Info).withErrorLevel(Level.Debug) { logger =>
+    *     logger.info("info log") >> Timer[F].sleep(10.seconds) >> logger.debug("debug log")
+    *   }
     * }}}
     *
     * The message will be logged after 10 seconds. Thus use the logger with caution.
