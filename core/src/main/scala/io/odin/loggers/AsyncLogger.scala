@@ -1,9 +1,8 @@
 package io.odin.loggers
 
 import cats.MonadThrow
-import cats.effect.kernel.{Async, Clock, Resource}
-import cats.effect.std.Dispatcher
-import cats.effect.std.Queue
+import cats.effect.kernel.{Async, Clock, MonadCancelThrow, Resource}
+import cats.effect.std.{Dispatcher, Queue, Semaphore}
 import cats.syntax.all._
 import io.odin.{Level, Logger, LoggerMessage}
 
@@ -14,25 +13,33 @@ import scala.concurrent.duration._
   *
   * Use `AsyncLogger.withAsync` to instantiate it safely
   */
-case class AsyncLogger[F[_]: Clock](queue: Queue[F, LoggerMessage], timeWindow: FiniteDuration, inner: Logger[F])(
-    implicit F: MonadThrow[F]
-) extends DefaultLogger[F](inner.minLevel) {
-  def submit(msg: LoggerMessage): F[Unit] = {
-    queue.tryOffer(msg).void
-  }
+case class AsyncLogger[F[_]: Clock](
+    queue: Queue[F, F[Unit]],
+    sem: Semaphore[F],
+    timeWindow: FiniteDuration,
+    inner: Logger[F]
+)(implicit F: MonadCancelThrow[F])
+    extends DefaultLogger[F](inner.minLevel) {
+
+  def submit(msg: LoggerMessage): F[Unit] =
+    queue.tryOffer(inner.log(msg)).void
 
   private[loggers] def drain: F[Unit] =
-    drainAll.flatMap(msgs => inner.log(msgs.toList)).orElse(F.unit)
+    sem.permit.use(_ => drainAll.orElse(F.unit))
 
-  def withMinimalLevel(level: Level): Logger[F] = copy(inner = inner.withMinimalLevel(level))
+  def withMinimalLevel(level: Level): Logger[F] =
+    copy(inner = inner.withMinimalLevel(level))
 
-  private def drainAll: F[Vector[LoggerMessage]] =
-    F.tailRecM(Vector.empty[LoggerMessage]) { acc =>
-      queue.tryTake.map {
-        case Some(value) => Left(acc :+ value)
-        case None        => Right(acc)
+  private def drainAll: F[Unit] =
+    queue.tryTake
+      .flatMap[Option[Unit]] {
+        case Some(log) =>
+          log.as(None)
+        case None =>
+          MonadThrow[F].pure(Some(()))
       }
-    }
+      .untilDefinedM
+
 }
 
 object AsyncLogger {
@@ -55,9 +62,9 @@ object AsyncLogger {
   ): Resource[F, Logger[F]] = {
     val createQueue = maxBufferSize match {
       case Some(value) =>
-        Queue.bounded[F, LoggerMessage](value)
+        Queue.bounded[F, F[Unit]](value)
       case None =>
-        Queue.unbounded[F, LoggerMessage]
+        Queue.unbounded[F, F[Unit]]
     }
 
     // Run internal loop of consuming events from the queue and push them down the chain
@@ -69,7 +76,8 @@ object AsyncLogger {
 
     for {
       queue <- Resource.eval(createQueue)
-      logger <- Resource.pure(AsyncLogger(queue, timeWindow, inner))
+      sem <- Resource.eval(Semaphore[F](1))
+      logger <- Resource.pure(AsyncLogger(queue, sem, timeWindow, inner))
       _ <- backgroundConsumer(logger)
     } yield logger
   }
