@@ -14,7 +14,7 @@ lazy val versions = new {
   val slf4j = "1.7.33"
   val log4j = "2.17.0"
   val disruptor = "3.4.4"
-  val scribe = "3.5.5"
+  val scribe = "3.10.2"
   val perfolation = "1.2.8"
   val jsoniter = "2.12.1"
 }
@@ -261,7 +261,6 @@ lazy val scalac212Options = Seq(
   "-Ywarn-unused:patvars", // Warn if a variable bound in a pattern is unused.
   "-Ywarn-unused:privates" // Warn if a private member is unused.
 )
-
 
 lazy val scalac213Options = Seq(
   "-Werror",
