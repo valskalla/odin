@@ -793,7 +793,7 @@ import io.odin.slf4j.ExternalLogger;
 
 public class StaticLoggerBinder extends ExternalLogger {
 
-    public static String REQUESTED_API_VERSION = "1.7";
+    public static String REQUESTED_API_VERSION = "2.0.0";
 
     private static final StaticLoggerBinder _instance = new StaticLoggerBinder();
 
