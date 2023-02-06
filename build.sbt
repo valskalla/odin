@@ -9,7 +9,7 @@ lazy val versions = new {
   val magnoliaScala2 = "0.17.0"
   val magnoliaScala3 = "2.0.0-M4"
   val scalaCheck = "1.15.4"
-  val zio = "1.0.9"
+  val zio = "1.0.18"
   val zioCats = "3.1.1.0"
   val slf4j = "1.7.33"
   val log4j = "2.17.0"
@@ -261,7 +261,6 @@ lazy val scalac212Options = Seq(
   "-Ywarn-unused:patvars", // Warn if a variable bound in a pattern is unused.
   "-Ywarn-unused:privates" // Warn if a private member is unused.
 )
-
 
 lazy val scalac213Options = Seq(
   "-Werror",
