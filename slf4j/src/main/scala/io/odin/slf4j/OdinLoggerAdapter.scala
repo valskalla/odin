@@ -19,7 +19,7 @@ case class OdinLoggerAdapter[F[_]](loggerName: String, underlying: OdinLogger[F]
   override def getName: String = loggerName
 
   private def run(level: Level, msg: String, t: Option[Throwable] = None): Unit =
-    dispatcher.unsafeRunSync(for {
+    dispatcher.unsafeRunAndForget(for {
       timestamp <- F.realTime
       _ <- underlying.log(
         LoggerMessage(
