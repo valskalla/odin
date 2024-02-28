@@ -22,7 +22,7 @@ lazy val versions = new {
 lazy val onlyScala2 = Option(System.getenv("ONLY_SCALA_2")).contains("true")
 lazy val onlyScala3 = Option(System.getenv("ONLY_SCALA_3")).contains("true")
 lazy val scala3 = if (onlyScala2) List() else List("3.1.0")
-lazy val scala2 = if (onlyScala3) List() else List("2.13.8", "2.12.15")
+lazy val scala2 = if (onlyScala3) List() else List("2.13.13", "2.12.15")
 lazy val scalaVersions = scala2 ::: scala3
 
 lazy val scalaTest = "org.scalatest" %% "scalatest" % versions.scalaTest % Test
@@ -75,7 +75,7 @@ lazy val noPublish = Seq(
 )
 
 lazy val sharedSettings = Seq(
-  scalaVersion := "2.13.8",
+  scalaVersion := "2.13.13",
   organization := "com.github.valskalla",
   libraryDependencies ++= scalaTestScalaCheck :: scalaCheck :: scalaTest :: Nil,
   crossScalaVersions := scalaVersions,
@@ -261,7 +261,6 @@ lazy val scalac212Options = Seq(
   "-Ywarn-unused:patvars", // Warn if a variable bound in a pattern is unused.
   "-Ywarn-unused:privates" // Warn if a private member is unused.
 )
-
 
 lazy val scalac213Options = Seq(
   "-Werror",
